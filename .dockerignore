@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+doc
+README.md
+LICENSE
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CodeBuddy
+.codebuddy
+
+# Dependencies
+node_modules
+frontend/node_modules
+backend/vendor
+
+# Build outputs
+dist
+frontend/dist
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker-compose.override.yml

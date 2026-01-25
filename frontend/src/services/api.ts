@@ -1,0 +1,109 @@
+import axios from 'axios';
+import type { 
+  ApiResponse, 
+  ListResponse,
+  Car, 
+  CarStatus, 
+  ChargeListItem, 
+  ChargeDetail, 
+  ChargeStats,
+  DriveListItem,
+  DriveDetail,
+  DrivePosition,
+  OverviewStats,
+  EfficiencyStats,
+  BatteryStats
+} from '@/types';
+
+const api = axios.create({
+  baseURL: '/api/v1',
+  timeout: 10000,
+});
+
+// 响应拦截器
+api.interceptors.response.use(
+  (response) => {
+    const data = response.data as ApiResponse<unknown>;
+    if (data.code !== 0) {
+      return Promise.reject(new Error(data.message || 'Request failed'));
+    }
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// 车辆 API
+export const carApi = {
+  getAll: async (): Promise<Car[]> => {
+    const res = await api.get<ApiResponse<Car[]>>('/cars');
+    return res.data.data || [];
+  },
+
+  getStatus: async (carId: number): Promise<CarStatus> => {
+    const res = await api.get<ApiResponse<CarStatus>>(`/cars/${carId}/status`);
+    return res.data.data!;
+  },
+};
+
+// 充电 API
+export const chargeApi = {
+  getList: async (carId: number, page = 1, pageSize = 20): Promise<ListResponse<ChargeListItem>> => {
+    const res = await api.get<ApiResponse<ListResponse<ChargeListItem>>>(`/cars/${carId}/charges`, {
+      params: { page, pageSize },
+    });
+    return res.data.data || { items: [], pagination: { page, pageSize, total: 0 } };
+  },
+
+  getDetail: async (chargeId: number): Promise<ChargeDetail> => {
+    const res = await api.get<ApiResponse<ChargeDetail>>(`/charges/${chargeId}`);
+    return res.data.data!;
+  },
+
+  getStats: async (chargeId: number): Promise<ChargeStats> => {
+    const res = await api.get<ApiResponse<ChargeStats>>(`/charges/${chargeId}/stats`);
+    return res.data.data!;
+  },
+};
+
+// 驾驶 API
+export const driveApi = {
+  getList: async (carId: number, page = 1, pageSize = 20): Promise<ListResponse<DriveListItem>> => {
+    const res = await api.get<ApiResponse<ListResponse<DriveListItem>>>(`/cars/${carId}/drives`, {
+      params: { page, pageSize },
+    });
+    return res.data.data || { items: [], pagination: { page, pageSize, total: 0 } };
+  },
+
+  getDetail: async (driveId: number): Promise<DriveDetail> => {
+    const res = await api.get<ApiResponse<DriveDetail>>(`/drives/${driveId}`);
+    return res.data.data!;
+  },
+
+  getPositions: async (driveId: number): Promise<DrivePosition[]> => {
+    const res = await api.get<ApiResponse<DrivePosition[]>>(`/drives/${driveId}/positions`);
+    return res.data.data || [];
+  },
+};
+
+// 统计 API
+export const statsApi = {
+  getOverview: async (carId: number): Promise<OverviewStats> => {
+    const res = await api.get<ApiResponse<OverviewStats>>(`/cars/${carId}/stats/overview`);
+    return res.data.data!;
+  },
+
+  getEfficiency: async (carId: number, days = 30): Promise<EfficiencyStats> => {
+    const res = await api.get<ApiResponse<EfficiencyStats>>(`/cars/${carId}/stats/efficiency`, {
+      params: { days },
+    });
+    return res.data.data!;
+  },
+
+  getBattery: async (carId: number): Promise<BatteryStats> => {
+    const res = await api.get<ApiResponse<BatteryStats>>(`/cars/${carId}/stats/battery`);
+    return res.data.data!;
+  },
+};
