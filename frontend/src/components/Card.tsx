@@ -12,12 +12,12 @@ interface CardProps {
 
 export function Card({ children, className, onClick, hoverable = false, style }: CardProps) {
   const { theme } = useSettingsStore();
-  
+
   return (
     <div
       onClick={onClick}
       className={clsx(
-        'glass rounded-xl p-4 animate-fadeIn',
+        'glass rounded-xl p-4',
         hoverable && 'cursor-pointer hover:scale-[1.02] transition-transform duration-200',
         onClick && 'cursor-pointer',
         className
@@ -80,9 +80,9 @@ export function StatCard({ label, value, unit, icon, trend, trendValue }: StatCa
           )}
         </div>
         {icon && (
-          <div className="p-2 rounded-lg" style={{ 
+          <div className="p-2 rounded-lg" style={{
             background: `${colors.primary}20`,
-            color: colors.primary 
+            color: colors.primary
           }}>
             {icon}
           </div>

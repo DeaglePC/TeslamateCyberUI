@@ -69,27 +69,29 @@ export default function ChargeListPage() {
       </div>
 
       {/* 充电记录列表 */}
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {charges.map((charge, index) => (
           <Card
             key={charge.id}
             hoverable
             onClick={() => navigate(`/charges/${charge.id}`)}
-            className="animate-slideIn"
-            style={{ animationDelay: `${index * 50}ms` }}
+            className=""
+            style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
           >
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex flex-col gap-4">
               {/* 顶部：时间和位置 */}
-              <div className="flex items-start gap-2 mb-2 md:mb-0 md:flex-1 md:min-w-0">
-                <svg
-                  className="w-4 h-4 flex-shrink-0 mt-1 md:mt-0"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={colors.success}
-                  strokeWidth="2"
-                >
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                </svg>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${colors.success}15` }}>
+                  <svg
+                    className="w-5 h-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={colors.success}
+                    strokeWidth="2"
+                  >
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  </svg>
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{charge.location}</p>
                   <p className="text-sm" style={{ color: colors.muted }}>
@@ -100,42 +102,90 @@ export default function ChargeListPage() {
               </div>
 
               {/* 电量条 */}
-              <div className="w-full md:w-auto md:flex-1">
+              <div>
                 <BatteryBar
                   startLevel={charge.startBatteryLevel}
                   endLevel={charge.endBatteryLevel}
                 />
               </div>
 
-              {/* 底部：充电数据 */}
-              <div className="flex flex-wrap md:flex-nowrap items-center gap-4 md:gap-6 w-full md:w-auto">
-                <div className="flex items-center gap-1 md:gap-2">
-                  <p className="text-lg font-bold" style={{ color: colors.primary }}>
-                    {formatEnergy(charge.chargeEnergyAdded)}
-                  </p>
-                  <span className="text-sm" style={{ color: colors.muted }}>充电量</span>
+              {/* 底部：充电数据 - 网格布局 */}
+              <div className="grid grid-cols-3 gap-3 pt-3 border-t" style={{ borderColor: `${colors.muted}20` }}>
+                {/* 充电量 */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
+                    <svg className="w-4 h-4" style={{ color: colors.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="1" y="6" width="18" height="12" rx="2" ry="2" />
+                      <line x1="23" y1="13" x2="23" y2="11" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs" style={{ color: colors.muted }}>充电量</p>
+                    <p className="font-bold" style={{ color: colors.primary }}>
+                      {formatEnergy(charge.chargeEnergyAdded)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 md:gap-2">
-                  <p className="font-semibold">{formatDuration(charge.durationMin)}</p>
-                  <span className="text-sm" style={{ color: colors.muted }}>时长</span>
+
+                {/* 时长 */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.success}15` }}>
+                    <svg className="w-4 h-4" style={{ color: colors.success }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs" style={{ color: colors.muted }}>时长</p>
+                    <p className="font-semibold">{formatDuration(charge.durationMin)}</p>
+                  </div>
                 </div>
-                {charge.cost !== undefined && charge.cost > 0 && (
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <p className="font-semibold">{formatCurrency(charge.cost)}</p>
-                    <span className="text-sm" style={{ color: colors.muted }}>费用</span>
+
+                {/* 费用 */}
+                {charge.cost !== undefined && charge.cost > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
+                      <svg className="w-4 h-4" style={{ color: colors.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="12" y1="1" x2="12" y2="23" />
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs" style={{ color: colors.muted }}>费用</p>
+                      <p className="font-semibold">{formatCurrency(charge.cost)}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-end">
+                    <svg
+                      className="w-5 h-5"
+                      style={{ color: colors.muted }}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
                   </div>
                 )}
-                <svg
-                  className="w-5 h-5 flex-shrink-0 md:ml-auto"
-                  style={{ color: colors.muted }}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
               </div>
+
+              {/* 查看详情箭头 - 仅在有费用时显示 */}
+              {charge.cost !== undefined && charge.cost > 0 && (
+                <div className="flex justify-end">
+                  <svg
+                    className="w-5 h-5"
+                    style={{ color: colors.muted }}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </div>
+              )}
             </div>
           </Card>
         ))}

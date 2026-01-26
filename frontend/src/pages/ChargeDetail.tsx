@@ -68,10 +68,11 @@ export default function ChargeDetailPage() {
     return {
       backgroundColor: 'transparent',
       grid: {
-        top: 60,
-        right: 60,
-        bottom: 30,
-        left: 60,
+        top: 50,
+        right: 10,
+        bottom: 25,
+        left: 10,
+        containLabel: true,
       },
       legend: {
         data: ['电量 %', '功率 kW'],
@@ -114,6 +115,7 @@ export default function ChargeDetailPage() {
           type: 'line',
           data: batteryLevels,
           smooth: true,
+          smoothMonotone: 'x',
           lineStyle: { color: colors.primary, width: 2 },
           areaStyle: {
             color: {
@@ -133,6 +135,7 @@ export default function ChargeDetailPage() {
           yAxisIndex: 1,
           data: chargerPowers,
           smooth: true,
+          smoothMonotone: 'x',
           lineStyle: { color: colors.secondary, width: 2 },
           itemStyle: { color: colors.secondary },
         },
@@ -200,8 +203,9 @@ export default function ChargeDetailPage() {
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>充电曲线</h3>
           <ReactECharts
             option={chartOption}
-            style={{ height: 300 }}
+            style={{ height: 'min(450px, 55vh)' }}
             opts={{ renderer: 'svg' }}
+            className="!min-h-[320px]"
           />
         </Card>
       )}

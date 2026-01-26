@@ -141,10 +141,11 @@ export default function DriveDetailPage() {
     return {
       backgroundColor: 'transparent',
       grid: {
-        top: 60,
-        right: 60,
-        bottom: 30,
-        left: 60,
+        top: 50,
+        right: 10,
+        bottom: 25,
+        left: 10,
+        containLabel: true,
       },
       legend: {
         data: ['速度 km/h', '功率 kW'],
@@ -185,6 +186,7 @@ export default function DriveDetailPage() {
           type: 'line',
           data: speeds,
           smooth: true,
+          smoothMonotone: 'x',
           lineStyle: { color: colors.primary, width: 2 },
           areaStyle: {
             color: {
@@ -205,6 +207,7 @@ export default function DriveDetailPage() {
           yAxisIndex: 1,
           data: powers,
           smooth: true,
+          smoothMonotone: 'x',
           lineStyle: { color: colors.secondary, width: 2 },
           itemStyle: { color: colors.secondary },
           showSymbol: false,
@@ -241,10 +244,15 @@ export default function DriveDetailPage() {
 
       {/* 路线信息 */}
       <Card>
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col items-center">
+        <div className="grid grid-cols-[24px_1fr] gap-x-3">
+          {/* Start Row */}
+          <div className="relative flex flex-col items-center justify-center self-stretch">
             <div
-              className="w-4 h-4 rounded-full flex items-center justify-center text-xs"
+              className="absolute top-1/2 bottom-0 w-0.5 left-1/2 -translate-x-1/2"
+              style={{ background: `${colors.muted}40` }}
+            />
+            <div
+              className="w-4 h-4 rounded-full flex items-center justify-center text-xs relative z-10 shrink-0"
               style={{
                 background: colors.primary,
                 boxShadow: `0 0 8px ${colors.primary}60`
@@ -252,9 +260,22 @@ export default function DriveDetailPage() {
             >
               <span style={{ color: '#fff', fontWeight: 'bold' }}>起</span>
             </div>
-            <div className="w-0.5 h-12 my-1" style={{ background: `${colors.muted}40` }} />
+          </div>
+          <div className="py-3 min-w-0">
+            <p className="font-medium break-words leading-tight">{detail.startLocation}</p>
+            <p className="text-sm mt-1" style={{ color: colors.muted }}>
+              {formatDate(detail.startDate)}
+            </p>
+          </div>
+
+          {/* End Row */}
+          <div className="relative flex flex-col items-center justify-center self-stretch">
             <div
-              className="w-4 h-4 rounded-full flex items-center justify-center text-xs"
+              className="absolute top-0 bottom-1/2 w-0.5 left-1/2 -translate-x-1/2"
+              style={{ background: `${colors.muted}40` }}
+            />
+            <div
+              className="w-4 h-4 rounded-full flex items-center justify-center text-xs relative z-10 shrink-0"
               style={{
                 background: colors.secondary,
                 boxShadow: `0 0 8px ${colors.secondary}60`
@@ -263,19 +284,11 @@ export default function DriveDetailPage() {
               <span style={{ color: '#fff', fontWeight: 'bold' }}>终</span>
             </div>
           </div>
-          <div className="flex-1 flex flex-col justify-around h-32">
-            <div>
-              <p className="font-medium">{detail.startLocation}</p>
-              <p className="text-sm" style={{ color: colors.muted }}>
-                {formatDate(detail.startDate)}
-              </p>
-            </div>
-            <div>
-              <p className="font-medium">{detail.endLocation}</p>
-              <p className="text-sm" style={{ color: colors.muted }}>
-                {detail.endDate ? formatDate(detail.endDate) : '-'}
-              </p>
-            </div>
+          <div className="py-3 min-w-0">
+            <p className="font-medium break-words leading-tight">{detail.endLocation}</p>
+            <p className="text-sm mt-1" style={{ color: colors.muted }}>
+              {detail.endDate ? formatDate(detail.endDate) : '-'}
+            </p>
           </div>
         </div>
       </Card>
@@ -326,8 +339,9 @@ export default function DriveDetailPage() {
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>速度/功率曲线</h3>
           <ReactECharts
             option={chartOption}
-            style={{ height: 300 }}
+            style={{ height: 'min(400px, 50vh)' }}
             opts={{ renderer: 'svg' }}
+            className="!min-h-[280px]"
           />
         </Card>
       )}

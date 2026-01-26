@@ -69,28 +69,28 @@ export default function DriveListPage() {
       </div>
 
       {/* 驾驶记录列表 */}
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {drives.map((drive, index) => (
           <Card
             key={drive.id}
             hoverable
             onClick={() => navigate(`/drives/${drive.id}`)}
-            className="animate-slideIn"
-            style={{ animationDelay: `${index * 50}ms` }}
+            className=""
+            style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
           >
             <div className="flex flex-col gap-4">
               {/* 路线信息 */}
               <div className="flex items-start gap-3">
                 <div className="flex flex-col items-center py-1">
-                  <div 
+                  <div
                     className="w-3 h-3 rounded-full"
                     style={{ background: colors.primary }}
                   />
-                  <div 
+                  <div
                     className="w-0.5 h-8 my-1"
                     style={{ background: `${colors.muted}40` }}
                   />
-                  <div 
+                  <div
                     className="w-3 h-3 rounded-full"
                     style={{ background: colors.accent }}
                   />
@@ -111,52 +111,70 @@ export default function DriveListPage() {
                 </div>
               </div>
 
-              {/* 行程数据 */}
-              <div className="pt-2 border-t" style={{ borderColor: `${colors.muted}20` }}>
-                <div className="flex flex-wrap md:flex-nowrap items-center justify-between md:justify-start gap-3 md:gap-6">
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <p className="text-lg font-bold" style={{ color: colors.primary }}>
+              {/* 电量条 */}
+              <div className="w-full">
+                <BatteryBar
+                  startLevel={drive.startBatteryLevel}
+                  endLevel={drive.endBatteryLevel}
+                />
+              </div>
+
+              {/* 行程数据 - 2x2 网格布局 */}
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t" style={{ borderColor: `${colors.muted}20` }}>
+                {/* 距离 */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
+                    <svg className="w-4 h-4" style={{ color: colors.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs" style={{ color: colors.muted }}>距离</p>
+                    <p className="font-bold" style={{ color: colors.primary }}>
                       {formatDistance(drive.distance, unit)}
                     </p>
-                    <span className="text-xs" style={{ color: colors.muted }}>距离</span>
-                  </div>
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <p className="font-semibold">{formatDuration(drive.durationMin)}</p>
-                    <span className="text-xs" style={{ color: colors.muted }}>时长</span>
-                  </div>
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <p className="font-semibold">{formatSpeed(drive.speedMax, unit)}</p>
-                    <span className="text-xs" style={{ color: colors.muted }}>最高速度</span>
-                  </div>
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <p className="font-semibold">{drive.efficiency.toFixed(0)} Wh/km</p>
-                    <span className="text-xs" style={{ color: colors.muted }}>能效</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 mt-2 md:mt-0 w-full md:w-auto">
-                  {/* 电量变化 */}
-                  <div className="w-24 md:w-24 shrink-0">
-                    <BatteryBar
-                      startLevel={drive.startBatteryLevel}
-                      endLevel={drive.endBatteryLevel}
-                      showLabels={false}
-                    />
-                    <div className="flex justify-between text-xs mt-1" style={{ color: colors.muted }}>
-                      <span>{drive.startBatteryLevel}%</span>
-                      <span>{drive.endBatteryLevel}%</span>
-                    </div>
+                {/* 时长 */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.accent}15` }}>
+                    <svg className="w-4 h-4" style={{ color: colors.accent }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
                   </div>
-                  <svg
-                    className="w-5 h-5 flex-shrink-0 md:ml-auto"
-                    style={{ color: colors.muted }}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
+                  <div>
+                    <p className="text-xs" style={{ color: colors.muted }}>时长</p>
+                    <p className="font-semibold">{formatDuration(drive.durationMin)}</p>
+                  </div>
+                </div>
+
+                {/* 最高速度 */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
+                    <svg className="w-4 h-4" style={{ color: colors.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs" style={{ color: colors.muted }}>最高速度</p>
+                    <p className="font-semibold">{formatSpeed(drive.speedMax, unit)}</p>
+                  </div>
+                </div>
+
+                {/* 能效 */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.accent}15` }}>
+                    <svg className="w-4 h-4" style={{ color: colors.accent }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs" style={{ color: colors.muted }}>能效</p>
+                    <p className="font-semibold">{drive.efficiency.toFixed(0)} Wh/km</p>
+                  </div>
                 </div>
               </div>
             </div>
