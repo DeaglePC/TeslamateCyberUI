@@ -85,3 +85,61 @@ func (h *Handler) GetBatteryStats(c *gin.Context) {
 
 	c.JSON(http.StatusOK, SuccessResponse(stats))
 }
+
+// GetSocHistory 获取SOC历史数据
+func (h *Handler) GetSocHistory(c *gin.Context) {
+	idStr := c.Param("id")
+	carID64, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Invalid car ID"))
+		return
+	}
+	if carID64 < -32768 || carID64 > 32767 {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Car ID out of valid range"))
+		return
+	}
+	carID := int16(carID64)
+
+	hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
+	if hours < 1 || hours > 168 {
+		hours = 24
+	}
+
+	data, err := h.repo.Stats.GetSocHistory(c.Request.Context(), carID, hours)
+	if err != nil {
+		logger.Errorf("Failed to get SOC history: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get SOC history"))
+		return
+	}
+
+	c.JSON(http.StatusOK, SuccessResponse(data))
+}
+
+// GetStatesTimeline 获取状态时间线数据
+func (h *Handler) GetStatesTimeline(c *gin.Context) {
+	idStr := c.Param("id")
+	carID64, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Invalid car ID"))
+		return
+	}
+	if carID64 < -32768 || carID64 > 32767 {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Car ID out of valid range"))
+		return
+	}
+	carID := int16(carID64)
+
+	hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
+	if hours < 1 || hours > 168 {
+		hours = 24
+	}
+
+	data, err := h.repo.Stats.GetStatesTimeline(c.Request.Context(), carID, hours)
+	if err != nil {
+		logger.Errorf("Failed to get states timeline: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get states timeline"))
+		return
+	}
+
+	c.JSON(http.StatusOK, SuccessResponse(data))
+}

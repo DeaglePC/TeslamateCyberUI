@@ -1,13 +1,7 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useSettingsStore } from '@/store/settings';
+import { useTranslation } from '@/utils/i18n';
 import clsx from 'clsx';
-
-const navItems = [
-  { path: '/', label: '首页', icon: HomeIcon },
-  { path: '/charges', label: '充电', icon: BatteryIcon },
-  { path: '/drives', label: '驾驶', icon: CarIcon },
-  { path: '/settings', label: '设置', icon: SettingsIcon },
-];
 
 function HomeIcon({ className }: { className?: string }) {
   return (
@@ -48,8 +42,16 @@ function SettingsIcon({ className }: { className?: string }) {
 }
 
 export default function Layout() {
-  const { theme } = useSettingsStore();
+  const { theme, language } = useSettingsStore();
+  const { t } = useTranslation(language);
   const location = useLocation();
+
+  const navItems = [
+    { path: '/', label: t('home'), icon: HomeIcon },
+    { path: '/charges', label: t('charges'), icon: BatteryIcon },
+    { path: '/drives', label: t('drives'), icon: CarIcon },
+    { path: '/settings', label: t('settings'), icon: SettingsIcon },
+  ];
 
   const themeColors = {
     cyber: {
@@ -119,7 +121,7 @@ export default function Layout() {
         {/* 导航 */}
         <nav className="flex-1 p-4 space-y-2">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || 
+            const isActive = location.pathname === item.path ||
               (item.path !== '/' && location.pathname.startsWith(item.path));
             return (
               <NavLink
@@ -156,7 +158,7 @@ export default function Layout() {
         colors.border
       )}>
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path || 
+          const isActive = location.pathname === item.path ||
             (item.path !== '/' && location.pathname.startsWith(item.path));
           return (
             <NavLink

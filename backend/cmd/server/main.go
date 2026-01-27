@@ -77,13 +77,14 @@ func main() {
 		api.GET("/cars/:id/stats/overview", h.GetOverviewStats)
 		api.GET("/cars/:id/stats/efficiency", h.GetEfficiencyStats)
 		api.GET("/cars/:id/stats/battery", h.GetBatteryStats)
+		api.GET("/cars/:id/stats/soc-history", h.GetSocHistory)
+		api.GET("/cars/:id/stats/states-timeline", h.GetStatesTimeline)
 	}
-	
+
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
-
 
 	// 启动服务
 	addr := cfg.Server.Host + ":" + cfg.Server.Port

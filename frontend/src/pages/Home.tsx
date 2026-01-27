@@ -2,29 +2,57 @@ import { useEffect, useState } from 'react';
 import { useSettingsStore } from '@/store/settings';
 import { carApi, statsApi } from '@/services/api';
 import { Card, StatCard } from '@/components/Card';
-import { BatteryIndicator } from '@/components/Battery';
 import { Loading, ErrorState, EmptyState } from '@/components/States';
-import { formatDistance, formatEnergy, formatDuration, formatTemperature, formatRelativeTime } from '@/utils/format';
-import type { Car, CarStatus, OverviewStats } from '@/types';
+import { MapCard } from '@/components/MapCard';
+import { SocHistoryChart } from '@/components/SocHistoryChart';
+import { ActivityTimeline } from '@/components/ActivityTimeline';
+import { formatDistance, formatRelativeTime } from '@/utils/format';
+import { useTranslation } from '@/utils/i18n';
+import type { Car, CarStatus, OverviewStats, SocDataPoint, StateTimelineItem } from '@/types';
 import clsx from 'clsx';
 
+// Tesla Model images URLs (using public Tesla images)
+const MODEL_IMAGES: Record<string, string> = {
+  '3': 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&options=$MTS13,$PPSB,$WS90,$IBB1&view=FRONT34&model=m3&size=1920&bkba_opt=2&crop=0,0,0,0&',
+  'S': 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&options=$MTS10,$PPSB,$WS90,$IBB1&view=FRONT34&model=ms&size=1920&bkba_opt=2&crop=0,0,0,0&',
+  'X': 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&options=$MTX10,$PPSB,$WX00,$IBB1&view=FRONT34&model=mx&size=1920&bkba_opt=2&crop=0,0,0,0&',
+  'Y': 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&options=$MTY07,$PPSB,$WY19B,$INPB0&view=FRONT34&model=my&size=1920&bkba_opt=2&crop=0,0,0,0&',
+};
+
+// Color name mapping
+const COLOR_NAMES: Record<string, { zh: string; en: string }> = {
+  'SolidBlack': { zh: '纯黑色', en: 'Solid Black' },
+  'MidnightSilverMetallic': { zh: '午夜银', en: 'Midnight Silver' },
+  'DeepBlueMetallic': { zh: '深海蓝', en: 'Deep Blue' },
+  'PearlWhiteMultiCoat': { zh: '珍珠白', en: 'Pearl White' },
+  'RedMultiCoat': { zh: '中国红', en: 'Red Multi-Coat' },
+  'UltraWhite': { zh: '冷光白', en: 'Ultra White' },
+};
+
 export default function HomePage() {
-  const { theme, selectedCarId, setSelectedCarId, unit } = useSettingsStore();
+  const { theme, selectedCarId, setSelectedCarId, unit, language } = useSettingsStore();
+  const { t, getStateLabel } = useTranslation(language);
   const [cars, setCars] = useState<Car[]>([]);
   const [status, setStatus] = useState<CarStatus | null>(null);
   const [stats, setStats] = useState<OverviewStats | null>(null);
+  const [socHistory, setSocHistory] = useState<SocDataPoint[]>([]);
+  const [statesTimeline, setStatesTimeline] = useState<StateTimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
 
-  const themeColors: Record<string, { primary: string; muted: string; success: string; warning: string }> = {
-    cyber: { primary: '#00f0ff', muted: '#808080', success: '#00ff88', warning: '#ffaa00' },
-    tesla: { primary: '#cc0000', muted: '#888888', success: '#4caf50', warning: '#ff9800' },
-    dark: { primary: '#4361ee', muted: '#8d99ae', success: '#06d6a0', warning: '#ffd60a' },
-    tech: { primary: '#0077b6', muted: '#778da9', success: '#52b788', warning: '#f4a261' },
-    aurora: { primary: '#72efdd', muted: '#98c1d9', success: '#80ed99', warning: '#fcbf49' },
+  const themeColors: Record<string, { primary: string; muted: string; success: string; warning: string; bg: string }> = {
+    cyber: { primary: '#00f0ff', muted: '#808080', success: '#00ff88', warning: '#ffaa00', bg: '#0d0d1a' },
+    tesla: { primary: '#cc0000', muted: '#888888', success: '#4caf50', warning: '#ff9800', bg: '#0f0f0f' },
+    dark: { primary: '#4361ee', muted: '#8d99ae', success: '#06d6a0', warning: '#ffd60a', bg: '#111827' },
+    tech: { primary: '#0077b6', muted: '#778da9', success: '#52b788', warning: '#f4a261', bg: '#0f172a' },
+    aurora: { primary: '#72efdd', muted: '#98c1d9', success: '#80ed99', warning: '#fcbf49', bg: '#0f172a' },
   };
 
   const colors = themeColors[theme] || themeColors.cyber;
+
+  // Get current car info
+  const currentCar = cars.find(c => c.id === selectedCarId) || cars[0];
 
   const fetchData = async () => {
     try {
@@ -40,16 +68,20 @@ export default function HomePage() {
           setSelectedCarId(carId);
         }
 
-        const [carStatus, overviewStats] = await Promise.all([
+        const [carStatus, overviewStats, socData, timelineData] = await Promise.all([
           carApi.getStatus(carId),
           statsApi.getOverview(carId),
+          statsApi.getSocHistory(carId, 24),
+          statsApi.getStatesTimeline(carId, 24),
         ]);
 
         setStatus(carStatus);
         setStats(overviewStats);
+        setSocHistory(socData);
+        setStatesTimeline(timelineData);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载失败');
+      setError(err instanceof Error ? err.message : t('error'));
     } finally {
       setLoading(false);
     }
@@ -61,29 +93,24 @@ export default function HomePage() {
 
   if (loading) return <Loading />;
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
-  if (cars.length === 0) return <EmptyState message="未找到车辆" />;
+  if (cars.length === 0) return <EmptyState message={t('noCarsFound')} />;
 
-  const stateLabels: Record<string, string> = {
-    online: '在线',
-    offline: '离线',
-    asleep: '休眠',
-    charging: '充电中',
-    driving: '行驶中',
-    updating: '更新中',
+  // Get model display name
+  const getModelName = (model?: string) => {
+    if (!model) return 'Tesla';
+    return `Model ${model.toUpperCase()}`;
   };
 
-  const stateColors: Record<string, string> = {
-    online: colors.success,
-    offline: colors.muted,
-    asleep: colors.muted,
-    charging: colors.warning,
-    driving: colors.primary,
-    updating: colors.warning,
+  // Get color display name
+  const getColorName = (colorCode?: string) => {
+    if (!colorCode) return language === 'zh' ? '未知' : 'Unknown';
+    const color = COLOR_NAMES[colorCode];
+    return color ? color[language] : colorCode;
   };
 
   return (
     <div className="space-y-6 animate-slideUp">
-      {/* 车辆选择器（多车时显示） */}
+      {/* Car Selector */}
       {cars.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
           {cars.map((car) => (
@@ -101,167 +128,285 @@ export default function HomePage() {
                 color: selectedCarId === car.id ? colors.primary : colors.muted,
               }}
             >
-              {car.name || car.model || `车辆 ${car.id}`}
+              {car.name || car.model || `${t('vehicle')} ${car.id}`}
             </button>
           ))}
         </div>
       )}
 
-      {/* 车辆状态卡片 */}
-      {status && (
-        <Card className="relative overflow-hidden">
-          {/* 背景装饰 */}
-          <div 
-            className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20"
-            style={{ background: colors.primary }}
-          />
-          
-          <div className="relative">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-2xl font-bold" style={{ color: colors.primary }}>
-                  {status.name || status.model}
-                </h2>
-                <p style={{ color: colors.muted }}>{status.model}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span 
-                  className="w-2 h-2 rounded-full animate-pulse"
-                  style={{ background: stateColors[status.state] || colors.muted }}
-                />
-                <span style={{ color: stateColors[status.state] || colors.muted }}>
-                  {stateLabels[status.state] || status.state}
-                </span>
-              </div>
-            </div>
+      {/* Hero Section - 3 Column Layout */}
+      {status && currentCar && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left - Flip Card (Car Info) */}
+          <div
+            className="perspective-1000 cursor-pointer min-h-[200px]"
+            onClick={() => setIsCardFlipped(!isCardFlipped)}
+          >
+            <div
+              className={clsx(
+                'relative w-full h-full transition-transform duration-500 preserve-3d',
+                isCardFlipped && 'rotate-y-180'
+              )}
+              style={{
+                transformStyle: 'preserve-3d',
+                transform: isCardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              }}
+            >
+              {/* Front Side - Model + Image */}
+              <Card
+                className="absolute inset-0 backface-hidden flex flex-col items-center justify-center p-4"
+                style={{ backfaceVisibility: 'hidden' }}
+              >
+                {/* Model Name */}
+                <div className="text-center mb-2">
+                  <p className="text-xs uppercase tracking-widest" style={{ color: colors.muted }}>
+                    Tesla
+                  </p>
+                  <h2 className="text-2xl font-bold" style={{ color: colors.primary }}>
+                    {getModelName(currentCar.model)}
+                  </h2>
+                  {currentCar.name && (
+                    <p className="text-lg mt-1" style={{ color: colors.muted }}>
+                      "{currentCar.name}"
+                    </p>
+                  )}
+                </div>
 
-            {/* 电池状态 */}
-            <div className="flex items-center gap-4 mb-6">
-              <BatteryIndicator 
-                level={status.batteryLevel} 
-                isCharging={status.state === 'charging'}
-                size="lg"
-              />
-              <div>
-                <span className="text-3xl font-bold" style={{ color: colors.primary }}>
-                  {status.batteryLevel}%
-                </span>
-                <p className="text-sm" style={{ color: colors.muted }}>
-                  续航 {formatDistance(status.idealRange, unit)}
+                {/* Car Image */}
+                <div className="flex-1 flex items-center justify-center w-full">
+                  {currentCar.model && MODEL_IMAGES[currentCar.model] ? (
+                    <img
+                      src={MODEL_IMAGES[currentCar.model]}
+                      alt={`Tesla Model ${currentCar.model}`}
+                      className="w-full max-w-[280px] object-contain drop-shadow-lg"
+                      style={{ filter: `drop-shadow(0 0 20px ${colors.primary}40)` }}
+                    />
+                  ) : (
+                    <svg viewBox="0 0 200 80" className="w-full max-w-xs opacity-80" fill="none">
+                      <path
+                        d="M20 50 Q40 45 60 45 L80 35 Q100 25 130 30 L160 35 Q180 40 190 50 L190 55 Q185 60 175 60 L165 60 Q160 55 155 55 L55 55 Q50 55 45 60 L35 60 Q25 60 20 55 Z"
+                        fill="url(#carGradient)"
+                        stroke={colors.primary}
+                        strokeWidth="0.5"
+                      />
+                      <defs>
+                        <linearGradient id="carGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor={colors.bg} />
+                          <stop offset="50%" stopColor="rgba(60,60,80,0.8)" />
+                          <stop offset="100%" stopColor={colors.bg} />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  )}
+                </div>
+
+                {/* Flip hint */}
+                <p className="text-xs mt-2" style={{ color: colors.muted }}>
+                  {language === 'zh' ? '点击查看详情' : 'Tap for details'}
                 </p>
-              </div>
-            </div>
+              </Card>
 
-            {/* 快速信息 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm" style={{ color: colors.muted }}>里程</p>
-                <p className="font-semibold">{formatDistance(status.odometer, unit)}</p>
+              {/* Back Side - Detailed Info */}
+              <Card
+                className="absolute inset-0 backface-hidden p-4"
+                style={{
+                  backfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)',
+                }}
+              >
+                <div className="h-full flex flex-col">
+                  <h3 className="text-lg font-bold mb-3" style={{ color: colors.primary }}>
+                    {language === 'zh' ? '车辆详情' : 'Vehicle Details'}
+                  </h3>
+
+                  <div className="flex-1 space-y-2 text-sm overflow-hidden">
+                    {/* VIN */}
+                    <div className="flex justify-between gap-2">
+                      <span className="shrink-0" style={{ color: colors.muted }}>VIN</span>
+                      <span className="font-mono text-xs truncate">{currentCar.vin || '--'}</span>
+                    </div>
+
+                    {/* Model */}
+                    <div className="flex justify-between gap-2">
+                      <span className="shrink-0" style={{ color: colors.muted }}>
+                        {language === 'zh' ? '型号' : 'Model'}
+                      </span>
+                      <span className="truncate">{getModelName(currentCar.model)}</span>
+                    </div>
+
+                    {/* Marketing Name */}
+                    {currentCar.marketingName && (
+                      <div className="flex justify-between gap-2">
+                        <span className="shrink-0" style={{ color: colors.muted }}>
+                          {language === 'zh' ? '版本' : 'Version'}
+                        </span>
+                        <span className="truncate">{currentCar.marketingName}</span>
+                      </div>
+                    )}
+
+                    {/* Exterior Color */}
+                    <div className="flex justify-between items-center gap-2">
+                      <span style={{ color: colors.muted }}>
+                        {language === 'zh' ? '外观颜色' : 'Color'}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full border border-white/20"
+                          style={{
+                            background: currentCar.exteriorColor === 'SolidBlack' ? '#1a1a1a' :
+                              currentCar.exteriorColor === 'PearlWhiteMultiCoat' ? '#f5f5f5' :
+                                currentCar.exteriorColor === 'MidnightSilverMetallic' ? '#6b7280' :
+                                  currentCar.exteriorColor === 'DeepBlueMetallic' ? '#1e40af' :
+                                    currentCar.exteriorColor === 'RedMultiCoat' ? '#dc2626' :
+                                      currentCar.exteriorColor === 'UltraWhite' ? '#ffffff' : '#6b7280'
+                          }}
+                        />
+                        {getColorName(currentCar.exteriorColor)}
+                      </span>
+                    </div>
+
+                    {/* Wheel Type */}
+                    {currentCar.wheelType && (
+                      <div className="flex justify-between gap-2">
+                        <span className="shrink-0" style={{ color: colors.muted }}>
+                          {language === 'zh' ? '轮毂' : 'Wheels'}
+                        </span>
+                        <span className="truncate">{currentCar.wheelType}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Flip back hint */}
+                  <p className="text-xs text-center mt-2" style={{ color: colors.muted }}>
+                    {language === 'zh' ? '点击返回' : 'Tap to go back'}
+                  </p>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* Center - Status Info */}
+          <Card className="relative overflow-hidden">
+            <div
+              className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20"
+              style={{ background: colors.primary }}
+            />
+
+            <div className="relative space-y-4">
+              {/* Current State Header */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-wider" style={{ color: colors.muted }}>
+                    {t('currentState')}
+                  </p>
+                  <h2 className="text-3xl font-bold uppercase tracking-tight">
+                    {getStateLabel(status.state)}
+                  </h2>
+                </div>
+                <span className="text-xs" style={{ color: colors.muted }}>
+                  ID: #{status.carId}
+                </span>
               </div>
-              {status.insideTemp !== undefined && (
-                <div>
-                  <p className="text-sm" style={{ color: colors.muted }}>车内温度</p>
-                  <p className="font-semibold">{formatTemperature(status.insideTemp, unit)}</p>
-                </div>
-              )}
-              {status.outsideTemp !== undefined && (
-                <div>
-                  <p className="text-sm" style={{ color: colors.muted }}>室外温度</p>
-                  <p className="font-semibold">{formatTemperature(status.outsideTemp, unit)}</p>
-                </div>
-              )}
-              {status.geofence && (
-                <div>
-                  <p className="text-sm" style={{ color: colors.muted }}>位置</p>
-                  <p className="font-semibold">{status.geofence}</p>
-                </div>
-              )}
-              {status.softwareVersion && (
-                <div>
-                  <p className="text-sm" style={{ color: colors.muted }}>软件版本</p>
-                  <p className="font-semibold">{status.softwareVersion}</p>
-                </div>
-              )}
+
+              {/* Since Duration */}
               {status.since && (
-                <div>
-                  <p className="text-sm" style={{ color: colors.muted }}>状态持续</p>
-                  <p className="font-semibold">{formatRelativeTime(status.since)}</p>
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke={colors.success}>
+                    <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" />
+                  </svg>
+                  <span style={{ color: colors.success }}>
+                    {t('since')} {formatRelativeTime(status.since)}
+                  </span>
                 </div>
               )}
+
+              {/* Battery Level */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span style={{ color: colors.muted }}>{t('batteryLevel')}</span>
+                  <span className="text-xl font-bold" style={{ color: colors.primary }}>
+                    {status.batteryLevel}%
+                  </span>
+                </div>
+                <div className="h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${status.batteryLevel}%`,
+                      background: `linear-gradient(90deg, ${colors.primary}, ${colors.success})`,
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+
+          {/* Right - Map */}
+          <MapCard
+            latitude={status.latitude ?? stats?.lastLatitude}
+            longitude={status.longitude ?? stats?.lastLongitude}
+            address={status.geofence ?? stats?.lastAddress}
+            state={status.state}
+          />
+        </div>
       )}
 
-      {/* 统计概览 */}
-      {stats && (
-        <>
-          <h3 className="text-lg font-semibold" style={{ color: colors.primary }}>统计概览</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard
-              label="总里程"
-              value={formatDistance(stats.totalDistance, unit)}
-              icon={
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
-              }
-            />
-            <StatCard
-              label="驾驶次数"
-              value={stats.totalDrives}
-              unit="次"
-              icon={
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-6.75A1 1 0 0 0 12.36 4H7.64a1 1 0 0 0-.93.63L4 11l-5.16.86a1 1 0 0 0-.84.99V16h3" />
-                  <circle cx="6.5" cy="16.5" r="2.5" />
-                  <circle cx="16.5" cy="16.5" r="2.5" />
-                </svg>
-              }
-            />
-            <StatCard
-              label="充电次数"
-              value={stats.totalCharges}
-              unit="次"
-              icon={
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                </svg>
-              }
-            />
-            <StatCard
-              label="总充电量"
-              value={formatEnergy(stats.totalEnergyAdded)}
-              icon={
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="1" y="6" width="18" height="12" rx="2" ry="2" />
-                  <line x1="23" y1="13" x2="23" y2="11" />
-                </svg>
-              }
-            />
-            <StatCard
-              label="驾驶时长"
-              value={formatDuration(stats.totalDriveDuration)}
-            />
-            <StatCard
-              label="充电时长"
-              value={formatDuration(stats.totalChargeDuration)}
-            />
-            <StatCard
-              label="平均能效"
-              value={stats.avgEfficiency.toFixed(0)}
-              unit="Wh/km"
-            />
-            {stats.totalEnergyCost !== undefined && stats.totalEnergyCost > 0 && (
-              <StatCard
-                label="总充电费用"
-                value={`¥${stats.totalEnergyCost.toFixed(2)}`}
-              />
-            )}
-          </div>
-        </>
+      {/* Stats Row */}
+      {status && stats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label={t('range').toUpperCase()}
+            value={formatDistance(status.idealRange, unit)}
+            icon={
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+            }
+          />
+          <StatCard
+            label={t('odometer').toUpperCase()}
+            value={formatDistance(stats.totalDistance, unit)}
+            icon={
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+            }
+          />
+          <StatCard
+            label={t('softwareVersion').toUpperCase()}
+            value={status.softwareVersion || '--'}
+            icon={
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+                <path d="M9 9h6v6H9z" />
+                <path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2" />
+              </svg>
+            }
+          />
+          <StatCard
+            label={t('efficiency').toUpperCase()}
+            value={stats.avgEfficiency.toFixed(0)}
+            unit="Wh/km"
+            icon={
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+            }
+          />
+        </div>
       )}
+
+      {/* Bottom Section - Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* SOC History */}
+        <SocHistoryChart data={socHistory} />
+
+        {/* Activity Timeline */}
+        <ActivityTimeline data={statesTimeline} />
+      </div>
     </div>
   );
 }

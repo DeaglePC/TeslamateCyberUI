@@ -39,9 +39,11 @@ interface StatCardProps {
   icon?: ReactNode;
   trend?: 'up' | 'down' | 'neutral';
   trendValue?: string;
+  sublabel?: string;
+  sublabelColor?: string;
 }
 
-export function StatCard({ label, value, unit, icon, trend, trendValue }: StatCardProps) {
+export function StatCard({ label, value, unit, icon, trend, trendValue, sublabel, sublabelColor }: StatCardProps) {
   const { theme } = useSettingsStore();
 
   const themeColors: Record<string, { primary: string; muted: string }> = {
@@ -55,19 +57,24 @@ export function StatCard({ label, value, unit, icon, trend, trendValue }: StatCa
   const colors = themeColors[theme] || themeColors.cyber;
 
   return (
-    <Card>
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm" style={{ color: colors.muted }}>{label}</p>
+    <Card className="overflow-hidden">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] sm:text-xs uppercase tracking-wider font-semibold" style={{ color: colors.muted }}>{label}</p>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold" style={{ color: colors.primary }}>
+            <span className="text-lg sm:text-xl lg:text-2xl font-bold" style={{ color: colors.primary }}>
               {value}
             </span>
-            {unit && <span className="text-sm" style={{ color: colors.muted }}>{unit}</span>}
+            {unit && <span className="text-xs sm:text-sm" style={{ color: colors.muted }}>{unit}</span>}
           </div>
+          {sublabel && (
+            <p className="text-[10px] sm:text-xs mt-1" style={{ color: sublabelColor || colors.muted }}>
+              {sublabel}
+            </p>
+          )}
           {trend && trendValue && (
             <div className={clsx(
-              'flex items-center gap-1 mt-2 text-sm',
+              'flex items-center gap-1 mt-2 text-xs sm:text-sm',
               trend === 'up' && 'text-green-400',
               trend === 'down' && 'text-red-400',
               trend === 'neutral' && 'text-gray-400'
@@ -80,14 +87,17 @@ export function StatCard({ label, value, unit, icon, trend, trendValue }: StatCa
           )}
         </div>
         {icon && (
-          <div className="p-2 rounded-lg" style={{
+          <div className="p-1.5 sm:p-2 rounded-lg shrink-0" style={{
             background: `${colors.primary}20`,
             color: colors.primary
           }}>
-            {icon}
+            <div className="w-4 h-4 sm:w-5 sm:h-5">
+              {icon}
+            </div>
           </div>
         )}
       </div>
     </Card>
   );
 }
+

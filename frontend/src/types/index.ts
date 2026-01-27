@@ -22,10 +22,12 @@ export interface Car {
   id: number;
   name?: string;
   model?: string;
+  vin?: string;
   trimBadging?: string;
   exteriorColor?: string;
   wheelType?: string;
   marketingName?: string;
+  displayPriority?: number;
   insertedAt: string;
   updatedAt: string;
 }
@@ -175,6 +177,11 @@ export interface OverviewStats {
   totalChargeDuration: number;
   avgEfficiency: number;
   currentOdometer: number;
+  // 最后位置信息
+  lastLatitude?: number;
+  lastLongitude?: number;
+  lastAddress?: string;
+  lastLocationTime?: string;
 }
 
 // 能效统计
@@ -206,3 +213,16 @@ export interface BatteryStats {
   originalCapacity: number;
   degradationPercent: number;
 }
+
+// SOC历史数据点
+export interface SocDataPoint {
+  date: string;
+  soc: number;
+}
+
+// 状态时间线数据项
+export interface StateTimelineItem {
+  time: string;
+  state: number; // 0=online, 1=driving, 2=charging, 3=offline, 4=asleep, 5=online, 6=updating
+}
+

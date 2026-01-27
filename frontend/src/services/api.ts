@@ -1,18 +1,20 @@
 import axios from 'axios';
-import type { 
-  ApiResponse, 
+import type {
+  ApiResponse,
   ListResponse,
-  Car, 
-  CarStatus, 
-  ChargeListItem, 
-  ChargeDetail, 
+  Car,
+  CarStatus,
+  ChargeListItem,
+  ChargeDetail,
   ChargeStats,
   DriveListItem,
   DriveDetail,
   DrivePosition,
   OverviewStats,
   EfficiencyStats,
-  BatteryStats
+  BatteryStats,
+  SocDataPoint,
+  StateTimelineItem
 } from '@/types';
 
 const api = axios.create({
@@ -105,5 +107,19 @@ export const statsApi = {
   getBattery: async (carId: number): Promise<BatteryStats> => {
     const res = await api.get<ApiResponse<BatteryStats>>(`/cars/${carId}/stats/battery`);
     return res.data.data!;
+  },
+
+  getSocHistory: async (carId: number, hours = 24): Promise<SocDataPoint[]> => {
+    const res = await api.get<ApiResponse<SocDataPoint[]>>(`/cars/${carId}/stats/soc-history`, {
+      params: { hours },
+    });
+    return res.data.data || [];
+  },
+
+  getStatesTimeline: async (carId: number, hours = 24): Promise<StateTimelineItem[]> => {
+    const res = await api.get<ApiResponse<StateTimelineItem[]>>(`/cars/${carId}/stats/states-timeline`, {
+      params: { hours },
+    });
+    return res.data.data || [];
   },
 };

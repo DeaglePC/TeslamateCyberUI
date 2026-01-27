@@ -16,6 +16,8 @@ type StatsRepository interface {
 	GetOverview(ctx context.Context, carID int16) (*model.OverviewStats, error)
 	GetEfficiency(ctx context.Context, carID int16, days int) (*model.EfficiencyStats, error)
 	GetBattery(ctx context.Context, carID int16) (*model.BatteryStats, error)
+	GetSocHistory(ctx context.Context, carID int16, hours int) ([]model.SocDataPoint, error)
+	GetStatesTimeline(ctx context.Context, carID int16, hours int) ([]model.StateTimelineItem, error)
 }
 
 type statsRepository struct {
@@ -90,6 +92,57 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 		stats.AvgEfficiency = stats.TotalEnergyAdded / stats.TotalDistance * 1000 // Wh/km
 	}
 
+	// 最后位置信息
+	locationQuery := `
+		WITH locations AS (
+			SELECT 
+				a.latitude, 
+				a.longitude, 
+				COALESCE(g.name, array_to_string(((string_to_array(a.display_name, ', ', ''))[0:2]), ', ')) AS address,
+				COALESCE(cp.end_date, cp.start_date) AS location_time
+			FROM charging_processes cp
+			INNER JOIN addresses a ON cp.address_id = a.id
+			LEFT JOIN geofences g ON cp.geofence_id = g.id
+			WHERE cp.car_id = $1
+			UNION
+			SELECT 
+				a.latitude, 
+				a.longitude, 
+				COALESCE(g.name, array_to_string(((string_to_array(a.display_name, ', ', ''))[0:2]), ', ')) AS address,
+				d.end_date AS location_time
+			FROM drives d
+			INNER JOIN addresses a ON d.end_address_id = a.id
+			LEFT JOIN geofences g ON d.end_geofence_id = g.id
+			WHERE d.car_id = $1 AND d.end_date IS NOT NULL
+		)
+		SELECT latitude, longitude, address, location_time
+		FROM locations
+		WHERE location_time IS NOT NULL
+		ORDER BY location_time DESC
+		LIMIT 1
+	`
+	var locationInfo struct {
+		Latitude     sql.NullFloat64 `db:"latitude"`
+		Longitude    sql.NullFloat64 `db:"longitude"`
+		Address      sql.NullString  `db:"address"`
+		LocationTime sql.NullTime    `db:"location_time"`
+	}
+	if err := r.db.GetContext(ctx, &locationInfo, locationQuery, carID); err == nil {
+		if locationInfo.Latitude.Valid {
+			stats.LastLatitude = &locationInfo.Latitude.Float64
+		}
+		if locationInfo.Longitude.Valid {
+			stats.LastLongitude = &locationInfo.Longitude.Float64
+		}
+		if locationInfo.Address.Valid {
+			stats.LastAddress = &locationInfo.Address.String
+		}
+		if locationInfo.LocationTime.Valid {
+			t := locationInfo.LocationTime.Time.Format(time.RFC3339)
+			stats.LastLocationTime = &t
+		}
+	}
+
 	return stats, nil
 }
 
@@ -110,7 +163,7 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 		LIMIT 30
 	`
 	startDate := time.Now().AddDate(0, 0, -days)
-	
+
 	rows, err := r.db.QueryxContext(ctx, dailyQuery, carID, startDate)
 	if err != nil {
 		logger.Errorf("Failed to get daily efficiency: %v", err)
@@ -151,7 +204,7 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 		LIMIT 12
 	`
 	weekStart := time.Now().AddDate(0, -3, 0)
-	
+
 	rows, err = r.db.QueryxContext(ctx, weeklyQuery, carID, weekStart)
 	if err != nil {
 		logger.Errorf("Failed to get weekly efficiency: %v", err)
@@ -192,7 +245,7 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 		LIMIT 12
 	`
 	monthStart := time.Now().AddDate(-1, 0, 0)
-	
+
 	rows, err = r.db.QueryxContext(ctx, monthlyQuery, carID, monthStart)
 	if err != nil {
 		logger.Errorf("Failed to get monthly efficiency: %v", err)
@@ -299,4 +352,110 @@ func (r *statsRepository) GetBattery(ctx context.Context, carID int16) (*model.B
 	}
 
 	return stats, nil
+}
+
+// GetSocHistory 获取SOC历史数据
+func (r *statsRepository) GetSocHistory(ctx context.Context, carID int16, hours int) ([]model.SocDataPoint, error) {
+	query := `
+		SELECT date, battery_level AS soc
+		FROM (
+			SELECT battery_level, date
+			FROM positions
+			WHERE car_id = $1 AND ideal_battery_range_km IS NOT NULL 
+				AND date >= NOW() - INTERVAL '1 hour' * $2
+			UNION ALL
+			SELECT battery_level, date
+			FROM charges c 
+			JOIN charging_processes p ON p.id = c.charging_process_id
+			WHERE date >= NOW() - INTERVAL '1 hour' * $2 AND p.car_id = $1
+		) AS data
+		ORDER BY date ASC
+	`
+
+	rows, err := r.db.QueryxContext(ctx, query, carID, hours)
+	if err != nil {
+		logger.Errorf("Failed to get SOC history: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []model.SocDataPoint
+	for rows.Next() {
+		var row struct {
+			Date time.Time `db:"date"`
+			Soc  int       `db:"soc"`
+		}
+		if err := rows.StructScan(&row); err != nil {
+			continue
+		}
+		result = append(result, model.SocDataPoint{
+			Date: row.Date.Format(time.RFC3339),
+			Soc:  row.Soc,
+		})
+	}
+
+	return result, nil
+}
+
+// GetStatesTimeline 获取状态时间线数据
+func (r *statsRepository) GetStatesTimeline(ctx context.Context, carID int16, hours int) ([]model.StateTimelineItem, error) {
+	query := `
+		WITH states_data AS (
+			SELECT
+				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
+				unnest(ARRAY [2, 0]) AS state
+			FROM charging_processes
+			WHERE car_id = $1 AND start_date >= NOW() - INTERVAL '1 hour' * $2
+			UNION ALL
+			SELECT
+				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
+				unnest(ARRAY [1, 0]) AS state
+			FROM drives
+			WHERE car_id = $1 AND start_date >= NOW() - INTERVAL '1 hour' * $2
+			UNION ALL
+			SELECT
+				start_date AS date,
+				CASE
+					WHEN state = 'offline' THEN 3
+					WHEN state = 'asleep' THEN 4
+					WHEN state = 'online' THEN 5
+				END AS state
+			FROM states
+			WHERE car_id = $1 AND start_date >= NOW() - INTERVAL '1 hour' * $2
+			UNION ALL
+			SELECT
+				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
+				unnest(ARRAY [6, 0]) AS state
+			FROM updates
+			WHERE car_id = $1 AND start_date >= NOW() - INTERVAL '1 hour' * $2
+		)
+		SELECT date AS time, state
+		FROM states_data
+		WHERE date IS NOT NULL
+		ORDER BY date ASC, state ASC
+	`
+
+	rows, err := r.db.QueryxContext(ctx, query, carID, hours)
+	if err != nil {
+		logger.Errorf("Failed to get states timeline: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []model.StateTimelineItem
+	for rows.Next() {
+		var row struct {
+			Time  time.Time `db:"time"`
+			State int       `db:"state"`
+		}
+		if err := rows.StructScan(&row); err != nil {
+			continue
+		}
+		result = append(result, model.StateTimelineItem{
+			Time:  row.Time.Format(time.RFC3339),
+			State: row.State,
+		})
+	}
+
+	return result, nil
 }
