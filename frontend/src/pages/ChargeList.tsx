@@ -5,7 +5,7 @@ import { chargeApi } from '@/services/api';
 import { Card } from '@/components/Card';
 import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState, EmptyState } from '@/components/States';
-import { formatDate, formatDuration, formatEnergy, formatCurrency } from '@/utils/format';
+import { formatDate, formatDuration, formatEnergy } from '@/utils/format';
 import type { ChargeListItem, Pagination } from '@/types';
 import clsx from 'clsx';
 
@@ -81,7 +81,7 @@ export default function ChargeListPage() {
             <div className="flex flex-col gap-4">
               {/* 顶部：时间和位置 */}
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${colors.success}15` }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${colors.success}15` }}>
                   <svg
                     className="w-5 h-5"
                     viewBox="0 0 24 24"
@@ -141,34 +141,35 @@ export default function ChargeListPage() {
                   </div>
                 </div>
 
-                {/* 费用 */}
-                {charge.cost !== undefined && charge.cost > 0 ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
-                      <svg className="w-4 h-4" style={{ color: colors.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="12" y1="1" x2="12" y2="23" />
-                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs" style={{ color: colors.muted }}>费用</p>
-                      <p className="font-semibold">{formatCurrency(charge.cost)}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-end">
+                {/* 充电类型 AC/DC */}
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: charge.chargeType === 'DC' ? 'rgba(255,140,0,0.15)' : `${colors.primary}15`
+                    }}
+                  >
                     <svg
-                      className="w-5 h-5"
-                      style={{ color: colors.muted }}
+                      className="w-4 h-4"
+                      style={{ color: charge.chargeType === 'DC' ? '#ff8c00' : colors.primary }}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
                     >
-                      <polyline points="9 18 15 12 9 6" />
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                     </svg>
                   </div>
-                )}
+                  <div>
+                    <p className="text-xs" style={{ color: colors.muted }}>类型</p>
+                    <p
+                      className="font-bold"
+                      style={{ color: charge.chargeType === 'DC' ? '#ff8c00' : colors.primary }}
+                    >
+                      {charge.chargeType || '--'}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* 查看详情箭头 - 仅在有费用时显示 */}

@@ -50,7 +50,12 @@ func (r *chargeRepository) GetList(ctx context.Context, carID int16, page, pageS
 			COALESCE(g.name, a.display_name, 'Unknown') as location,
 			cp.cost,
 			p.latitude,
-			p.longitude
+			p.longitude,
+			CASE WHEN NULLIF((
+				SELECT mode() WITHIN GROUP (ORDER BY c.charger_phases)
+				FROM charges c 
+				WHERE c.charging_process_id = cp.id
+			), 0) IS NULL THEN 'DC' ELSE 'AC' END as charge_type
 		FROM charging_processes cp
 		LEFT JOIN addresses a ON cp.address_id = a.id
 		LEFT JOIN geofences g ON cp.geofence_id = g.id
@@ -81,6 +86,7 @@ func (r *chargeRepository) GetList(ctx context.Context, carID int16, page, pageS
 			Cost              sql.NullFloat64 `db:"cost"`
 			Latitude          sql.NullFloat64 `db:"latitude"`
 			Longitude         sql.NullFloat64 `db:"longitude"`
+			ChargeType        string          `db:"charge_type"`
 		}
 
 		if err := rows.StructScan(&item); err != nil {
@@ -95,6 +101,7 @@ func (r *chargeRepository) GetList(ctx context.Context, carID int16, page, pageS
 			StartBatteryLevel: item.StartBatteryLevel,
 			EndBatteryLevel:   item.EndBatteryLevel,
 			Location:          item.Location,
+			ChargeType:        item.ChargeType,
 		}
 
 		if item.StartDate.Valid {
@@ -146,7 +153,12 @@ func (r *chargeRepository) GetDetail(ctx context.Context, chargeID int64) (*mode
 			COALESCE(g.name, a.display_name, 'Unknown') as location,
 			p.latitude,
 			p.longitude,
-			cp.cost
+			cp.cost,
+			CASE WHEN NULLIF((
+				SELECT mode() WITHIN GROUP (ORDER BY c.charger_phases)
+				FROM charges c 
+				WHERE c.charging_process_id = cp.id
+			), 0) IS NULL THEN 'DC' ELSE 'AC' END as charge_type
 		FROM charging_processes cp
 		LEFT JOIN addresses a ON cp.address_id = a.id
 		LEFT JOIN geofences g ON cp.geofence_id = g.id
@@ -172,6 +184,7 @@ func (r *chargeRepository) GetDetail(ctx context.Context, chargeID int64) (*mode
 		Latitude          sql.NullFloat64 `db:"latitude"`
 		Longitude         sql.NullFloat64 `db:"longitude"`
 		Cost              sql.NullFloat64 `db:"cost"`
+		ChargeType        string          `db:"charge_type"`
 	}
 
 	if err := r.db.GetContext(ctx, &row, query, chargeID); err != nil {
@@ -193,6 +206,7 @@ func (r *chargeRepository) GetDetail(ctx context.Context, chargeID int64) (*mode
 		StartRatedRangeKm: row.StartRatedRangeKm,
 		EndRatedRangeKm:   row.EndRatedRangeKm,
 		Location:          row.Location,
+		ChargeType:        row.ChargeType,
 	}
 
 	if row.StartDate.Valid {

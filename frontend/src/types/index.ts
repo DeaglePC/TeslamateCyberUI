@@ -74,6 +74,7 @@ export interface ChargeListItem {
   cost?: number;
   latitude?: number;
   longitude?: number;
+  chargeType: 'AC' | 'DC';
 }
 
 // 充电详情
@@ -96,6 +97,7 @@ export interface ChargeDetail {
   longitude?: number;
   cost?: number;
   efficiency?: number;
+  chargeType: 'AC' | 'DC';
 }
 
 // 充电统计数据点
@@ -185,6 +187,10 @@ export interface OverviewStats {
   lastLongitude?: number;
   lastAddress?: string;
   lastLocationTime?: string;
+  // 充电信息（正在充电时有值）
+  isCharging: boolean;
+  chargingVoltage?: number;
+  chargingPower?: number;
 }
 
 // 能效统计

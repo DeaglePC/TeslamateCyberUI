@@ -180,6 +180,49 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 		}
 	}
 
+	// 充电信息（如果正在充电）
+	// 获取最近一次充电过程，如果其 end_date 为 NULL，说明正在充电
+	chargingQuery := `
+		WITH charging_process AS (
+			SELECT id, end_date
+			FROM charging_processes
+			WHERE car_id = $1
+			ORDER BY start_date DESC
+			LIMIT 1
+		)
+		SELECT 
+			CASE WHEN cp.end_date IS NULL THEN true ELSE false END AS is_charging,
+			CASE WHEN cp.end_date IS NULL THEN c.charger_voltage ELSE NULL END AS charger_voltage,
+			CASE WHEN cp.end_date IS NULL THEN c.charger_power ELSE NULL END AS charger_power
+		FROM charging_process cp
+		LEFT JOIN LATERAL (
+			SELECT charger_voltage, charger_power
+			FROM charges
+			WHERE charging_process_id = cp.id
+			ORDER BY date DESC
+			LIMIT 1
+		) c ON true
+		WHERE cp.id IS NOT NULL
+	`
+	var chargingInfo struct {
+		IsCharging     bool          `db:"is_charging"`
+		ChargerVoltage sql.NullInt64 `db:"charger_voltage"`
+		ChargerPower   sql.NullInt64 `db:"charger_power"`
+	}
+	if err := r.db.GetContext(ctx, &chargingInfo, chargingQuery, carID); err == nil {
+		stats.IsCharging = chargingInfo.IsCharging
+		if chargingInfo.IsCharging {
+			if chargingInfo.ChargerVoltage.Valid {
+				v := int(chargingInfo.ChargerVoltage.Int64)
+				stats.ChargingVoltage = &v
+			}
+			if chargingInfo.ChargerPower.Valid {
+				p := int(chargingInfo.ChargerPower.Int64)
+				stats.ChargingPower = &p
+			}
+		}
+	}
+
 	return stats, nil
 }
 

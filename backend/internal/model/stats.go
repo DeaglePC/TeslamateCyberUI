@@ -19,6 +19,10 @@ type OverviewStats struct {
 	LastLongitude    *float64 `json:"lastLongitude,omitempty"`
 	LastAddress      *string  `json:"lastAddress,omitempty"`
 	LastLocationTime *string  `json:"lastLocationTime,omitempty"`
+	// 充电信息（正在充电时有值）
+	IsCharging      bool `json:"isCharging"`
+	ChargingVoltage *int `json:"chargingVoltage,omitempty"`
+	ChargingPower   *int `json:"chargingPower,omitempty"`
 }
 
 // EfficiencyStats 能效统计

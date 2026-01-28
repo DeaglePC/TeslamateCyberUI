@@ -399,6 +399,50 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* Charging Status Section - 充电时显示 */}
+      {status && stats && stats.isCharging && (
+        <div className="space-y-4">
+          {/* 充电状态标题 */}
+          <div className="flex items-center gap-3">
+            <div
+              className="w-3 h-3 rounded-full animate-pulse"
+              style={{
+                background: colors.success,
+                boxShadow: `0 0 12px ${colors.success}80`
+              }}
+            />
+            <h3 className="font-semibold" style={{ color: colors.success }}>
+              {language === 'zh' ? '正在充电中' : 'Charging in Progress'}
+            </h3>
+          </div>
+
+          {/* 充电信息卡片 */}
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard
+              label={language === 'zh' ? '充电电压' : 'CHARGING VOLTAGE'}
+              value={stats.chargingVoltage != null ? stats.chargingVoltage : '--'}
+              unit="V"
+              icon={
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+              }
+            />
+            <StatCard
+              label={language === 'zh' ? '充电功率' : 'CHARGING POWER'}
+              value={stats.chargingPower != null ? stats.chargingPower : '--'}
+              unit="kW"
+              icon={
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+              }
+            />
+          </div>
+        </div>
+      )}
+
       {/* Bottom Section - Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* SOC History */}
