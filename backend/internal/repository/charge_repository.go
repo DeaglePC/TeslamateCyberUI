@@ -249,16 +249,16 @@ func (r *chargeRepository) GetStats(ctx context.Context, chargeID int64) (*model
 	}
 	defer rows.Close()
 
-	var dataPoints []model.ChargeDataPoint
+	var allPoints []model.ChargeDataPoint
 	for rows.Next() {
 		var row struct {
-			Date          sql.NullTime    `db:"date"`
-			BatteryLevel  int             `db:"battery_level"`
-			ChargerPower  int             `db:"charger_power"`
-			ChargerVoltage int            `db:"charger_voltage"`
-			ChargerCurrent int            `db:"charger_current"`
-			IdealRangeKm  float64         `db:"ideal_range_km"`
-			OutsideTemp   sql.NullFloat64 `db:"outside_temp"`
+			Date           sql.NullTime    `db:"date"`
+			BatteryLevel   int             `db:"battery_level"`
+			ChargerPower   int             `db:"charger_power"`
+			ChargerVoltage int             `db:"charger_voltage"`
+			ChargerCurrent int             `db:"charger_current"`
+			IdealRangeKm   float64         `db:"ideal_range_km"`
+			OutsideTemp    sql.NullFloat64 `db:"outside_temp"`
 		}
 
 		if err := rows.StructScan(&row); err != nil {
@@ -280,11 +280,51 @@ func (r *chargeRepository) GetStats(ctx context.Context, chargeID int64) (*model
 			point.OutsideTemp = &row.OutsideTemp.Float64
 		}
 
-		dataPoints = append(dataPoints, point)
+		allPoints = append(allPoints, point)
+	}
+
+	// 采样优化：只保留关键数据点（电量变化点、功率显著变化点）
+	// 这样可以减少锯齿效果，同时保持曲线的关键特征
+	var sampledPoints []model.ChargeDataPoint
+
+	if len(allPoints) > 0 {
+		// 始终保留第一个点
+		sampledPoints = append(sampledPoints, allPoints[0])
+		lastAddedBatteryLevel := allPoints[0].BatteryLevel
+		lastAddedPower := allPoints[0].ChargerPower
+
+		for i := 1; i < len(allPoints)-1; i++ {
+			point := allPoints[i]
+
+			// 保留条件：
+			// 1. 电量变化了（每变化1%保留一个点）
+			// 2. 功率变化超过3kW（捕捉充电功率的显著变化）
+			batteryChanged := point.BatteryLevel != lastAddedBatteryLevel
+			powerChangedSignificantly := abs(point.ChargerPower-lastAddedPower) >= 3
+
+			if batteryChanged || powerChangedSignificantly {
+				sampledPoints = append(sampledPoints, point)
+				lastAddedBatteryLevel = point.BatteryLevel
+				lastAddedPower = point.ChargerPower
+			}
+		}
+
+		// 始终保留最后一个点
+		if len(allPoints) > 1 {
+			sampledPoints = append(sampledPoints, allPoints[len(allPoints)-1])
+		}
 	}
 
 	return &model.ChargeStats{
 		ChargingProcessID: chargeID,
-		DataPoints:        dataPoints,
+		DataPoints:        sampledPoints,
 	}, nil
+}
+
+// abs 返回整数的绝对值
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }

@@ -57,7 +57,7 @@ export function StatCard({ label, value, unit, icon, trend, trendValue, sublabel
   const colors = themeColors[theme] || themeColors.cyber;
 
   return (
-    <Card className="overflow-hidden">
+    <Card>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] sm:text-xs uppercase tracking-wider font-semibold" style={{ color: colors.muted }}>{label}</p>

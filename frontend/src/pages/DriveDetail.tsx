@@ -130,13 +130,50 @@ export default function DriveDetailPage() {
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
   if (!detail) return <ErrorState message="驾驶记录不存在" />;
 
+  // 数据采样函数 - 对密集数据进行降采样和平滑处理
+  const sampleData = (data: number[], targetPoints: number = 150): number[] => {
+    if (data.length <= targetPoints) return data;
+
+    const step = data.length / targetPoints;
+    const sampled: number[] = [];
+
+    for (let i = 0; i < targetPoints; i++) {
+      const startIdx = Math.floor(i * step);
+      const endIdx = Math.min(Math.floor((i + 1) * step), data.length);
+
+      // 计算窗口内的平均值（简单移动平均）
+      let sum = 0;
+      for (let j = startIdx; j < endIdx; j++) {
+        sum += data[j];
+      }
+      sampled.push(Math.round(sum / (endIdx - startIdx)));
+    }
+
+    return sampled;
+  };
+
   // 速度/功率图表配置
   const getChartOption = () => {
     if (positions.length === 0) return null;
 
-    const times = positions.map(p => formatDate(p.date, 'HH:mm'));
-    const speeds = positions.map(p => p.speed);
-    const powers = positions.map(p => p.power);
+    // 采样数据，目标约 150 个点
+    const targetPoints = Math.min(positions.length, 150);
+    const step = positions.length / targetPoints;
+
+    const sampledTimes: string[] = [];
+    const rawSpeeds: number[] = [];
+    const rawPowers: number[] = [];
+
+    for (let i = 0; i < targetPoints; i++) {
+      const idx = Math.floor(i * step);
+      sampledTimes.push(formatDate(positions[idx].date, 'HH:mm'));
+      rawSpeeds.push(positions[idx].speed);
+      rawPowers.push(positions[idx].power);
+    }
+
+    // 对速度和功率进行平滑处理
+    const speeds = sampleData(positions.map(p => p.speed), targetPoints);
+    const powers = sampleData(positions.map(p => p.power), targetPoints);
 
     return {
       backgroundColor: 'transparent',
@@ -157,12 +194,18 @@ export default function DriveDetailPage() {
         backgroundColor: colors.bg,
         borderColor: colors.primary,
         textStyle: { color: colors.muted },
+        axisPointer: {
+          type: 'cross',
+          crossStyle: { color: colors.muted },
+          lineStyle: { color: `${colors.primary}60` }
+        }
       },
       xAxis: {
         type: 'category',
-        data: times,
+        data: sampledTimes,
         axisLine: { lineStyle: { color: colors.muted } },
         axisLabel: { color: colors.muted, interval: 'auto' },
+        boundaryGap: false,
       },
       yAxis: [
         {
@@ -170,7 +213,7 @@ export default function DriveDetailPage() {
           name: '速度 km/h',
           axisLine: { lineStyle: { color: colors.primary } },
           axisLabel: { color: colors.primary },
-          splitLine: { lineStyle: { color: `${colors.muted}20` } },
+          splitLine: { lineStyle: { color: `${colors.muted}15` } },
         },
         {
           type: 'value',
@@ -185,32 +228,54 @@ export default function DriveDetailPage() {
           name: '速度 km/h',
           type: 'line',
           data: speeds,
-          smooth: true,
-          smoothMonotone: 'x',
-          lineStyle: { color: colors.primary, width: 2 },
+          smooth: 0.4,
+          symbol: 'none',
+          sampling: 'lttb', // Largest-Triangle-Three-Buckets 采样算法
+          lineStyle: {
+            color: colors.primary,
+            width: 2,
+            shadowColor: `${colors.primary}40`,
+            shadowBlur: 4,
+            shadowOffsetY: 2
+          },
           areaStyle: {
             color: {
               type: 'linear',
               x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
-                { offset: 0, color: `${colors.primary}40` },
+                { offset: 0, color: `${colors.primary}30` },
+                { offset: 0.7, color: `${colors.primary}10` },
                 { offset: 1, color: `${colors.primary}00` },
               ],
             },
           },
           itemStyle: { color: colors.primary },
-          showSymbol: false,
         },
         {
           name: '功率 kW',
           type: 'line',
           yAxisIndex: 1,
           data: powers,
-          smooth: true,
-          smoothMonotone: 'x',
-          lineStyle: { color: colors.secondary, width: 2 },
+          smooth: 0.4,
+          symbol: 'none',
+          sampling: 'lttb',
+          lineStyle: {
+            color: colors.secondary,
+            width: 1.5,
+            shadowColor: `${colors.secondary}30`,
+            shadowBlur: 3,
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: `${colors.secondary}25` },
+                { offset: 1, color: `${colors.secondary}00` },
+              ],
+            },
+          },
           itemStyle: { color: colors.secondary },
-          showSymbol: false,
         },
       ],
     };

@@ -143,6 +143,43 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 		}
 	}
 
+	// 最新温度信息（从 positions 和 charges 中获取最近60分钟内的温度）
+	tempQuery := `
+		WITH last_position AS (
+			SELECT date, outside_temp, inside_temp
+			FROM positions
+			WHERE car_id = $1 AND outside_temp IS NOT NULL AND date >= (NOW() - INTERVAL '60 minutes')
+			ORDER BY date DESC
+			LIMIT 1
+		),
+		last_charge AS (
+			SELECT c.date, c.outside_temp, NULL::double precision as inside_temp
+			FROM charges c
+			JOIN charging_processes cp ON c.charging_process_id = cp.id
+			WHERE cp.car_id = $1 AND c.outside_temp IS NOT NULL AND c.date >= (NOW() - INTERVAL '60 minutes')
+			ORDER BY c.date DESC
+			LIMIT 1
+		)
+		SELECT * FROM last_position
+		UNION ALL
+		SELECT * FROM last_charge
+		ORDER BY date DESC
+		LIMIT 1
+	`
+	var tempInfo struct {
+		Date        sql.NullTime    `db:"date"`
+		OutsideTemp sql.NullFloat64 `db:"outside_temp"`
+		InsideTemp  sql.NullFloat64 `db:"inside_temp"`
+	}
+	if err := r.db.GetContext(ctx, &tempInfo, tempQuery, carID); err == nil {
+		if tempInfo.OutsideTemp.Valid {
+			stats.OutsideTemp = &tempInfo.OutsideTemp.Float64
+		}
+		if tempInfo.InsideTemp.Valid {
+			stats.InsideTemp = &tempInfo.InsideTemp.Float64
+		}
+	}
+
 	return stats, nil
 }
 

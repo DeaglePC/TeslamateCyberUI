@@ -114,8 +114,14 @@ export default function ChargeDetailPage() {
           name: '电量 %',
           type: 'line',
           data: batteryLevels,
-          smooth: true,
-          smoothMonotone: 'x',
+          smooth: 0.6, // 增加平滑度 (0-1)
+          symbol: 'circle',
+          symbolSize: 4,
+          showSymbol: false, // 默认隐藏点
+          emphasis: {
+            focus: 'series',
+            itemStyle: { borderWidth: 2 }
+          },
           lineStyle: { color: colors.primary, width: 2 },
           areaStyle: {
             color: {
@@ -134,8 +140,14 @@ export default function ChargeDetailPage() {
           type: 'line',
           yAxisIndex: 1,
           data: chargerPowers,
-          smooth: true,
-          smoothMonotone: 'x',
+          smooth: 0.6,
+          symbol: 'circle',
+          symbolSize: 4,
+          showSymbol: false,
+          emphasis: {
+            focus: 'series',
+            itemStyle: { borderWidth: 2 }
+          },
           lineStyle: { color: colors.secondary, width: 2 },
           itemStyle: { color: colors.secondary },
         },

@@ -11,6 +11,9 @@ type OverviewStats struct {
 	TotalChargeDuration int      `json:"totalChargeDuration"`
 	AvgEfficiency       float64  `json:"avgEfficiency"`
 	CurrentOdometer     float64  `json:"currentOdometer"`
+	// 温度信息
+	OutsideTemp *float64 `json:"outsideTemp,omitempty"`
+	InsideTemp  *float64 `json:"insideTemp,omitempty"`
 	// 最后位置信息
 	LastLatitude     *float64 `json:"lastLatitude,omitempty"`
 	LastLongitude    *float64 `json:"lastLongitude,omitempty"`

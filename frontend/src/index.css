@@ -234,3 +234,40 @@ body,
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* 页面滑动转场动画 */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translate3d(30%, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translate3d(-30%, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.page-slide-left {
+  animation: slideInFromRight 0.25s ease-out forwards;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}
+
+.page-slide-right {
+  animation: slideInFromLeft 0.25s ease-out forwards;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}

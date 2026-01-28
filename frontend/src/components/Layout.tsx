@@ -1,6 +1,7 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import clsx from 'clsx';
 
 function HomeIcon({ className }: { className?: string }) {
@@ -41,10 +42,21 @@ function SettingsIcon({ className }: { className?: string }) {
   );
 }
 
+// Main tab paths for swipe navigation
+const SWIPE_TABS = ['/', '/charges', '/drives', '/settings'];
+
 export default function Layout() {
   const { theme, language } = useSettingsStore();
   const { t } = useTranslation(language);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Touch state for swipe detection
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  // Slide direction for transition animation
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
 
   const navItems = [
     { path: '/', label: t('home'), icon: HomeIcon },
@@ -52,6 +64,119 @@ export default function Layout() {
     { path: '/drives', label: t('drives'), icon: CarIcon },
     { path: '/settings', label: t('settings'), icon: SettingsIcon },
   ];
+
+  // Get current tab index for swipe navigation
+  const getCurrentTabIndex = useCallback(() => {
+    // Check for exact match first
+    const exactIndex = SWIPE_TABS.indexOf(location.pathname);
+    if (exactIndex !== -1) return exactIndex;
+
+    // Check for prefix match (e.g., /drives/123 -> /drives)
+    for (let i = SWIPE_TABS.length - 1; i >= 0; i--) {
+      if (SWIPE_TABS[i] !== '/' && location.pathname.startsWith(SWIPE_TABS[i])) {
+        return i;
+      }
+    }
+    return 0;
+  }, [location.pathname]);
+
+  // Handle swipe navigation
+  const handleSwipe = useCallback((direction: 'left' | 'right') => {
+    const currentIndex = getCurrentTabIndex();
+
+    if (direction === 'left' && currentIndex < SWIPE_TABS.length - 1) {
+      // Swipe left = go to next tab (content comes from right)
+      setSlideDirection('left');
+      navigate(SWIPE_TABS[currentIndex + 1]);
+    } else if (direction === 'right' && currentIndex > 0) {
+      // Swipe right = go to previous tab (content comes from left)
+      setSlideDirection('right');
+      navigate(SWIPE_TABS[currentIndex - 1]);
+    }
+  }, [getCurrentTabIndex, navigate]);
+
+  // Touch event handlers
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now(),
+    };
+  }, []);
+
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (!touchStartRef.current) return;
+
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    const deltaTime = Date.now() - touchStartRef.current.time;
+
+    // Reset touch state
+    touchStartRef.current = null;
+
+    // Swipe detection thresholds
+    const minDistance = 50; // Minimum swipe distance in pixels
+    const maxTime = 500; // Maximum swipe duration in ms
+    const maxVerticalRatio = 0.5; // Maximum vertical/horizontal ratio (to ensure horizontal swipe)
+
+    // Check if it's a valid horizontal swipe
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    if (absX > minDistance && deltaTime < maxTime && absY / absX < maxVerticalRatio) {
+      handleSwipe(deltaX < 0 ? 'left' : 'right');
+    }
+  }, [handleSwipe]);
+
+  // Attach touch listeners to main content area
+  useEffect(() => {
+    const element = mainContentRef.current;
+    if (!element) return;
+
+    // Only enable on mobile (md breakpoint is 768px)
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+
+    const attachListeners = () => {
+      if (mediaQuery.matches) {
+        element.addEventListener('touchstart', handleTouchStart, { passive: true });
+        element.addEventListener('touchend', handleTouchEnd, { passive: true });
+      }
+    };
+
+    const detachListeners = () => {
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        attachListeners();
+      } else {
+        detachListeners();
+      }
+    };
+
+    // Initial setup
+    attachListeners();
+    mediaQuery.addEventListener('change', handleMediaChange);
+
+    return () => {
+      detachListeners();
+      mediaQuery.removeEventListener('change', handleMediaChange);
+    };
+  }, [handleTouchStart, handleTouchEnd]);
+
+  // Clear slide direction after animation completes
+  useEffect(() => {
+    if (slideDirection) {
+      const timer = setTimeout(() => {
+        setSlideDirection(null);
+      }, 300); // Match animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [slideDirection, location.pathname]);
 
   const themeColors = {
     cyber: {
@@ -145,9 +270,16 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* 主内容区 */}
-      <main className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
-        <div className="flex-1 p-4 md:p-6 overflow-auto">
+      {/* 主内容区 - 添加 ref 用于滑动检测 */}
+      <main ref={mainContentRef} className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
+        <div
+          key={location.pathname}
+          className={clsx(
+            'flex-1 p-4 md:p-6 overflow-auto',
+            slideDirection === 'left' && 'page-slide-left',
+            slideDirection === 'right' && 'page-slide-right'
+          )}
+        >
           <Outlet />
         </div>
       </main>
@@ -178,3 +310,4 @@ export default function Layout() {
     </div>
   );
 }
+

@@ -177,6 +177,9 @@ export interface OverviewStats {
   totalChargeDuration: number;
   avgEfficiency: number;
   currentOdometer: number;
+  // 温度信息
+  outsideTemp?: number;
+  insideTemp?: number;
   // 最后位置信息
   lastLatitude?: number;
   lastLongitude?: number;

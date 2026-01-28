@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
@@ -148,9 +148,25 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
     const [hoveredSegment, setHoveredSegment] = useState<TimelineSegment | null>(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [mounted, setMounted] = useState(false);
+    const [containerWidth, setContainerWidth] = useState(600);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    // Track container width for responsive time labels
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                setContainerWidth(entry.contentRect.width);
+            }
+        });
+
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
     }, []);
 
     const themeColors: Record<string, { primary: string; muted: string }> = {
@@ -230,14 +246,18 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
             });
         }
 
-        // Generate time labels (every 2 hours)
+        // Generate time labels - adjust interval based on container width
+        // Wide screens: every 2 hours (13 labels)
+        // Medium screens: every 4 hours (7 labels)
+        // Narrow screens: every 6 hours (5 labels)
+        const hourInterval = containerWidth > 500 ? 2 : containerWidth > 300 ? 4 : 6;
         const labels: string[] = [];
-        for (let i = 0; i <= 24; i += 2) {
+        for (let i = 0; i <= 24; i += hourInterval) {
             labels.push(dayStart.add(i, 'hour').format('HH:mm'));
         }
 
         return { segments: result, timeLabels: labels };
-    }, [data, language]);
+    }, [data, language, containerWidth]);
 
     // Handle mouse move on segment
     const handleMouseMove = (seg: TimelineSegment, e: React.MouseEvent) => {
@@ -268,7 +288,7 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
             </div>
 
             {/* Timeline Bar */}
-            <div className="relative">
+            <div className="relative" ref={containerRef}>
                 {/* Main timeline bar */}
                 <div
                     className="relative h-20 rounded-lg"
