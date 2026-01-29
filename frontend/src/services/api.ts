@@ -17,9 +17,37 @@ import type {
   StateTimelineItem
 } from '@/types';
 
+// Helper function to get settings from localStorage
+const getApiConfig = () => {
+  try {
+    const stored = localStorage.getItem('cyberui-settings');
+    if (stored) {
+      const settings = JSON.parse(stored);
+      return {
+        baseUrl: settings.state?.baseUrl || '',
+        apiKey: settings.state?.apiKey || ''
+      };
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return { baseUrl: '', apiKey: '' };
+};
+
 const api = axios.create({
-  baseURL: '/api/v1',
   timeout: 10000,
+});
+
+// Request interceptor to set baseURL and API key
+api.interceptors.request.use((config) => {
+  const { baseUrl, apiKey } = getApiConfig();
+  // Set baseURL dynamically - fallback to relative path if not configured
+  config.baseURL = baseUrl ? `${baseUrl}/api/v1` : '/api/v1';
+  // Add API key header if configured
+  if (apiKey) {
+    config.headers['X-API-Key'] = apiKey;
+  }
+  return config;
 });
 
 // 响应拦截器

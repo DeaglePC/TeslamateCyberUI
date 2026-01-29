@@ -4,7 +4,7 @@ import { useTranslation } from '@/utils/i18n';
 import clsx from 'clsx';
 
 export default function SettingsPage() {
-  const { theme, setTheme, unit, setUnit, language, setLanguage, amapKey, setAmapKey } = useSettingsStore();
+  const { theme, setTheme, unit, setUnit, language, setLanguage, amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey } = useSettingsStore();
   const { t } = useTranslation(language);
 
   const themeColors: Record<string, { primary: string; muted: string; border: string }> = {
@@ -115,6 +115,52 @@ export default function SettingsPage() {
               {u.name}
             </button>
           ))}
+        </div>
+      </Card>
+
+      {/* API Settings */}
+      <Card>
+        <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>
+          {language === 'zh' ? 'API 连接设置' : 'API Connection Settings'}
+        </h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm mb-2" style={{ color: colors.muted }}>
+              {language === 'zh' ? '后端地址' : 'Backend URL'}
+            </label>
+            <input
+              type="url"
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              placeholder="http://localhost:8080"
+              className="w-full p-3 rounded-lg border bg-transparent outline-none transition-all focus:ring-2"
+              style={{
+                borderColor: colors.border,
+                color: colors.primary,
+              }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm mb-2" style={{ color: colors.muted }}>
+              {language === 'zh' ? 'API Key' : 'API Key'}
+            </label>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder={language === 'zh' ? '如果后端启用了鉴权' : 'If backend auth is enabled'}
+              className="w-full p-3 rounded-lg border bg-transparent outline-none transition-all focus:ring-2"
+              style={{
+                borderColor: colors.border,
+                color: colors.primary,
+              }}
+            />
+          </div>
+          <p className="text-xs" style={{ color: colors.muted }}>
+            {language === 'zh'
+              ? '修改后刷新页面生效'
+              : 'Changes take effect after page refresh'}
+          </p>
         </div>
       </Card>
 

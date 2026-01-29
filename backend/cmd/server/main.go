@@ -5,6 +5,7 @@ import (
 	"teslamate-cyberui/internal/config"
 	"teslamate-cyberui/internal/handler"
 	"teslamate-cyberui/internal/logger"
+	"teslamate-cyberui/internal/middleware"
 	"teslamate-cyberui/internal/repository"
 
 	"github.com/gin-contrib/cors"
@@ -51,13 +52,14 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.Server.CORSOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-API-Key"},
 		AllowCredentials: true,
 	}))
 
 	// 注册路由
 	// Note: the original code had /api/v1, keeping it for now.
 	api := r.Group("/api/v1")
+	api.Use(middleware.APIKeyAuth(cfg.Server.APIKey))
 	{
 		// 车辆相关
 		api.GET("/cars", h.GetCars)

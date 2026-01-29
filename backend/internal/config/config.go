@@ -18,6 +18,7 @@ type ServerConfig struct {
 	Port        string
 	Mode        string
 	CORSOrigins []string
+	APIKey      string
 }
 
 // DatabaseConfig 数据库配置
@@ -70,6 +71,7 @@ func Load() (*Config, error) {
 			Port:        getEnv("CYBERUI_SERVER_PORT", "8080"),
 			Mode:        getEnv("CYBERUI_SERVER_MODE", "debug"),
 			CORSOrigins: getEnvSlice("CYBERUI_CORS_ORIGINS", []string{"*"}),
+			APIKey:      getEnv("CYBERUI_API_KEY", ""),
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("TESLAMATE_DB_HOST", "localhost"),

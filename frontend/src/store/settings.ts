@@ -11,11 +11,15 @@ interface SettingsState {
   language: LanguageType;
   selectedCarId: number | null;
   amapKey: string;
+  baseUrl: string;
+  apiKey: string;
   setTheme: (theme: ThemeType) => void;
   setUnit: (unit: UnitType) => void;
   setLanguage: (language: LanguageType) => void;
   setSelectedCarId: (id: number | null) => void;
   setAmapKey: (key: string) => void;
+  setBaseUrl: (url: string) => void;
+  setApiKey: (key: string) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -26,11 +30,15 @@ export const useSettingsStore = create<SettingsState>()(
       language: 'zh',
       selectedCarId: null,
       amapKey: '',
+      baseUrl: '',
+      apiKey: '',
       setTheme: (theme) => set({ theme }),
       setUnit: (unit) => set({ unit }),
       setLanguage: (language) => set({ language }),
       setSelectedCarId: (id) => set({ selectedCarId: id }),
       setAmapKey: (key) => set({ amapKey: key }),
+      setBaseUrl: (url) => set({ baseUrl: url }),
+      setApiKey: (key) => set({ apiKey: key }),
     }),
     {
       name: 'cyberui-settings',
