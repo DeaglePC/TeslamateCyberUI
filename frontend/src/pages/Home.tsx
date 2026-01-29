@@ -11,12 +11,65 @@ import { useTranslation } from '@/utils/i18n';
 import type { Car, CarStatus, OverviewStats, SocDataPoint, StateTimelineItem } from '@/types';
 import clsx from 'clsx';
 
-// Tesla Model images URLs (using public Tesla images)
-const MODEL_IMAGES: Record<string, string> = {
-  '3': 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&options=$MTS13,$PPSB,$WS90,$IBB1&view=FRONT34&model=m3&size=1920&bkba_opt=2&crop=0,0,0,0&',
-  'S': 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&options=$MTS10,$PPSB,$WS90,$IBB1&view=FRONT34&model=ms&size=1920&bkba_opt=2&crop=0,0,0,0&',
-  'X': 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&options=$MTX10,$PPSB,$WX00,$IBB1&view=FRONT34&model=mx&size=1920&bkba_opt=2&crop=0,0,0,0&',
-  'Y': 'https://static-assets.tesla.com/configurator/compositor?context=design_studio_2&options=$MTY07,$PPSB,$WY19B,$INPB0&view=FRONT34&model=my&size=1920&bkba_opt=2&crop=0,0,0,0&',
+// Tesla color option codes for configurator API
+const COLOR_OPTION_CODES: Record<string, string> = {
+  // Model 3 / Model Y colors
+  'SolidBlack': 'PBSB',
+  'MidnightSilverMetallic': 'PMNG',
+  'DeepBlueMetallic': 'PPSB',
+  'PearlWhiteMultiCoat': 'PPSW',
+  'RedMultiCoat': 'PPMR',
+  'UltraWhite': 'PN01',
+  'QuicksilverMetallic': 'PR01',  // Highland
+  'MidnightCherryRed': 'PPSR',    // Highland
+  // Older colors
+  'SilverMetallic': 'PMSS',
+  'ObsidianBlackMetallic': 'PMBL',
+  'TitaniumMetallic': 'PMTG',
+  'BlueMetallic': 'PMMB',
+};
+
+// Get Tesla configurator image URL based on model, color, and trim
+const getCarImageUrl = (model?: string, exteriorColor?: string, trimBadging?: string): string => {
+  if (!model) return '';
+
+  const modelLower = model.toLowerCase();
+  const colorCode = exteriorColor ? (COLOR_OPTION_CODES[exteriorColor] || 'PPSW') : 'PPSW';
+
+  // Detect if it's a Highland (new) Model 3 based on trim or other indicators
+  // Highland Model 3 has different option codes
+  // const isHighland = trimBadging?.includes('Highland') || false;
+
+  // Build Tesla configurator URL
+  const baseUrl = 'https://static-assets.tesla.com/configurator/compositor';
+
+  // Model-specific configurations using Tesla's actual format
+  if (modelLower === '3' || modelLower === 'model3') {
+    // Model 3: Using format from Tesla's official configurator
+    // $MT372 = trim, $PN00 = color, $W38A = wheels, $IPB2 = interior
+    // bkba_opt=1 for transparent background
+    return `${baseUrl}?context=design_studio_2&options=$MT372,$${colorCode},$W38A,$IPB2,$DRRH&view=STUD_FRONT34&model=m3&size=1920&bkba_opt=1&crop=0,0,0,0&overlay=0&`;
+  } else if (modelLower === 's' || modelLower === 'models') {
+    return `${baseUrl}?context=design_studio_2&options=$MTS13,$${colorCode},$WT20,$IBC00&view=STUD_FRONT34&model=ms&size=1920&bkba_opt=1&crop=0,0,0,0&overlay=0&`;
+  } else if (modelLower === 'x' || modelLower === 'modelx') {
+    return `${baseUrl}?context=design_studio_2&options=$MTX13,$${colorCode},$WX00,$IBC00&view=STUD_FRONT34&model=mx&size=1920&bkba_opt=1&crop=0,0,0,0&overlay=0&`;
+  } else if (modelLower === 'y' || modelLower === 'modely') {
+    return `${baseUrl}?context=design_studio_2&options=$MTY13,$${colorCode},$WY19B,$INPB0&view=STUD_FRONT34&model=my&size=1920&bkba_opt=1&crop=0,0,0,0&overlay=0&`;
+  }
+
+  // Fallback to Tesla digital assets
+  const fallbackImages: Record<string, string> = {
+    '3': 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png',
+    'model3': 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png',
+    's': 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png',
+    'models': 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-S.png',
+    'x': 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png',
+    'modelx': 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-X.png',
+    'y': 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',
+    'modely': 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-Y.png',
+  };
+
+  return fallbackImages[modelLower] || '';
 };
 
 // Color name mapping
@@ -154,32 +207,48 @@ export default function HomePage() {
             >
               {/* Front Side - Model + Image */}
               <Card
-                className="absolute inset-0 backface-hidden flex flex-col items-center justify-center p-4"
+                className="absolute inset-0 backface-hidden flex flex-col p-4"
                 style={{ backfaceVisibility: 'hidden' }}
               >
-                {/* Model Name */}
-                <div className="text-center mb-2">
-                  <p className="text-xs uppercase tracking-widest" style={{ color: colors.muted }}>
-                    Tesla
-                  </p>
-                  <h2 className="text-2xl font-bold" style={{ color: colors.primary }}>
-                    {getModelName(currentCar.model)}
-                  </h2>
-                  {currentCar.name && (
-                    <p className="text-lg mt-1" style={{ color: colors.muted }}>
-                      "{currentCar.name}"
+                {/* Top Row - Model Left, Name Right */}
+                <div className="flex items-start justify-between mb-2">
+                  {/* Left - Model */}
+                  <div>
+                    <p className="text-xs uppercase tracking-widest" style={{ color: colors.muted }}>
+                      Tesla
                     </p>
+                    <h2 className="text-xl font-bold" style={{ color: colors.primary }}>
+                      {getModelName(currentCar.model)}
+                    </h2>
+                  </div>
+
+                  {/* Right - Name */}
+                  {currentCar.name && (
+                    <div className="text-right">
+                      <p className="text-xs" style={{ color: colors.muted }}>
+                        {language === 'zh' ? '昵称' : 'Nickname'}
+                      </p>
+                      <p className="text-lg font-semibold" style={{ color: colors.primary }}>
+                        {currentCar.name}
+                      </p>
+                    </div>
                   )}
                 </div>
 
-                {/* Car Image */}
-                <div className="flex-1 flex items-center justify-center w-full">
-                  {currentCar.model && MODEL_IMAGES[currentCar.model] ? (
+                {/* Center - Car Image */}
+                <div className="flex-1 flex items-center justify-center w-full overflow-visible">
+                  {currentCar.model ? (
                     <img
-                      src={MODEL_IMAGES[currentCar.model]}
+                      src={getCarImageUrl(currentCar.model, currentCar.exteriorColor, currentCar.trimBadging)}
                       alt={`Tesla Model ${currentCar.model}`}
-                      className="w-full max-w-[280px] object-contain drop-shadow-lg"
-                      style={{ filter: `drop-shadow(0 0 20px ${colors.primary}40)` }}
+                      className="w-full max-w-[600px] object-contain drop-shadow-lg scale-150 lg:scale-135 -mt-16 lg:-mt-6"
+                      style={{ filter: `drop-shadow(0 0 25px ${colors.primary}50)` }}
+                      onError={(e) => {
+                        // Fallback to generic image on error
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png';
+                      }}
                     />
                   ) : (
                     <svg viewBox="0 0 200 80" className="w-full max-w-xs opacity-80" fill="none">
@@ -199,11 +268,6 @@ export default function HomePage() {
                     </svg>
                   )}
                 </div>
-
-                {/* Flip hint */}
-                <p className="text-xs mt-2" style={{ color: colors.muted }}>
-                  {language === 'zh' ? '点击查看详情' : 'Tap for details'}
-                </p>
               </Card>
 
               {/* Back Side - Detailed Info */}
