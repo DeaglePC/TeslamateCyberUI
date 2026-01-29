@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
+import { getThemeColors } from '@/utils/theme';
 import type { SocDataPoint } from '@/types';
 import dayjs from 'dayjs';
 
@@ -14,15 +15,7 @@ export function SocHistoryChart({ data, className = '' }: SocHistoryChartProps) 
     const { theme, language } = useSettingsStore();
     const { t } = useTranslation(language);
 
-    const themeColors: Record<string, { primary: string; muted: string; gradient: string[] }> = {
-        cyber: { primary: '#00f0ff', muted: '#808080', gradient: ['rgba(0, 240, 255, 0.5)', 'rgba(0, 240, 255, 0)'] },
-        tesla: { primary: '#cc0000', muted: '#888888', gradient: ['rgba(204, 0, 0, 0.5)', 'rgba(204, 0, 0, 0)'] },
-        dark: { primary: '#4361ee', muted: '#8d99ae', gradient: ['rgba(67, 97, 238, 0.5)', 'rgba(67, 97, 238, 0)'] },
-        tech: { primary: '#0077b6', muted: '#778da9', gradient: ['rgba(0, 119, 182, 0.5)', 'rgba(0, 119, 182, 0)'] },
-        aurora: { primary: '#72efdd', muted: '#98c1d9', gradient: ['rgba(114, 239, 221, 0.5)', 'rgba(114, 239, 221, 0)'] },
-    };
-
-    const colors = themeColors[theme] || themeColors.cyber;
+    const colors = getThemeColors(theme);
 
     const option = useMemo(() => {
         // Sample data every N points for performance

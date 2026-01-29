@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
+import { getThemeColors } from '@/utils/theme';
 import type { StateTimelineItem } from '@/types';
 import dayjs from 'dayjs';
 
@@ -21,16 +22,6 @@ const STATE = {
     UPDATING: 6,   // Updating
 } as const;
 
-// State colors matching Grafana
-const STATE_COLORS: Record<number, string> = {
-    [STATE.DRIVING]: '#a855f7',   // Purple
-    [STATE.CHARGING]: '#a855f7',  // Purple (same as driving in Grafana)
-    [STATE.OFFLINE]: '#f97316',   // Orange
-    [STATE.ASLEEP]: '#22c55e',    // Green
-    [STATE.ONLINE]: '#06b6d4',    // Cyan/Teal
-    [STATE.UPDATING]: '#a855f7',  // Purple
-};
-
 // State labels
 const getStateLabel = (state: number, language: 'zh' | 'en'): string => {
     const labels: Record<number, { zh: string; en: string }> = {
@@ -42,6 +33,26 @@ const getStateLabel = (state: number, language: 'zh' | 'en'): string => {
         [STATE.UPDATING]: { zh: '更新', en: 'Updating' },
     };
     return labels[state]?.[language] || '';
+};
+
+// Get state color from theme
+const getStateColor = (state: number, timeline: {
+    driving: string;
+    charging: string;
+    offline: string;
+    asleep: string;
+    online: string;
+    updating: string;
+}): string => {
+    const colorMap: Record<number, string> = {
+        [STATE.DRIVING]: timeline.driving,
+        [STATE.CHARGING]: timeline.charging,
+        [STATE.OFFLINE]: timeline.offline,
+        [STATE.ASLEEP]: timeline.asleep,
+        [STATE.ONLINE]: timeline.online,
+        [STATE.UPDATING]: timeline.updating,
+    };
+    return colorMap[state] || timeline.offline;
 };
 
 interface TimelineSegment {
@@ -169,15 +180,7 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
         return () => observer.disconnect();
     }, []);
 
-    const themeColors: Record<string, { primary: string; muted: string }> = {
-        cyber: { primary: '#00f0ff', muted: '#808080' },
-        tesla: { primary: '#cc0000', muted: '#888888' },
-        dark: { primary: '#4361ee', muted: '#8d99ae' },
-        tech: { primary: '#0077b6', muted: '#778da9' },
-        aurora: { primary: '#72efdd', muted: '#98c1d9' },
-    };
-
-    const colors = themeColors[theme] || themeColors.cyber;
+    const colors = getThemeColors(theme);
 
     // Process data into continuous segments
     const { segments, timeLabels } = useMemo(() => {
@@ -214,7 +217,7 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
                         start: startPct,
                         width: endPct - startPct,
                         state: currentState,
-                        color: STATE_COLORS[currentState] || STATE_COLORS[STATE.OFFLINE],
+                        color: getStateColor(currentState, colors.timeline),
                         label: getStateLabel(currentState, language),
                         startTime: segmentStart,
                         endTime: time,
@@ -238,7 +241,7 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
                 start: startPct,
                 width: 100 - startPct,
                 state: currentState,
-                color: STATE_COLORS[currentState] || STATE_COLORS[STATE.OFFLINE],
+                color: getStateColor(currentState, colors.timeline),
                 label: getStateLabel(currentState, language),
                 startTime: segmentStart,
                 endTime: now,
@@ -363,7 +366,7 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
                     <div key={item.state} className="flex items-center gap-2">
                         <div
                             className="w-3 h-3 rounded"
-                            style={{ backgroundColor: STATE_COLORS[item.state] }}
+                            style={{ backgroundColor: getStateColor(item.state, colors.timeline) }}
                         />
                         <span className="text-xs" style={{ color: colors.muted }}>
                             {item.label}

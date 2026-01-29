@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"teslamate-cyberui/internal/logger"
 
@@ -33,7 +34,22 @@ func (h *Handler) GetCharges(c *gin.Context) {
 		pageSize = 20
 	}
 
-	result, err := h.repo.Charge.GetList(c.Request.Context(), carID, page, pageSize)
+	// 解析时间筛选参数
+	var startDate, endDate *time.Time
+	if startStr := c.Query("startDate"); startStr != "" {
+		if t, err := time.Parse("2006-01-02", startStr); err == nil {
+			startDate = &t
+		}
+	}
+	if endStr := c.Query("endDate"); endStr != "" {
+		if t, err := time.Parse("2006-01-02", endStr); err == nil {
+			// 设置为当天结束时间
+			endOfDay := t.Add(24*time.Hour - time.Second)
+			endDate = &endOfDay
+		}
+	}
+
+	result, err := h.repo.Charge.GetList(c.Request.Context(), carID, page, pageSize, startDate, endDate)
 	if err != nil {
 		logger.Errorf("Failed to get charges: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get charges"))

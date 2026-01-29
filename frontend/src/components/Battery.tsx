@@ -1,4 +1,5 @@
 import { useSettingsStore } from '@/store/settings';
+import { getThemeColors } from '@/utils/theme';
 import clsx from 'clsx';
 
 interface BatteryIndicatorProps {
@@ -77,21 +78,11 @@ export function BatteryIndicator({ level, isCharging = false, size = 'md' }: Bat
 interface BatteryBarProps {
   startLevel: number;
   endLevel: number;
-  showLabels?: boolean;
 }
 
-export function BatteryBar({ startLevel, endLevel, showLabels = true }: BatteryBarProps) {
+export function BatteryBar({ startLevel, endLevel }: BatteryBarProps) {
   const { theme } = useSettingsStore();
-
-  const themeColors: Record<string, { primary: string; muted: string; success: string }> = {
-    cyber: { primary: '#00f0ff', muted: '#808080', success: '#00ff88' },
-    tesla: { primary: '#cc0000', muted: '#888888', success: '#4caf50' },
-    dark: { primary: '#4361ee', muted: '#8d99ae', success: '#06d6a0' },
-    tech: { primary: '#0077b6', muted: '#778da9', success: '#52b788' },
-    aurora: { primary: '#72efdd', muted: '#98c1d9', success: '#80ed99' },
-  };
-
-  const colors = themeColors[theme] || themeColors.cyber;
+  const colors = getThemeColors(theme);
 
   // 计算增加的电量
   const addedLevel = Math.max(0, endLevel - startLevel);
@@ -148,17 +139,17 @@ export function BatteryBar({ startLevel, endLevel, showLabels = true }: BatteryB
           <span className="text-sm font-bold">{startLevel}%</span>
         </div>
 
-        {/* 中间箭头 */}
+        {/* 中间增量/消耗标签 */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <svg
-            className="w-5 h-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={isConsuming ? '#ff6b6b' : colors.success}
-            strokeWidth="2"
+          <span
+            className="text-xs font-bold px-2 py-0.5 rounded"
+            style={{
+              color: isConsuming ? '#ff6b6b' : colors.success,
+              background: isConsuming ? 'rgba(255,107,107,0.2)' : `${colors.success}25`,
+            }}
           >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
+            {isConsuming ? `${startLevel - endLevel}%` : `+${addedLevel}%`}
+          </span>
         </div>
 
         {/* 右侧结束电量标签 */}
@@ -169,21 +160,6 @@ export function BatteryBar({ startLevel, endLevel, showLabels = true }: BatteryB
           <span className="text-sm font-bold">{endLevel}%</span>
         </div>
       </div>
-
-      {/* 增量提示 */}
-      {showLabels && (
-        <div className="flex justify-center mt-1">
-          <span
-            className="text-xs px-2 py-0.5 rounded-full"
-            style={{
-              color: isConsuming ? '#ff6b6b' : colors.success,
-              background: isConsuming ? 'rgba(255,107,107,0.15)' : `${colors.success}20`,
-            }}
-          >
-            {isConsuming ? `−${consumedLevel}%` : `+${addedLevel}%`}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

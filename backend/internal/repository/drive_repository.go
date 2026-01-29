@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"time"
 
 	"teslamate-cyberui/internal/logger"
 	"teslamate-cyberui/internal/model"
@@ -12,7 +14,7 @@ import (
 
 // DriveRepository 驾驶数据仓储接口
 type DriveRepository interface {
-	GetList(ctx context.Context, carID int16, page, pageSize int) (*model.ListResponse[model.DriveListItem], error)
+	GetList(ctx context.Context, carID int16, page, pageSize int, startDate, endDate *time.Time) (*model.ListResponse[model.DriveListItem], error)
 	GetDetail(ctx context.Context, driveID int64) (*model.DriveDetail, error)
 	GetPositions(ctx context.Context, driveID int64) ([]model.DrivePosition, error)
 }
@@ -27,18 +29,34 @@ func NewDriveRepository(db *sqlx.DB) DriveRepository {
 }
 
 // GetList 获取驾驶记录列表
-func (r *driveRepository) GetList(ctx context.Context, carID int16, page, pageSize int) (*model.ListResponse[model.DriveListItem], error) {
+func (r *driveRepository) GetList(ctx context.Context, carID int16, page, pageSize int, startDate, endDate *time.Time) (*model.ListResponse[model.DriveListItem], error) {
+	// 构建查询条件
+	whereClause := "WHERE d.car_id = $1"
+	args := []interface{}{carID}
+	argIdx := 2
+
+	if startDate != nil {
+		whereClause += fmt.Sprintf(" AND d.start_date >= $%d", argIdx)
+		args = append(args, *startDate)
+		argIdx++
+	}
+	if endDate != nil {
+		whereClause += fmt.Sprintf(" AND d.start_date <= $%d", argIdx)
+		args = append(args, *endDate)
+		argIdx++
+	}
+
 	// 获取总数
-	countQuery := `SELECT COUNT(*) FROM drives WHERE car_id = $1`
+	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM drives d %s`, whereClause)
 	var total int
-	if err := r.db.GetContext(ctx, &total, countQuery, carID); err != nil {
+	if err := r.db.GetContext(ctx, &total, countQuery, args...); err != nil {
 		logger.Errorf("Failed to count drives for car %d: %v", carID, err)
 		return nil, err
 	}
 
 	// 获取列表
 	offset := (page - 1) * pageSize
-	query := `
+	query := fmt.Sprintf(`
 		SELECT
 			d.id,
 			d.start_date,
@@ -59,12 +77,14 @@ func (r *driveRepository) GetList(ctx context.Context, carID int16, page, pageSi
 		LEFT JOIN geofences eg ON d.end_geofence_id = eg.id
 		LEFT JOIN positions sp ON d.start_position_id = sp.id
 		LEFT JOIN positions ep ON d.end_position_id = ep.id
-		WHERE d.car_id = $1
+		%s
 		ORDER BY d.start_date DESC
-		LIMIT $2 OFFSET $3
-	`
+		LIMIT $%d OFFSET $%d
+	`, whereClause, argIdx, argIdx+1)
 
-	rows, err := r.db.QueryxContext(ctx, query, carID, pageSize, offset)
+	args = append(args, pageSize, offset)
+
+	rows, err := r.db.QueryxContext(ctx, query, args...)
 	if err != nil {
 		logger.Errorf("Failed to get drives for car %d: %v", carID, err)
 		return nil, err

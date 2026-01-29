@@ -1,28 +1,22 @@
 import { useSettingsStore, type ThemeType, type UnitType, type LanguageType } from '@/store/settings';
 import { Card } from '@/components/Card';
 import { useTranslation } from '@/utils/i18n';
+import { getThemeColors, themeConfigs } from '@/utils/theme';
 import clsx from 'clsx';
 
 export default function SettingsPage() {
   const { theme, setTheme, unit, setUnit, language, setLanguage, amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey } = useSettingsStore();
   const { t } = useTranslation(language);
 
-  const themeColors: Record<string, { primary: string; muted: string; border: string }> = {
-    cyber: { primary: '#00f0ff', muted: '#808080', border: 'rgba(0,240,255,0.3)' },
-    tesla: { primary: '#cc0000', muted: '#888888', border: 'rgba(255,255,255,0.1)' },
-    dark: { primary: '#4361ee', muted: '#8d99ae', border: 'rgba(67,97,238,0.3)' },
-    tech: { primary: '#0077b6', muted: '#778da9', border: 'rgba(0,119,182,0.3)' },
-    aurora: { primary: '#72efdd', muted: '#98c1d9', border: 'rgba(114,239,221,0.3)' },
-  };
+  const colors = getThemeColors(theme);
 
-  const colors = themeColors[theme] || themeColors.cyber;
-
+  // Theme options for UI display
   const themes: { id: ThemeType; name: Record<LanguageType, string>; colors: { bg: string; primary: string } }[] = [
-    { id: 'cyber', name: { zh: '赛博朋克', en: 'Cyberpunk' }, colors: { bg: '#0a0a0f', primary: '#00f0ff' } },
-    { id: 'tesla', name: { zh: '特斯拉', en: 'Tesla' }, colors: { bg: '#111111', primary: '#cc0000' } },
-    { id: 'dark', name: { zh: '暗夜', en: 'Dark' }, colors: { bg: '#1a1a2e', primary: '#4361ee' } },
-    { id: 'tech', name: { zh: '科技蓝', en: 'Tech Blue' }, colors: { bg: '#0d1b2a', primary: '#0077b6' } },
-    { id: 'aurora', name: { zh: '极光', en: 'Aurora' }, colors: { bg: '#0b132b', primary: '#72efdd' } },
+    { id: 'cyber', name: { zh: '赛博朋克', en: 'Cyberpunk' }, colors: { bg: themeConfigs.cyber.bg, primary: themeConfigs.cyber.primary } },
+    { id: 'tesla', name: { zh: '特斯拉', en: 'Tesla' }, colors: { bg: themeConfigs.tesla.bg, primary: themeConfigs.tesla.primary } },
+    { id: 'dark', name: { zh: '暗夜', en: 'Dark' }, colors: { bg: themeConfigs.dark.bg, primary: themeConfigs.dark.primary } },
+    { id: 'tech', name: { zh: '科技蓝', en: 'Tech Blue' }, colors: { bg: themeConfigs.tech.bg, primary: themeConfigs.tech.primary } },
+    { id: 'aurora', name: { zh: '极光', en: 'Aurora' }, colors: { bg: themeConfigs.aurora.bg, primary: themeConfigs.aurora.primary } },
   ];
 
   const units: { id: UnitType; name: string }[] = [

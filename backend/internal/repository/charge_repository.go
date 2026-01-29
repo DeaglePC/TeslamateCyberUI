@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"time"
 
 	"teslamate-cyberui/internal/logger"
 	"teslamate-cyberui/internal/model"
@@ -12,7 +14,7 @@ import (
 
 // ChargeRepository 充电数据仓储接口
 type ChargeRepository interface {
-	GetList(ctx context.Context, carID int16, page, pageSize int) (*model.ListResponse[model.ChargeListItem], error)
+	GetList(ctx context.Context, carID int16, page, pageSize int, startDate, endDate *time.Time) (*model.ListResponse[model.ChargeListItem], error)
 	GetDetail(ctx context.Context, chargeID int64) (*model.ChargeDetail, error)
 	GetStats(ctx context.Context, chargeID int64) (*model.ChargeStats, error)
 }
@@ -27,18 +29,34 @@ func NewChargeRepository(db *sqlx.DB) ChargeRepository {
 }
 
 // GetList 获取充电记录列表
-func (r *chargeRepository) GetList(ctx context.Context, carID int16, page, pageSize int) (*model.ListResponse[model.ChargeListItem], error) {
+func (r *chargeRepository) GetList(ctx context.Context, carID int16, page, pageSize int, startDate, endDate *time.Time) (*model.ListResponse[model.ChargeListItem], error) {
+	// 构建查询条件
+	whereClause := "WHERE cp.car_id = $1"
+	args := []interface{}{carID}
+	argIdx := 2
+
+	if startDate != nil {
+		whereClause += fmt.Sprintf(" AND cp.start_date >= $%d", argIdx)
+		args = append(args, *startDate)
+		argIdx++
+	}
+	if endDate != nil {
+		whereClause += fmt.Sprintf(" AND cp.start_date <= $%d", argIdx)
+		args = append(args, *endDate)
+		argIdx++
+	}
+
 	// 获取总数
-	countQuery := `SELECT COUNT(*) FROM charging_processes WHERE car_id = $1`
+	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM charging_processes cp %s`, whereClause)
 	var total int
-	if err := r.db.GetContext(ctx, &total, countQuery, carID); err != nil {
+	if err := r.db.GetContext(ctx, &total, countQuery, args...); err != nil {
 		logger.Errorf("Failed to count charges for car %d: %v", carID, err)
 		return nil, err
 	}
 
 	// 获取列表
 	offset := (page - 1) * pageSize
-	query := `
+	query := fmt.Sprintf(`
 		SELECT 
 			cp.id,
 			cp.start_date,
@@ -60,12 +78,14 @@ func (r *chargeRepository) GetList(ctx context.Context, carID int16, page, pageS
 		LEFT JOIN addresses a ON cp.address_id = a.id
 		LEFT JOIN geofences g ON cp.geofence_id = g.id
 		LEFT JOIN positions p ON cp.position_id = p.id
-		WHERE cp.car_id = $1
+		%s
 		ORDER BY cp.start_date DESC
-		LIMIT $2 OFFSET $3
-	`
+		LIMIT $%d OFFSET $%d
+	`, whereClause, argIdx, argIdx+1)
 
-	rows, err := r.db.QueryxContext(ctx, query, carID, pageSize, offset)
+	args = append(args, pageSize, offset)
+
+	rows, err := r.db.QueryxContext(ctx, query, args...)
 	if err != nil {
 		logger.Errorf("Failed to get charges for car %d: %v", carID, err)
 		return nil, err

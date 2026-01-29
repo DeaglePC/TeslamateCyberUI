@@ -80,9 +80,9 @@ export const carApi = {
 
 // 充电 API
 export const chargeApi = {
-  getList: async (carId: number, page = 1, pageSize = 20): Promise<ListResponse<ChargeListItem>> => {
+  getList: async (carId: number, page = 1, pageSize = 20, startDate?: string, endDate?: string): Promise<ListResponse<ChargeListItem>> => {
     const res = await api.get<ApiResponse<ListResponse<ChargeListItem>>>(`/cars/${carId}/charges`, {
-      params: { page, pageSize },
+      params: { page, pageSize, startDate, endDate },
     });
     return res.data.data || { items: [], pagination: { page, pageSize, total: 0 } };
   },
@@ -100,9 +100,9 @@ export const chargeApi = {
 
 // 驾驶 API
 export const driveApi = {
-  getList: async (carId: number, page = 1, pageSize = 20): Promise<ListResponse<DriveListItem>> => {
+  getList: async (carId: number, page = 1, pageSize = 20, startDate?: string, endDate?: string): Promise<ListResponse<DriveListItem>> => {
     const res = await api.get<ApiResponse<ListResponse<DriveListItem>>>(`/cars/${carId}/drives`, {
-      params: { page, pageSize },
+      params: { page, pageSize, startDate, endDate },
     });
     return res.data.data || { items: [], pagination: { page, pageSize, total: 0 } };
   },
