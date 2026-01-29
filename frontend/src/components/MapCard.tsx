@@ -88,9 +88,9 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
     }, [latitude, longitude, amapKey, colors.primary]);
 
     return (
-        <div className={`glass rounded-2xl overflow-hidden ${className}`}>
-            {/* Map Container */}
-            <div className="relative h-48">
+        <div className={`glass rounded-2xl overflow-hidden flex flex-col ${className}`}>
+            {/* Map Container - Flex Grow to fill space */}
+            <div className="relative flex-1 min-h-[12rem]">
                 {/* State Badge */}
                 <div
                     className="absolute top-3 left-3 z-10 px-3 py-1.5 rounded-full glass-strong flex items-center gap-2"
@@ -121,9 +121,9 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
                 )}
             </div>
 
-            {/* Address Section */}
+            {/* Address Section - Fixed height at bottom */}
             {address && (
-                <div className="px-4 py-3 border-t border-white/5">
+                <div className="px-4 py-3 border-t border-white/5 shrink-0 bg-black/20">
                     <div className="flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke={colors.primary}>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

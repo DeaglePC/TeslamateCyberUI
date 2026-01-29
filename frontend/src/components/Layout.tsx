@@ -280,7 +280,9 @@ export default function Layout() {
             slideDirection === 'right' && 'page-slide-right'
           )}
         >
-          <Outlet />
+          <div className="max-w-[1920px] mx-auto w-full">
+            <Outlet />
+          </div>
         </div>
       </main>
 

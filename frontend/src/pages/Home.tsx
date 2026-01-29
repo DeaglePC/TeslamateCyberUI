@@ -188,11 +188,12 @@ export default function HomePage() {
       )}
 
       {/* Hero Section - 3 Column Layout */}
+      {/* Hero Section - 2 Column Layout (Car Card + Map) */}
       {status && currentCar && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left - Flip Card (Car Info) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left - Combined Car & Status Card */}
           <div
-            className="perspective-1000 cursor-pointer min-h-[200px]"
+            className="perspective-1000 cursor-pointer min-h-[240px] lg:min-h-[400px]"
             onClick={() => setIsCardFlipped(!isCardFlipped)}
           >
             <div
@@ -205,214 +206,180 @@ export default function HomePage() {
                 transform: isCardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
               }}
             >
-              {/* Front Side - Model + Image */}
+              {/* Front Side - Status + Image */}
               <Card
-                className="absolute inset-0 backface-hidden flex flex-col p-4"
+                className="absolute inset-0 backface-hidden flex flex-col p-6 overflow-hidden"
                 style={{ backfaceVisibility: 'hidden' }}
               >
-                {/* Top Row - Model Left, Name Right */}
-                <div className="flex items-start justify-between mb-2">
-                  {/* Left - Model */}
-                  <div>
-                    <p className="text-xs uppercase tracking-widest" style={{ color: colors.muted }}>
-                      Tesla
-                    </p>
-                    <h2 className="text-xl font-bold" style={{ color: colors.primary }}>
-                      {getModelName(currentCar.model)}
-                    </h2>
+                <div
+                  className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-10 pointer-events-none"
+                  style={{ background: colors.primary }}
+                />
+
+                {/* Header Row */}
+                <div className="flex justify-between items-start z-10 relative">
+                  {/* Left: Tesla App Style Info */}
+                  <div className="space-y-1">
+                    {/* 1. Battery Icon + Percentage */}
+                    <div className="flex items-center gap-2">
+                      {/* Battery Icon */}
+                      <div className="relative w-8 h-3.5 border border-white/30 rounded-[2px] flex items-center p-[1px]"
+                        style={{ borderColor: colors.muted }}>
+                        {/* Battery Tip */}
+                        <div className="absolute -right-[3px] top-1/2 -translate-y-1/2 w-[2px] h-1.5 rounded-r-[1px]"
+                          style={{ background: colors.muted }} />
+                        {/* Fill */}
+                        <div
+                          className="h-full rounded-[1px] transition-all duration-500"
+                          style={{
+                            width: `${status.batteryLevel}%`,
+                            background: status.batteryLevel <= 20 ? '#ff4444' : colors.primary,
+                          }}
+                        />
+                      </div>
+
+                      {/* Percentage Text */}
+                      <span className="text-sm font-bold tracking-tight" style={{ color: colors.primary }}>
+                        {status.batteryLevel}%
+                      </span>
+                    </div>
+
+                    {/* 2. Status Text */}
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium" style={{ color: colors.muted }}>
+                        {getStateLabel(status.state)}
+                        <span className="ml-1">
+                          {status.since && formatRelativeTime(status.since).replace('ago', '').replace('前', '')}
+                        </span>
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Right - Name */}
+                  {/* Right: Car Name */}
                   {currentCar.name && (
                     <div className="text-right">
-                      <p className="text-xs" style={{ color: colors.muted }}>
-                        {language === 'zh' ? '昵称' : 'Nickname'}
-                      </p>
-                      <p className="text-lg font-semibold" style={{ color: colors.primary }}>
+                      <p className="text-lg font-bold" style={{ color: colors.primary }}>
                         {currentCar.name}
+                      </p>
+                      <p className="text-xs" style={{ color: colors.muted }}>
+                        {getModelName(currentCar.model)}
                       </p>
                     </div>
                   )}
                 </div>
 
-                {/* Center - Car Image */}
-                <div className="flex-1 flex items-center justify-center w-full overflow-visible">
+                {/* Center - Large Car Image */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none pt-12">
                   {currentCar.model ? (
                     <img
                       src={getCarImageUrl(currentCar.model, currentCar.exteriorColor, currentCar.trimBadging)}
                       alt={`Tesla Model ${currentCar.model}`}
-                      className="w-full max-w-[600px] object-contain drop-shadow-lg scale-150 lg:scale-135 -mt-16 lg:-mt-6"
-                      style={{ filter: `drop-shadow(0 0 25px ${colors.primary}50)` }}
+                      className="w-full object-contain drop-shadow-xl
+                        max-w-[600px] scale-[1.4] mx-auto
+                        lg:max-w-[800px] lg:scale-[1.6] lg:mx-auto"
+                      style={{ filter: `drop-shadow(0 10px 40px ${colors.primary}40)` }}
                       onError={(e) => {
-                        // Fallback to generic image on error
                         const target = e.target as HTMLImageElement;
                         target.onerror = null;
                         target.src = 'https://digitalassets.tesla.com/tesla-contents/image/upload/f_auto,q_auto/Mega-Menu-Vehicles-Model-3.png';
                       }}
                     />
                   ) : (
-                    <svg viewBox="0 0 200 80" className="w-full max-w-xs opacity-80" fill="none">
-                      <path
-                        d="M20 50 Q40 45 60 45 L80 35 Q100 25 130 30 L160 35 Q180 40 190 50 L190 55 Q185 60 175 60 L165 60 Q160 55 155 55 L55 55 Q50 55 45 60 L35 60 Q25 60 20 55 Z"
-                        fill="url(#carGradient)"
-                        stroke={colors.primary}
-                        strokeWidth="0.5"
-                      />
-                      <defs>
-                        <linearGradient id="carGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor={colors.bg} />
-                          <stop offset="50%" stopColor="rgba(60,60,80,0.8)" />
-                          <stop offset="100%" stopColor={colors.bg} />
-                        </linearGradient>
-                      </defs>
-                    </svg>
+                    <div className="opacity-50 mb-10">
+                      <p>No Image Available</p>
+                    </div>
                   )}
                 </div>
               </Card>
 
-              {/* Back Side - Detailed Info */}
+              {/* Back Side - Detailed Info (Same as before) */}
               <Card
-                className="absolute inset-0 backface-hidden p-4"
+                className="absolute inset-0 backface-hidden p-6"
                 style={{
                   backfaceVisibility: 'hidden',
                   transform: 'rotateY(180deg)',
                 }}
               >
                 <div className="h-full flex flex-col">
-                  <h3 className="text-lg font-bold mb-3" style={{ color: colors.primary }}>
-                    {language === 'zh' ? '车辆详情' : 'Vehicle Details'}
-                  </h3>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold" style={{ color: colors.primary }}>
+                      {language === 'zh' ? '车辆详情' : 'Vehicle Details'}
+                    </h3>
+                    <span className="text-xs px-2 py-1 rounded bg-white/5" style={{ color: colors.muted }}>
+                      ID: #{currentCar.id}
+                    </span>
+                  </div>
 
-                  <div className="flex-1 space-y-2 text-sm overflow-hidden">
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
                     {/* VIN */}
-                    <div className="flex justify-between gap-2">
-                      <span className="shrink-0" style={{ color: colors.muted }}>VIN</span>
-                      <span className="font-mono text-xs truncate">{currentCar.vin || '--'}</span>
+                    <div className="space-y-1">
+                      <p style={{ color: colors.muted }}>VIN</p>
+                      <p className="font-mono">{currentCar.vin || '--'}</p>
                     </div>
 
                     {/* Model */}
-                    <div className="flex justify-between gap-2">
-                      <span className="shrink-0" style={{ color: colors.muted }}>
-                        {language === 'zh' ? '型号' : 'Model'}
-                      </span>
-                      <span className="truncate">{getModelName(currentCar.model)}</span>
+                    <div className="space-y-1">
+                      <p style={{ color: colors.muted }}>{language === 'zh' ? '型号' : 'Model'}</p>
+                      <p>{getModelName(currentCar.model)}</p>
                     </div>
 
-                    {/* Marketing Name */}
+                    {/* Version */}
                     {currentCar.marketingName && (
-                      <div className="flex justify-between gap-2">
-                        <span className="shrink-0" style={{ color: colors.muted }}>
-                          {language === 'zh' ? '版本' : 'Version'}
-                        </span>
-                        <span className="truncate">{currentCar.marketingName}</span>
+                      <div className="space-y-1">
+                        <p style={{ color: colors.muted }}>{language === 'zh' ? '版本' : 'Version'}</p>
+                        <p>{currentCar.marketingName}</p>
                       </div>
                     )}
 
-                    {/* Exterior Color */}
-                    <div className="flex justify-between items-center gap-2">
-                      <span style={{ color: colors.muted }}>
-                        {language === 'zh' ? '外观颜色' : 'Color'}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span
+                    {/* Color */}
+                    <div className="space-y-1">
+                      <p style={{ color: colors.muted }}>{language === 'zh' ? '外观颜色' : 'Color'}</p>
+                      <div className="flex items-center gap-2">
+                        <div
                           className="w-3 h-3 rounded-full border border-white/20"
                           style={{
                             background: currentCar.exteriorColor === 'SolidBlack' ? '#1a1a1a' :
                               currentCar.exteriorColor === 'PearlWhiteMultiCoat' ? '#f5f5f5' :
-                                currentCar.exteriorColor === 'MidnightSilverMetallic' ? '#6b7280' :
-                                  currentCar.exteriorColor === 'DeepBlueMetallic' ? '#1e40af' :
-                                    currentCar.exteriorColor === 'RedMultiCoat' ? '#dc2626' :
-                                      currentCar.exteriorColor === 'UltraWhite' ? '#ffffff' : '#6b7280'
+                                '#6b7280'
                           }}
                         />
-                        {getColorName(currentCar.exteriorColor)}
-                      </span>
+                        <span>{getColorName(currentCar.exteriorColor)}</span>
+                      </div>
                     </div>
 
-                    {/* Wheel Type */}
-                    {currentCar.wheelType && (
-                      <div className="flex justify-between gap-2">
-                        <span className="shrink-0" style={{ color: colors.muted }}>
-                          {language === 'zh' ? '轮毂' : 'Wheels'}
-                        </span>
-                        <span className="truncate">{currentCar.wheelType}</span>
-                      </div>
-                    )}
+                    {/* Software */}
+                    <div className="space-y-1">
+                      <p style={{ color: colors.muted }}>{language === 'zh' ? '软件版本' : 'Software'}</p>
+                      <p className="font-mono">{status.softwareVersion}</p>
+                    </div>
+
+                    {/* Odometer */}
+                    <div className="space-y-1">
+                      <p style={{ color: colors.muted }}>{language === 'zh' ? '总里程' : 'Odometer'}</p>
+                      <p>{formatDistance(stats?.totalDistance || 0, unit)}</p>
+                    </div>
                   </div>
 
-                  {/* Flip back hint */}
-                  <p className="text-xs text-center mt-2" style={{ color: colors.muted }}>
-                    {language === 'zh' ? '点击返回' : 'Tap to go back'}
-                  </p>
+                  <div className="mt-auto text-center">
+                    <p className="text-xs" style={{ color: colors.muted }}>
+                      {language === 'zh' ? '点击返回' : 'Tap to go back'}
+                    </p>
+                  </div>
                 </div>
               </Card>
             </div>
           </div>
 
-          {/* Center - Status Info */}
-          <Card className="relative overflow-hidden">
-            <div
-              className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20"
-              style={{ background: colors.primary }}
-            />
-
-            <div className="relative space-y-4">
-              {/* Current State Header */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-wider" style={{ color: colors.muted }}>
-                    {t('currentState')}
-                  </p>
-                  <h2 className="text-3xl font-bold uppercase tracking-tight">
-                    {getStateLabel(status.state)}
-                  </h2>
-                </div>
-                <span className="text-xs" style={{ color: colors.muted }}>
-                  ID: #{status.carId}
-                </span>
-              </div>
-
-              {/* Since Duration */}
-              {status.since && (
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke={colors.success}>
-                    <circle cx="12" cy="12" r="10" strokeWidth={2} />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" />
-                  </svg>
-                  <span style={{ color: colors.success }}>
-                    {t('since')} {formatRelativeTime(status.since)}
-                  </span>
-                </div>
-              )}
-
-              {/* Battery Level */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span style={{ color: colors.muted }}>{t('batteryLevel')}</span>
-                  <span className="text-xl font-bold" style={{ color: colors.primary }}>
-                    {status.batteryLevel}%
-                  </span>
-                </div>
-                <div className="h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${status.batteryLevel}%`,
-                      background: `linear-gradient(90deg, ${colors.primary}, ${colors.success})`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </Card>
-
           {/* Right - Map */}
-          <MapCard
-            latitude={status.latitude ?? stats?.lastLatitude}
-            longitude={status.longitude ?? stats?.lastLongitude}
-            address={status.geofence ?? stats?.lastAddress}
-            state={status.state}
-          />
+          <div className="h-auto lg:h-full">
+            <MapCard
+              className="h-full"
+              latitude={status.latitude ?? stats?.lastLatitude}
+              longitude={status.longitude ?? stats?.lastLongitude}
+              address={status.geofence ?? stats?.lastAddress}
+              state={status.state}
+            />
+          </div>
         </div>
       )}
 
