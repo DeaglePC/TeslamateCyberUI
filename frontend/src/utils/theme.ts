@@ -53,7 +53,7 @@ export const themeConfigs: Record<ThemeType, ThemeColors> = {
             online: '#00f0ff',    // Cyan
             updating: '#ff9f43',  // Orange
         },
-        chart: ['#00f0ff', '#fcee0a', '#39ff14', '#ff3f34', '#a29bfe'],
+        chart: ['#00f0ff', '#ff00aa', '#39ff14', '#ff3f34', '#a29bfe'],
     },
 
     // 2. Tesla: OEM style. Red primary. Semantically standard.

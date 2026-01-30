@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSettingsStore } from '@/store/settings';
 import { getThemeColors } from '@/utils/theme';
+import { DatePicker } from '@/components/DatePicker';
 
 interface DateFilterProps {
     onFilter: (startDate: string | undefined, endDate: string | undefined) => void;
@@ -98,42 +99,33 @@ export function DateFilter({ onFilter, className = '' }: DateFilterProps) {
             {/* Custom date inputs */}
             {showCustom && (
                 <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg" style={{ background: `${colors.primary}10` }}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 z-20">
                         <span className="text-sm" style={{ color: colors.muted }}>
                             {language === 'zh' ? '从' : 'From'}
                         </span>
-                        <input
-                            type="date"
+                        <DatePicker
                             value={customStart}
-                            onChange={(e) => setCustomStart(e.target.value)}
-                            className="px-3 py-1.5 rounded-lg text-sm bg-transparent border outline-none"
-                            style={{
-                                borderColor: colors.border,
-                                color: colors.primary,
-                            }}
+                            onChange={setCustomStart}
+                            className="w-40"
                         />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 z-10">
                         <span className="text-sm" style={{ color: colors.muted }}>
                             {language === 'zh' ? '到' : 'To'}
                         </span>
-                        <input
-                            type="date"
+                        <DatePicker
                             value={customEnd}
-                            onChange={(e) => setCustomEnd(e.target.value)}
-                            className="px-3 py-1.5 rounded-lg text-sm bg-transparent border outline-none"
-                            style={{
-                                borderColor: colors.border,
-                                color: colors.primary,
-                            }}
+                            onChange={setCustomEnd}
+                            className="w-40"
                         />
                     </div>
                     <button
                         onClick={handleCustomApply}
-                        className="px-4 py-1.5 text-sm rounded-lg transition-all hover:opacity-80"
+                        className="px-4 py-1.5 text-sm rounded-lg transition-all hover:opacity-80 ml-auto md:ml-0"
                         style={{
                             background: colors.primary,
                             color: '#000',
+                            fontWeight: 'bold'
                         }}
                     >
                         {language === 'zh' ? '应用' : 'Apply'}

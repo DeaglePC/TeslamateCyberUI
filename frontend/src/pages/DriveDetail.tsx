@@ -8,6 +8,7 @@ import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
 import { DriveMap } from '@/components/DriveMap';
 import { formatDate, formatDuration, formatDistance, formatSpeed, formatTemperature } from '@/utils/format';
+import { getThemeColors } from '@/utils/theme';
 import type { DriveDetail, DrivePosition } from '@/types';
 
 export default function DriveDetailPage() {
@@ -19,15 +20,8 @@ export default function DriveDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const themeColors: Record<string, { primary: string; secondary: string; muted: string; bg: string }> = {
-    cyber: { primary: '#00f0ff', secondary: '#ff00aa', muted: '#808080', bg: '#0a0a0f' },
-    tesla: { primary: '#cc0000', secondary: '#ffffff', muted: '#888888', bg: '#111111' },
-    dark: { primary: '#4361ee', secondary: '#f72585', muted: '#8d99ae', bg: '#1a1a2e' },
-    tech: { primary: '#0077b6', secondary: '#90e0ef', muted: '#778da9', bg: '#0d1b2a' },
-    aurora: { primary: '#72efdd', secondary: '#7678ed', muted: '#98c1d9', bg: '#0b132b' },
-  };
-
-  const colors = themeColors[theme] || themeColors.cyber;
+  const colors = getThemeColors(theme);
+  const secondaryColor = colors.chart?.[1] || colors.accent;
 
   const fetchData = async () => {
     if (!id) return;
@@ -144,8 +138,8 @@ export default function DriveDetailPage() {
         {
           type: 'value',
           name: '功率 kW',
-          axisLine: { lineStyle: { color: colors.secondary } },
-          axisLabel: { color: colors.secondary },
+          axisLine: { lineStyle: { color: secondaryColor } },
+          axisLabel: { color: secondaryColor },
           splitLine: { show: false },
         },
       ],
@@ -186,9 +180,9 @@ export default function DriveDetailPage() {
           symbol: 'none',
           sampling: 'lttb',
           lineStyle: {
-            color: colors.secondary,
+            color: secondaryColor,
             width: 1.5,
-            shadowColor: `${colors.secondary}30`,
+            shadowColor: `${secondaryColor}30`,
             shadowBlur: 3,
           },
           areaStyle: {
@@ -196,12 +190,12 @@ export default function DriveDetailPage() {
               type: 'linear',
               x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
-                { offset: 0, color: `${colors.secondary}25` },
-                { offset: 1, color: `${colors.secondary}00` },
+                { offset: 0, color: `${secondaryColor}25` },
+                { offset: 1, color: `${secondaryColor}00` },
               ],
             },
           },
-          itemStyle: { color: colors.secondary },
+          itemStyle: { color: secondaryColor },
         },
       ],
     };
@@ -268,8 +262,8 @@ export default function DriveDetailPage() {
             <div
               className="w-4 h-4 rounded-full flex items-center justify-center text-xs relative z-10 shrink-0"
               style={{
-                background: colors.secondary,
-                boxShadow: `0 0 8px ${colors.secondary}60`
+                background: secondaryColor,
+                boxShadow: `0 0 8px ${secondaryColor}60`
               }}
             >
               <span style={{ color: '#fff', fontWeight: 'bold' }}>终</span>

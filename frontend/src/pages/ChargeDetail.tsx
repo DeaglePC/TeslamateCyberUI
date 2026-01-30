@@ -7,6 +7,7 @@ import { Card, StatCard } from '@/components/Card';
 import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
 import { formatDate, formatDuration, formatEnergy, formatCurrency, formatTemperature } from '@/utils/format';
+import { getThemeColors } from '@/utils/theme';
 import type { ChargeDetail, ChargeStats } from '@/types';
 
 export default function ChargeDetailPage() {
@@ -18,15 +19,8 @@ export default function ChargeDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const themeColors: Record<string, { primary: string; secondary: string; muted: string; bg: string }> = {
-    cyber: { primary: '#00f0ff', secondary: '#ff00aa', muted: '#808080', bg: '#0a0a0f' },
-    tesla: { primary: '#cc0000', secondary: '#ffffff', muted: '#888888', bg: '#111111' },
-    dark: { primary: '#4361ee', secondary: '#f72585', muted: '#8d99ae', bg: '#1a1a2e' },
-    tech: { primary: '#0077b6', secondary: '#90e0ef', muted: '#778da9', bg: '#0d1b2a' },
-    aurora: { primary: '#72efdd', secondary: '#7678ed', muted: '#98c1d9', bg: '#0b132b' },
-  };
-
-  const colors = themeColors[theme] || themeColors.cyber;
+  const colors = getThemeColors(theme);
+  const secondaryColor = colors.chart?.[1] || colors.accent;
 
   const fetchData = async () => {
     if (!id) return;
@@ -104,8 +98,8 @@ export default function ChargeDetailPage() {
         {
           type: 'value',
           name: '功率 kW',
-          axisLine: { lineStyle: { color: colors.secondary } },
-          axisLabel: { color: colors.secondary },
+          axisLine: { lineStyle: { color: secondaryColor } },
+          axisLabel: { color: secondaryColor },
           splitLine: { show: false },
         },
       ],
@@ -148,8 +142,8 @@ export default function ChargeDetailPage() {
             focus: 'series',
             itemStyle: { borderWidth: 2 }
           },
-          lineStyle: { color: colors.secondary, width: 2 },
-          itemStyle: { color: colors.secondary },
+          lineStyle: { color: secondaryColor, width: 2 },
+          itemStyle: { color: secondaryColor },
         },
       ],
     };
@@ -185,9 +179,25 @@ export default function ChargeDetailPage() {
       <Card>
         <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>电量变化</h3>
         <BatteryBar startLevel={detail.startBatteryLevel} endLevel={detail.endBatteryLevel} />
-        <div className="flex justify-between mt-4" style={{ color: colors.muted }}>
+        <div className="flex justify-between mt-4 mb-6" style={{ color: colors.muted }}>
           <span>续航 {detail.startIdealRangeKm.toFixed(0)} km</span>
           <span>续航 {detail.endIdealRangeKm.toFixed(0)} km</span>
+        </div>
+
+        {/* Time Info Integration */}
+        <div className="pt-4 border-t" style={{ borderColor: `${colors.muted}20` }}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm" style={{ color: colors.muted }}>开始时间</p>
+              <p className="font-semibold">{formatDate(detail.startDate)}</p>
+            </div>
+            {detail.endDate && (
+              <div>
+                <p className="text-sm" style={{ color: colors.muted }}>结束时间</p>
+                <p className="font-semibold">{formatDate(detail.endDate)}</p>
+              </div>
+            )}
+          </div>
         </div>
       </Card>
 
@@ -222,22 +232,7 @@ export default function ChargeDetailPage() {
         </Card>
       )}
 
-      {/* 时间信息 */}
-      <Card>
-        <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>时间信息</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm" style={{ color: colors.muted }}>开始时间</p>
-            <p className="font-semibold">{formatDate(detail.startDate)}</p>
-          </div>
-          {detail.endDate && (
-            <div>
-              <p className="text-sm" style={{ color: colors.muted }}>结束时间</p>
-              <p className="font-semibold">{formatDate(detail.endDate)}</p>
-            </div>
-          )}
-        </div>
-      </Card>
+
     </div>
   );
 }

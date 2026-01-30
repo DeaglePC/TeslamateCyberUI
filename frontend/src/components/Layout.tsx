@@ -43,7 +43,24 @@ function SettingsIcon({ className }: { className?: string }) {
   );
 }
 
-// Main tab paths for swipe navigation
+function ChevronLeft({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function ChevronRight({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+// ... existing code ...
+
 const SWIPE_TABS = ['/', '/charges', '/drives', '/settings'];
 
 export default function Layout() {
@@ -53,6 +70,7 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const colors = getThemeColors(theme);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Touch state for swipe detection
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -188,19 +206,38 @@ export default function Layout() {
     >
       {/* PC端侧边栏 */}
       <aside
-        className={clsx('hidden md:flex flex-col w-64 glass-strong border-r')}
+        className={clsx(
+          'hidden md:flex flex-col glass-strong border-r transition-all duration-300 ease-in-out',
+          isSidebarCollapsed ? 'w-20' : 'w-64'
+        )}
         style={{ borderColor: colors.border }}
       >
         {/* Logo */}
-        <div className="p-6 border-b" style={{ borderColor: 'inherit' }}>
-          <h1 className="text-2xl font-bold" style={{ color: colors.primary }}>
-            <span className="neon-text">CyberUI</span>
+        <div
+          className={clsx(
+            'border-b flex items-center',
+            isSidebarCollapsed ? 'justify-center p-4' : 'p-6'
+          )}
+          style={{ borderColor: 'inherit', height: '88px' }}
+        >
+          <h1 className={clsx('font-bold transition-all', isSidebarCollapsed ? 'text-xl' : 'text-2xl')} style={{ color: colors.primary }}>
+            <span className="neon-text">{isSidebarCollapsed ? 'C' : 'CyberUI'}</span>
           </h1>
-          <p className="text-sm mt-1" style={{ color: colors.muted }}>TeslaMate Dashboard</p>
+          {!isSidebarCollapsed && (
+            <p className="text-sm mt-1 absolute bottom-4 left-6 opacity-0 animate-fadeIn" style={{ color: colors.muted }}>
+              {/* Animation handled by CSS or just static is fine */}
+            </p>
+          )}
         </div>
 
+        {!isSidebarCollapsed && (
+          <div className="px-6 pb-2 -mt-4 mb-2">
+            <p className="text-xs whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: colors.muted }}>TeslaMate Dashboard</p>
+          </div>
+        )}
+
         {/* 导航 */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-3 space-y-2 overflow-x-hidden">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path ||
               (item.path !== '/' && location.pathname.startsWith(item.path));
@@ -208,9 +245,11 @@ export default function Layout() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                title={isSidebarCollapsed ? item.label : ''}
                 className={clsx(
-                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border',
-                  isActive ? '' : 'border-transparent hover:bg-white/5'
+                  'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 border group',
+                  isActive ? '' : 'border-transparent hover:bg-white/5',
+                  isSidebarCollapsed ? 'justify-center' : ''
                 )}
                 style={{
                   backgroundColor: isActive ? `${colors.primary}15` : 'transparent',
@@ -218,18 +257,38 @@ export default function Layout() {
                   color: isActive ? colors.primary : colors.muted
                 }}
               >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
+                <item.icon className="w-6 h-6 shrink-0" />
+                <span
+                  className={clsx(
+                    'font-medium whitespace-nowrap transition-all duration-300 overflow-hidden',
+                    isSidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+                  )}
+                >
+                  {item.label}
+                </span>
               </NavLink>
             );
           })}
         </nav>
 
-        {/* 底部信息 */}
-        <div className="p-4 border-t" style={{ borderColor: 'inherit' }}>
-          <p className="text-xs" style={{ color: colors.muted }}>TeslaMate CyberUI v1.0</p>
+        {/* 底部信息 & 收起按钮 */}
+        <div className="p-4 border-t flex items-center justify-between" style={{ borderColor: 'inherit' }}>
+          <div className={clsx('overflow-hidden transition-all duration-300', isSidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100')}>
+            <p className="text-xs whitespace-nowrap" style={{ color: colors.muted }}>v1.0</p>
+          </div>
+
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="p-1.5 rounded-md hover:bg-white/10 transition-colors mx-auto"
+            style={{ color: colors.muted }}
+            title={isSidebarCollapsed ? "Expand" : "Collapse"}
+          >
+            {isSidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          </button>
         </div>
       </aside>
+
+      {/* ... existing main content ... */}
 
       {/* 主内容区 - 添加 ref 用于滑动检测 */}
       <main ref={mainContentRef} className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">

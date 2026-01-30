@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
+import { getThemeColors } from '@/utils/theme';
 import { isOutOfChina, wgsToGcj } from '@/utils/geo';
 import 'leaflet/dist/leaflet.css';
 
@@ -43,6 +44,7 @@ export function MapCard({ latitude, longitude, address, state, timestamp, classN
     const { theme, amapKey, language } = useSettingsStore();
     const { t } = useTranslation(language);
 
+
     const formatTimestamp = (ts?: string) => {
         if (!ts) return '';
         const date = new Date(ts);
@@ -54,15 +56,7 @@ export function MapCard({ latitude, longitude, address, state, timestamp, classN
         });
     };
 
-    const themeColors: Record<string, { primary: string; muted: string }> = {
-        cyber: { primary: '#00f0ff', muted: '#808080' },
-        tesla: { primary: '#cc0000', muted: '#888888' },
-        dark: { primary: '#4361ee', muted: '#8d99ae' },
-        tech: { primary: '#0077b6', muted: '#778da9' },
-        aurora: { primary: '#72efdd', muted: '#98c1d9' },
-    };
-
-    const colors = themeColors[theme] || themeColors.cyber;
+    const colors = getThemeColors(theme);
 
     // Strategy Determination
     const hasLocation = !!(latitude && longitude);
