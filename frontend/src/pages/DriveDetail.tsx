@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactECharts from 'echarts-for-react';
 import { useSettingsStore } from '@/store/settings';
@@ -6,19 +6,18 @@ import { driveApi } from '@/services/api';
 import { Card, StatCard } from '@/components/Card';
 import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
+import { DriveMap } from '@/components/DriveMap';
 import { formatDate, formatDuration, formatDistance, formatSpeed, formatTemperature } from '@/utils/format';
 import type { DriveDetail, DrivePosition } from '@/types';
 
 export default function DriveDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { theme, unit, amapKey } = useSettingsStore();
+  const { theme, unit } = useSettingsStore();
   const [detail, setDetail] = useState<DriveDetail | null>(null);
   const [positions, setPositions] = useState<DrivePosition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<unknown>(null);
 
   const themeColors: Record<string, { primary: string; secondary: string; muted: string; bg: string }> = {
     cyber: { primary: '#00f0ff', secondary: '#ff00aa', muted: '#808080', bg: '#0a0a0f' },
@@ -48,79 +47,6 @@ export default function DriveDetailPage() {
       setLoading(false);
     }
   };
-
-  // 初始化高德地图
-  useEffect(() => {
-    if (!positions.length || !mapRef.current || !amapKey) return;
-
-    const initMap = async () => {
-      try {
-        const AMapLoader = await import('@amap/amap-jsapi-loader');
-        const AMap = await AMapLoader.default.load({
-          key: amapKey,
-          version: '2.0',
-          plugins: ['AMap.Polyline', 'AMap.Marker'],
-        });
-
-        const map = new AMap.Map(mapRef.current, {
-          zoom: 14,
-          mapStyle: 'amap://styles/dark',
-        });
-
-        // 绘制轨迹
-        const path = positions.map(p => [p.longitude, p.latitude]);
-
-        const polyline = new AMap.Polyline({
-          path,
-          strokeColor: colors.primary,
-          strokeWeight: 4,
-          strokeOpacity: 0.8,
-        });
-
-        map.add(polyline);
-
-        // 起点标记
-        const startMarker = new AMap.Marker({
-          position: [positions[0].longitude, positions[0].latitude],
-          content: `<div style="background:${colors.primary};width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`,
-          anchor: 'center',
-          offset: new AMap.Pixel(0, 0),
-        });
-
-        // 终点标记
-        const endMarker = new AMap.Marker({
-          position: [positions[positions.length - 1].longitude, positions[positions.length - 1].latitude],
-          content: `<div style="background:${colors.secondary};width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`,
-          anchor: 'center',
-          offset: new AMap.Pixel(0, 0),
-        });
-
-        // 调试日志
-        console.log('Start position:', positions[0].longitude, positions[0].latitude);
-        console.log('End position:', positions[positions.length - 1].longitude, positions[positions.length - 1].latitude);
-        console.log('Total positions:', positions.length);
-
-        map.add([startMarker, endMarker]);
-        map.setFitView();
-
-        mapInstance.current = map;
-      } catch (err) {
-        console.error('Map init error:', err);
-        if (err instanceof Error && err.message.includes('USERKEY_PLAT_NOMATCH')) {
-          console.error('高德地图 API Key 类型错误：请使用 Web端 (JS API) 类型的 Key，而不是 Web服务 Key');
-        }
-      }
-    };
-
-    initMap();
-
-    return () => {
-      if (mapInstance.current) {
-        // @ts-expect-error AMap destroy method
-        mapInstance.current.destroy?.();
-      }
-    };
-  }, [positions, amapKey, colors]);
 
   useEffect(() => {
     fetchData();
@@ -382,18 +308,12 @@ export default function DriveDetailPage() {
         )}
       </div>
 
-      {/* 地图轨迹 */}
-      {amapKey && positions.length > 0 && (
+      {/* 地图轨迹 - 无需Key也能显示 */}
+      {positions.length > 0 && (
         <Card>
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>行驶轨迹</h3>
-          <div ref={mapRef} className="w-full h-64 md:h-96 rounded-lg overflow-hidden" />
-        </Card>
-      )}
-
-      {!amapKey && (
-        <Card>
-          <div className="text-center py-8" style={{ color: colors.muted }}>
-            <p>请在设置页面配置高德地图 API Key 以查看轨迹</p>
+          <div className="h-64 md:h-96 w-full relative z-0">
+            <DriveMap positions={positions} />
           </div>
         </Card>
       )}
@@ -413,3 +333,4 @@ export default function DriveDetailPage() {
     </div>
   );
 }
+

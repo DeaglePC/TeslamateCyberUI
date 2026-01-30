@@ -1,6 +1,23 @@
 import { useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
+import { isOutOfChina, wgsToGcj } from '@/utils/geo';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default marker icon in Leaflet
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+const DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 interface MapCardProps {
     latitude?: number;
@@ -8,6 +25,15 @@ interface MapCardProps {
     address?: string;
     state?: string;
     className?: string;
+}
+
+// Component to handle map center updates in Leaflet
+function MapUpdater({ center }: { center: [number, number] }) {
+    const map = useMap();
+    useEffect(() => {
+        map.setView(center);
+    }, [center, map]);
+    return null;
 }
 
 export function MapCard({ latitude, longitude, address, state, className = '' }: MapCardProps) {
@@ -39,8 +65,14 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
     const icon = stateIcons[state || 'asleep'] || stateIcons.asleep;
     const label = getStateLabel(state || 'asleep').toUpperCase();
 
+    // Strategy Determination
+    const hasLocation = !!(latitude && longitude);
+    const isChina = hasLocation && !isOutOfChina(latitude!, longitude!);
+    const useAmap = isChina && !!amapKey;
+
+    // AMap Effect
     useEffect(() => {
-        if (!latitude || !longitude || !mapRef.current || !amapKey) return;
+        if (!useAmap || !mapRef.current || !amapKey || !latitude || !longitude) return;
 
         let mounted = true;
 
@@ -55,21 +87,36 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
 
                 if (!mounted || !mapRef.current) return;
 
-                const map = new AMap.Map(mapRef.current, {
-                    zoom: 15,
-                    mapStyle: 'amap://styles/dark',
-                    center: [longitude, latitude],
-                });
+                // Conversion for AMap (WGS-84 -> GCJ-02)
+                const [gcjLat, gcjLon] = wgsToGcj(latitude, longitude);
 
-                // Add marker for current position
+                let map = mapInstanceRef.current;
+                if (!map) {
+                    map = new AMap.Map(mapRef.current, {
+                        zoom: 15,
+                        mapStyle: 'amap://styles/dark',
+                        center: [gcjLon, gcjLat],
+                    });
+                    mapInstanceRef.current = map;
+                } else {
+                    // @ts-expect-error AMap setCenter
+                    map.setCenter([gcjLon, gcjLat]);
+                }
+
+                // Clear previous markers
+                // @ts-expect-error AMap clearMap
+                map.clearMap();
+
+                // Add marker
                 const marker = new AMap.Marker({
-                    position: [longitude, latitude],
+                    position: [gcjLon, gcjLat],
                     offset: new AMap.Pixel(-10, -10),
                     content: `<div style="width: 20px; height: 20px; border-radius: 50%; background: ${colors.primary}; border: 3px solid white; box-shadow: 0 0 10px ${colors.primary};"></div>`,
                 });
 
+                // @ts-expect-error AMap add
                 map.add(marker);
-                mapInstanceRef.current = map;
+
             } catch (error) {
                 console.error('Failed to load AMap:', error);
             }
@@ -80,20 +127,27 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
         return () => {
             mounted = false;
             if (mapInstanceRef.current) {
-                // @ts-expect-error AMap destroy method
-                mapInstanceRef.current.destroy?.();
-                mapInstanceRef.current = null;
+                // We keep the instance alive for performance, or add cleanup if needed
+                // mapInstanceRef.current.destroy?.(); 
             }
         };
-    }, [latitude, longitude, amapKey, colors.primary]);
+    }, [useAmap, latitude, longitude, amapKey, colors.primary]);
+
+    // Custom Leaflet Icon
+    const customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="width: 20px; height: 20px; border-radius: 50%; background: ${colors.primary}; border: 3px solid white; box-shadow: 0 0 10px ${colors.primary};"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10], // Center it
+    });
 
     return (
         <div className={`glass rounded-2xl overflow-hidden flex flex-col ${className}`}>
-            {/* Map Container - Flex Grow to fill space */}
+            {/* Map Container */}
             <div className="relative flex-1 min-h-[12rem]">
                 {/* State Badge */}
                 <div
-                    className="absolute top-3 left-3 z-10 px-3 py-1.5 rounded-full glass-strong flex items-center gap-2"
+                    className="absolute top-3 left-3 z-[401] px-3 py-1.5 rounded-full glass-strong flex items-center gap-2"
                     style={{ borderColor: colors.primary }}
                 >
                     <span>{icon}</span>
@@ -102,26 +156,38 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
                     </span>
                 </div>
 
-                {/* Map or Placeholder */}
-                {amapKey && latitude && longitude ? (
-                    <div ref={mapRef} className="w-full h-full" />
+                {/* Map Implementation */}
+                {hasLocation ? (
+                    useAmap ? (
+                        <div ref={mapRef} className="w-full h-full" />
+                    ) : (
+                        <MapContainer
+                            center={[latitude!, longitude!]}
+                            zoom={15}
+                            style={{ width: '100%', height: '100%', zIndex: 0 }}
+                            zoomControl={false}
+                        >
+                            <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                            />
+                            <Marker position={[latitude!, longitude!]} icon={customIcon} />
+                            <MapUpdater center={[latitude!, longitude!]} />
+                        </MapContainer>
+                    )
                 ) : (
                     <div
                         className="w-full h-full flex items-center justify-center"
                         style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16162a 100%)' }}
                     >
                         <div className="text-center" style={{ color: colors.muted }}>
-                            {!amapKey ? (
-                                <p className="text-sm">{t('configureMapKey')}</p>
-                            ) : (
-                                <p className="text-sm">{t('noLocation')}</p>
-                            )}
+                            <p className="text-sm">{t('noLocation')}</p>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Address Section - Fixed height at bottom */}
+            {/* Address Section */}
             {address && (
                 <div className="px-4 py-3 border-t border-white/5 shrink-0 bg-black/20">
                     <div className="flex items-center gap-2">

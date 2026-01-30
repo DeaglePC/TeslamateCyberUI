@@ -193,7 +193,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left - Combined Car & Status Card */}
           <div
-            className="perspective-1000 cursor-pointer min-h-[240px] lg:min-h-[400px]"
+            className="perspective-1000 cursor-pointer min-h-[320px] lg:min-h-[420px]"
             onClick={() => setIsCardFlipped(!isCardFlipped)}
           >
             <div
@@ -294,14 +294,14 @@ export default function HomePage() {
 
               {/* Back Side - Detailed Info (Same as before) */}
               <Card
-                className="absolute inset-0 backface-hidden p-6"
+                className="absolute inset-0 backface-hidden p-5"
                 style={{
                   backfaceVisibility: 'hidden',
                   transform: 'rotateY(180deg)',
                 }}
               >
                 <div className="h-full flex flex-col">
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold" style={{ color: colors.primary }}>
                       {language === 'zh' ? '车辆详情' : 'Vehicle Details'}
                     </h3>
@@ -310,7 +310,7 @@ export default function HomePage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                     {/* VIN */}
                     <div className="space-y-1">
                       <p style={{ color: colors.muted }}>VIN</p>
@@ -360,7 +360,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="mt-auto text-center">
+                  <div className="mt-auto text-center pt-2">
                     <p className="text-xs" style={{ color: colors.muted }}>
                       {language === 'zh' ? '点击返回' : 'Tap to go back'}
                     </p>
