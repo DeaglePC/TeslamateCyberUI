@@ -37,30 +37,87 @@ export default function SettingsPage() {
 
       {/* Theme Settings */}
       <Card>
-        <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('themeSettings')}</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {themes.map((th) => (
-            <button
-              key={th.id}
-              onClick={() => setTheme(th.id)}
-              className={clsx(
-                'p-3 rounded-lg border-2 transition-all',
-                theme === th.id ? 'scale-105' : 'opacity-70 hover:opacity-100'
-              )}
-              style={{
-                background: th.colors.bg,
-                borderColor: theme === th.id ? th.colors.primary : 'transparent',
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ background: th.colors.primary }}
-                />
-                <span style={{ color: th.colors.primary }}>{th.name[language]}</span>
+        <div className="flex items-center gap-2 mb-4">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          </svg>
+          <h3 className="font-semibold" style={{ color: colors.primary }}>{language === 'zh' ? '界面主题' : 'INTERFACE THEME'}</h3>
+        </div>
+
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+          {themes.map((th) => {
+            const isActive = theme === th.id;
+            return (
+              <div key={th.id} className="flex flex-col gap-2 group items-center">
+                <button
+                  onClick={() => setTheme(th.id)}
+                  className={clsx(
+                    'relative w-full aspect-[4/3] rounded-lg border-2 transition-all duration-300 overflow-hidden',
+                    isActive ? 'scale-105 ring-2 ring-offset-2 ring-offset-black/50' : 'hover:scale-105 opacity-80 hover:opacity-100 hover:border-white/20'
+                  )}
+                  style={{
+                    backgroundColor: th.colors.bg,
+                    borderColor: isActive ? th.colors.primary : 'rgba(255,255,255,0.1)',
+                    boxShadow: isActive ? `0 0 15px ${th.colors.primary}60, inset 0 0 15px ${th.colors.primary}20` : 'none',
+                    '--theme-primary': th.colors.primary,
+                  } as React.CSSProperties}
+                >
+                  {/* Grid Pattern Overlay */}
+                  <div
+                    className="absolute inset-0 opacity-20 pointer-events-none"
+                    style={{
+                      backgroundImage: `radial-gradient(${th.colors.primary} 1px, transparent 1px)`,
+                      backgroundSize: '8px 8px'
+                    }}
+                  />
+
+                  {/* Active Badge - Scaled down for smaller cards */}
+                  {isActive && (
+                    <div
+                      className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider z-20 shadow-lg leading-none"
+                      style={{
+                        backgroundColor: th.colors.primary,
+                        color: '#000000',
+                        boxShadow: `0 0 8px ${th.colors.primary}`
+                      }}
+                    >
+                      ACTIVE
+                    </div>
+                  )}
+
+                  {/* Preview Elements */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {/* Glowing Circle - Scaled */}
+                    <div
+                      className="absolute top-2 left-2 w-7 h-7 rounded-full border-[1.5px] transition-transform duration-300 group-hover:scale-110"
+                      style={{
+                        borderColor: th.colors.primary,
+                        boxShadow: `0 0 10px ${th.colors.primary}, inset 0 0 5px ${th.colors.primary}40`,
+                        background: `${th.colors.primary}10`
+                      }}
+                    />
+
+                    {/* Glowing Bar - Scaled */}
+                    <div
+                      className="absolute bottom-3 right-3 w-10 h-2 rounded-full transition-all duration-300 group-hover:w-12"
+                      style={{
+                        backgroundColor: th.colors.primary,
+                        boxShadow: `0 0 8px ${th.colors.primary}`
+                      }}
+                    />
+                  </div>
+                </button>
+
+                {/* Theme Name */}
+                <span className={clsx(
+                  "text-xs font-medium tracking-wide transition-colors duration-300 text-center",
+                  isActive ? "font-bold text-white shadow-glow" : "text-gray-400 group-hover:text-gray-200"
+                )}>
+                  {th.name[language]}
+                </span>
               </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
       </Card>
 

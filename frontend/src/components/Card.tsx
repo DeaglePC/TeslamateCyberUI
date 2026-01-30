@@ -1,4 +1,5 @@
 import { useSettingsStore } from '@/store/settings';
+import { getThemeColors } from '@/utils/theme';
 import clsx from 'clsx';
 import type { ReactNode, CSSProperties } from 'react';
 
@@ -45,16 +46,7 @@ interface StatCardProps {
 
 export function StatCard({ label, value, unit, icon, trend, trendValue, sublabel, sublabelColor }: StatCardProps) {
   const { theme } = useSettingsStore();
-
-  const themeColors: Record<string, { primary: string; muted: string }> = {
-    cyber: { primary: '#00f0ff', muted: '#808080' },
-    tesla: { primary: '#cc0000', muted: '#888888' },
-    dark: { primary: '#4361ee', muted: '#8d99ae' },
-    tech: { primary: '#0077b6', muted: '#778da9' },
-    aurora: { primary: '#72efdd', muted: '#98c1d9' },
-  };
-
-  const colors = themeColors[theme] || themeColors.cyber;
+  const colors = getThemeColors(theme);
 
   return (
     <Card>

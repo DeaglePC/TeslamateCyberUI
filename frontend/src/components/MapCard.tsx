@@ -24,6 +24,7 @@ interface MapCardProps {
     longitude?: number;
     address?: string;
     state?: string;
+    timestamp?: string;
     className?: string;
 }
 
@@ -36,11 +37,22 @@ function MapUpdater({ center }: { center: [number, number] }) {
     return null;
 }
 
-export function MapCard({ latitude, longitude, address, state, className = '' }: MapCardProps) {
+export function MapCard({ latitude, longitude, address, state, timestamp, className = '' }: MapCardProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<unknown>(null);
     const { theme, amapKey, language } = useSettingsStore();
-    const { t, getStateLabel } = useTranslation(language);
+    const { t } = useTranslation(language);
+
+    const formatTimestamp = (ts?: string) => {
+        if (!ts) return '';
+        const date = new Date(ts);
+        return date.toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+    };
 
     const themeColors: Record<string, { primary: string; muted: string }> = {
         cyber: { primary: '#00f0ff', muted: '#808080' },
@@ -52,29 +64,26 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
 
     const colors = themeColors[theme] || themeColors.cyber;
 
-    // State badge icons
-    const stateIcons: Record<string, string> = {
-        asleep: '🅿️',
-        online: '🟢',
-        offline: '⚫',
-        charging: '⚡',
-        driving: '🚗',
-        updating: '🔄',
-    };
-
-    const icon = stateIcons[state || 'asleep'] || stateIcons.asleep;
-    const label = getStateLabel(state || 'asleep').toUpperCase();
-
     // Strategy Determination
     const hasLocation = !!(latitude && longitude);
     const isChina = hasLocation && !isOutOfChina(latitude!, longitude!);
     const useAmap = isChina && !!amapKey;
+
+    // AMap Style Mapping
+    const amapStyles: Record<string, string> = {
+        cyber: 'amap://styles/darkblue',  // Neon friendly
+        tesla: 'amap://styles/grey',      // Professional/Metallic
+        dark: 'amap://styles/dark',       // Standard Dark
+        tech: 'amap://styles/blue',       // Deep Blue
+        aurora: 'amap://styles/dark',     // Contrast for Pink
+    };
 
     // AMap Effect
     useEffect(() => {
         if (!useAmap || !mapRef.current || !amapKey || !latitude || !longitude) return;
 
         let mounted = true;
+        const currentStyle = amapStyles[theme] || 'amap://styles/dark';
 
         const initMap = async () => {
             try {
@@ -94,13 +103,15 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
                 if (!map) {
                     map = new AMap.Map(mapRef.current, {
                         zoom: 15,
-                        mapStyle: 'amap://styles/dark',
+                        mapStyle: currentStyle,
                         center: [gcjLon, gcjLat],
                     });
                     mapInstanceRef.current = map;
                 } else {
-                    // @ts-expect-error AMap setCenter
+                    // @ts-expect-error AMap types
                     map.setCenter([gcjLon, gcjLat]);
+                    // @ts-expect-error AMap types
+                    map.setMapStyle(currentStyle);
                 }
 
                 // Clear previous markers
@@ -126,12 +137,8 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
 
         return () => {
             mounted = false;
-            if (mapInstanceRef.current) {
-                // We keep the instance alive for performance, or add cleanup if needed
-                // mapInstanceRef.current.destroy?.(); 
-            }
         };
-    }, [useAmap, latitude, longitude, amapKey, colors.primary]);
+    }, [useAmap, latitude, longitude, amapKey, colors.primary, theme]);
 
     // Custom Leaflet Icon
     const customIcon = L.divIcon({
@@ -145,16 +152,15 @@ export function MapCard({ latitude, longitude, address, state, className = '' }:
         <div className={`glass rounded-2xl overflow-hidden flex flex-col ${className}`}>
             {/* Map Container */}
             <div className="relative flex-1 min-h-[12rem]">
-                {/* State Badge */}
-                <div
-                    className="absolute top-3 left-3 z-[401] px-3 py-1.5 rounded-full glass-strong flex items-center gap-2"
-                    style={{ borderColor: colors.primary }}
-                >
-                    <span>{icon}</span>
-                    <span className="text-xs font-semibold tracking-wider" style={{ color: colors.primary }}>
-                        {label}
-                    </span>
-                </div>
+                {/* Timestamp Badge */}
+                {timestamp && (
+                    <div className="absolute top-3 left-3 z-[401] px-3 py-1.5 rounded-full glass-strong flex items-center gap-2 pointer-events-none">
+                        <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: colors.primary }}></div>
+                        <span className="text-xs font-medium tracking-wide" style={{ color: colors.muted }}>
+                            {t('lastUpdated')}: {formatTimestamp(timestamp)}
+                        </span>
+                    </div>
+                )}
 
                 {/* Map Implementation */}
                 {hasLocation ? (

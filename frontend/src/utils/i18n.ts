@@ -87,6 +87,7 @@ const translations = {
     hours: { zh: '小时', en: 'hours' },
     minutes: { zh: '分钟', en: 'min' },
     ago: { zh: '前', en: 'ago' },
+    lastUpdated: { zh: '最后更新', en: 'Last Updated' },
 } as const;
 
 type TranslationKey = keyof typeof translations;

@@ -362,6 +362,7 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
                     { state: STATE.ASLEEP, label: language === 'zh' ? '休眠' : 'Asleep' },
                     { state: STATE.DRIVING, label: language === 'zh' ? '行驶' : 'Driving' },
                     { state: STATE.CHARGING, label: language === 'zh' ? '充电' : 'Charging' },
+                    { state: STATE.UPDATING, label: language === 'zh' ? '更新' : 'Updating' },
                 ].map((item) => (
                     <div key={item.state} className="flex items-center gap-2">
                         <div

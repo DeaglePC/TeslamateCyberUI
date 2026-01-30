@@ -8,6 +8,7 @@ import { SocHistoryChart } from '@/components/SocHistoryChart';
 import { ActivityTimeline } from '@/components/ActivityTimeline';
 import { formatDistance, formatRelativeTime } from '@/utils/format';
 import { useTranslation } from '@/utils/i18n';
+import { getThemeColors } from '@/utils/theme';
 import type { Car, CarStatus, OverviewStats, SocDataPoint, StateTimelineItem } from '@/types';
 import clsx from 'clsx';
 
@@ -36,18 +37,11 @@ const getCarImageUrl = (model?: string, exteriorColor?: string, trimBadging?: st
   const modelLower = model.toLowerCase();
   const colorCode = exteriorColor ? (COLOR_OPTION_CODES[exteriorColor] || 'PPSW') : 'PPSW';
 
-  // Detect if it's a Highland (new) Model 3 based on trim or other indicators
-  // Highland Model 3 has different option codes
-  // const isHighland = trimBadging?.includes('Highland') || false;
-
   // Build Tesla configurator URL
   const baseUrl = 'https://static-assets.tesla.com/configurator/compositor';
 
   // Model-specific configurations using Tesla's actual format
   if (modelLower === '3' || modelLower === 'model3') {
-    // Model 3: Using format from Tesla's official configurator
-    // $MT372 = trim, $PN00 = color, $W38A = wheels, $IPB2 = interior
-    // bkba_opt=1 for transparent background
     return `${baseUrl}?context=design_studio_2&options=$MT372,$${colorCode},$W38A,$IPB2,$DRRH&view=STUD_FRONT34&model=m3&size=1920&bkba_opt=1&crop=0,0,0,0&overlay=0&`;
   } else if (modelLower === 's' || modelLower === 'models') {
     return `${baseUrl}?context=design_studio_2&options=$MTS13,$${colorCode},$WT20,$IBC00&view=STUD_FRONT34&model=ms&size=1920&bkba_opt=1&crop=0,0,0,0&overlay=0&`;
@@ -94,15 +88,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
 
-  const themeColors: Record<string, { primary: string; muted: string; success: string; warning: string; bg: string }> = {
-    cyber: { primary: '#00f0ff', muted: '#808080', success: '#00ff88', warning: '#ffaa00', bg: '#0d0d1a' },
-    tesla: { primary: '#cc0000', muted: '#888888', success: '#4caf50', warning: '#ff9800', bg: '#0f0f0f' },
-    dark: { primary: '#4361ee', muted: '#8d99ae', success: '#06d6a0', warning: '#ffd60a', bg: '#111827' },
-    tech: { primary: '#0077b6', muted: '#778da9', success: '#52b788', warning: '#f4a261', bg: '#0f172a' },
-    aurora: { primary: '#72efdd', muted: '#98c1d9', success: '#80ed99', warning: '#fcbf49', bg: '#0f172a' },
-  };
-
-  const colors = themeColors[theme] || themeColors.cyber;
+  const colors = getThemeColors(theme);
 
   // Get current car info
   const currentCar = cars.find(c => c.id === selectedCarId) || cars[0];
@@ -378,6 +364,7 @@ export default function HomePage() {
               longitude={status.longitude ?? stats?.lastLongitude}
               address={status.geofence ?? stats?.lastAddress}
               state={status.state}
+              timestamp={stats?.lastLocationTime}
             />
           </div>
         </div>

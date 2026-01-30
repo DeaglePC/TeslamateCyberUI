@@ -133,19 +133,24 @@ export function BatteryBar({ startLevel, endLevel }: BatteryBarProps) {
 
         {/* 左侧起始电量标签 */}
         <div
-          className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1"
-          style={{ color: isConsuming ? colors.primary : colors.muted }}
+          className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10"
+          style={{
+            color: '#ffffff',
+            textShadow: '0 1px 3px rgba(0,0,0,0.8)'
+          }}
         >
           <span className="text-sm font-bold">{startLevel}%</span>
         </div>
 
         {/* 中间增量/消耗标签 */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <span
             className="text-xs font-bold px-2 py-0.5 rounded"
             style={{
-              color: isConsuming ? '#ff6b6b' : colors.success,
-              background: isConsuming ? 'rgba(255,107,107,0.2)' : `${colors.success}25`,
+              color: '#ffffff',
+              background: isConsuming ? 'rgba(255,107,107,0.4)' : 'rgba(0,0,0,0.3)', // Darker background for contrast
+              textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+              backdropFilter: 'blur(2px)'
             }}
           >
             {isConsuming ? `${startLevel - endLevel}%` : `+${addedLevel}%`}
@@ -154,8 +159,11 @@ export function BatteryBar({ startLevel, endLevel }: BatteryBarProps) {
 
         {/* 右侧结束电量标签 */}
         <div
-          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"
-          style={{ color: isConsuming ? '#ff6b6b' : colors.success }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10"
+          style={{
+            color: '#ffffff',
+            textShadow: '0 1px 3px rgba(0,0,0,0.8)'
+          }}
         >
           <span className="text-sm font-bold">{endLevel}%</span>
         </div>

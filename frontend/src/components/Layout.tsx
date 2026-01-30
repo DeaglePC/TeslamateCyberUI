@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
+import { getThemeColors } from '@/utils/theme';
 import { useRef, useCallback, useEffect, useState } from 'react';
 import clsx from 'clsx';
 
@@ -50,6 +51,8 @@ export default function Layout() {
   const { t } = useTranslation(language);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const colors = getThemeColors(theme);
 
   // Touch state for swipe detection
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -178,69 +181,22 @@ export default function Layout() {
     }
   }, [slideDirection, location.pathname]);
 
-  const themeColors = {
-    cyber: {
-      bg: 'bg-[#0a0a0f]',
-      sidebar: 'bg-[rgba(20,20,35,0.8)]',
-      primary: 'text-[#00f0ff]',
-      text: 'text-[#e0e0e0]',
-      muted: 'text-[#808080]',
-      border: 'border-[rgba(0,240,255,0.3)]',
-      active: 'bg-[rgba(0,240,255,0.1)]',
-    },
-    tesla: {
-      bg: 'bg-[#111111]',
-      sidebar: 'bg-[rgba(30,30,30,0.9)]',
-      primary: 'text-[#cc0000]',
-      text: 'text-[#ffffff]',
-      muted: 'text-[#888888]',
-      border: 'border-[rgba(255,255,255,0.1)]',
-      active: 'bg-[rgba(204,0,0,0.1)]',
-    },
-    dark: {
-      bg: 'bg-[#1a1a2e]',
-      sidebar: 'bg-[rgba(30,30,50,0.85)]',
-      primary: 'text-[#4361ee]',
-      text: 'text-[#edf2f4]',
-      muted: 'text-[#8d99ae]',
-      border: 'border-[rgba(67,97,238,0.3)]',
-      active: 'bg-[rgba(67,97,238,0.1)]',
-    },
-    tech: {
-      bg: 'bg-[#0d1b2a]',
-      sidebar: 'bg-[rgba(27,38,59,0.9)]',
-      primary: 'text-[#0077b6]',
-      text: 'text-[#caf0f8]',
-      muted: 'text-[#778da9]',
-      border: 'border-[rgba(0,119,182,0.3)]',
-      active: 'bg-[rgba(0,119,182,0.1)]',
-    },
-    aurora: {
-      bg: 'bg-[#0b132b]',
-      sidebar: 'bg-[rgba(28,38,65,0.85)]',
-      primary: 'text-[#72efdd]',
-      text: 'text-[#e0fbfc]',
-      muted: 'text-[#98c1d9]',
-      border: 'border-[rgba(114,239,221,0.3)]',
-      active: 'bg-[rgba(114,239,221,0.1)]',
-    },
-  };
-
-  const colors = themeColors[theme];
-
   return (
-    <div className={clsx('min-h-screen flex', colors.bg, colors.text)}>
+    <div
+      className={clsx('min-h-screen flex')}
+      style={{ backgroundColor: colors.bg, color: colors.muted }}
+    >
       {/* PC端侧边栏 */}
-      <aside className={clsx(
-        'hidden md:flex flex-col w-64 glass-strong border-r',
-        colors.border
-      )}>
+      <aside
+        className={clsx('hidden md:flex flex-col w-64 glass-strong border-r')}
+        style={{ borderColor: colors.border }}
+      >
         {/* Logo */}
-        <div className="p-6 border-b border-inherit">
-          <h1 className={clsx('text-2xl font-bold', colors.primary)}>
+        <div className="p-6 border-b" style={{ borderColor: 'inherit' }}>
+          <h1 className="text-2xl font-bold" style={{ color: colors.primary }}>
             <span className="neon-text">CyberUI</span>
           </h1>
-          <p className={clsx('text-sm mt-1', colors.muted)}>TeslaMate Dashboard</p>
+          <p className="text-sm mt-1" style={{ color: colors.muted }}>TeslaMate Dashboard</p>
         </div>
 
         {/* 导航 */}
@@ -253,9 +209,14 @@ export default function Layout() {
                 key={item.path}
                 to={item.path}
                 className={clsx(
-                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
-                  isActive ? [colors.active, colors.primary, 'border', colors.border] : [colors.muted, 'hover:' + colors.text]
+                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border',
+                  isActive ? '' : 'border-transparent hover:bg-white/5'
                 )}
+                style={{
+                  backgroundColor: isActive ? `${colors.primary}15` : 'transparent',
+                  borderColor: isActive ? `${colors.primary}40` : 'transparent',
+                  color: isActive ? colors.primary : colors.muted
+                }}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
@@ -265,8 +226,8 @@ export default function Layout() {
         </nav>
 
         {/* 底部信息 */}
-        <div className={clsx('p-4 border-t', colors.border)}>
-          <p className={clsx('text-xs', colors.muted)}>TeslaMate CyberUI v1.0</p>
+        <div className="p-4 border-t" style={{ borderColor: 'inherit' }}>
+          <p className="text-xs" style={{ color: colors.muted }}>TeslaMate CyberUI v1.0</p>
         </div>
       </aside>
 
@@ -287,10 +248,10 @@ export default function Layout() {
       </main>
 
       {/* 移动端底部导航 */}
-      <nav className={clsx(
-        'md:hidden fixed bottom-0 left-0 right-0 glass-strong border-t flex justify-around py-2 z-50',
-        colors.border
-      )}>
+      <nav
+        className={clsx('md:hidden fixed bottom-0 left-0 right-0 glass-strong border-t flex justify-around py-2 z-50')}
+        style={{ borderColor: colors.border }}
+      >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path ||
             (item.path !== '/' && location.pathname.startsWith(item.path));
@@ -298,13 +259,11 @@ export default function Layout() {
             <NavLink
               key={item.path}
               to={item.path}
-              className={clsx(
-                'flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all',
-                isActive ? colors.primary : colors.muted
-              )}
+              className={clsx('flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all')}
+              style={{ color: isActive ? colors.primary : colors.muted }}
             >
               <item.icon className="w-6 h-6" />
-              <span className="text-xs">{item.label}</span>
+              <span className="text-[10px] font-bold tracking-wide leading-tight pt-0.5 antialiased">{item.label}</span>
             </NavLink>
           );
         })}
