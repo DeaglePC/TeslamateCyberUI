@@ -137,16 +137,22 @@ export const statsApi = {
     return res.data.data!;
   },
 
-  getSocHistory: async (carId: number, hours = 24): Promise<SocDataPoint[]> => {
+  getSocHistory: async (carId: number, hours = 24, from?: string, to?: string): Promise<SocDataPoint[]> => {
+    const params: Record<string, any> = { hours };
+    if (from) params.from = from;
+    if (to) params.to = to;
     const res = await api.get<ApiResponse<SocDataPoint[]>>(`/cars/${carId}/stats/soc-history`, {
-      params: { hours },
+      params,
     });
     return res.data.data || [];
   },
 
-  getStatesTimeline: async (carId: number, hours = 24): Promise<StateTimelineItem[]> => {
+  getStatesTimeline: async (carId: number, hours = 24, from?: string, to?: string): Promise<StateTimelineItem[]> => {
+    const params: Record<string, any> = { hours };
+    if (from) params.from = from;
+    if (to) params.to = to;
     const res = await api.get<ApiResponse<StateTimelineItem[]>>(`/cars/${carId}/stats/states-timeline`, {
-      params: { hours },
+      params,
     });
     return res.data.data || [];
   },

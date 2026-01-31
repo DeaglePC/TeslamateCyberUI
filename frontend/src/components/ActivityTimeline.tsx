@@ -3,12 +3,17 @@ import { createPortal } from 'react-dom';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors } from '@/utils/theme';
+import { DateFilter } from '@/components/DateFilter';
 import type { StateTimelineItem } from '@/types';
 import dayjs from 'dayjs';
 
 interface ActivityTimelineProps {
     data: StateTimelineItem[];
     className?: string;
+    rangeLabel?: string;
+    rangeStart?: string | Date;
+    rangeEnd?: string | Date;
+    onRangeChange?: (start: string | undefined, end: string | undefined) => void;
 }
 
 // State type constants matching backend
@@ -153,12 +158,14 @@ function Tooltip({
     );
 }
 
-export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps) {
+export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart, rangeEnd, onRangeChange }: ActivityTimelineProps) {
     const { theme, language } = useSettingsStore();
     const { t } = useTranslation(language);
     const [hoveredSegment, setHoveredSegment] = useState<TimelineSegment | null>(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [mounted, setMounted] = useState(false);
+    const [showFilter, setShowFilter] = useState(false);
+    const [filterPos, setFilterPos] = useState({ top: 0, right: 0 });
     const [containerWidth, setContainerWidth] = useState(600);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -184,11 +191,11 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
 
     // Process data into continuous segments
     const { segments, timeLabels } = useMemo(() => {
-        if (!data.length) return { segments: [], timeLabels: [] };
+        const now = rangeEnd ? dayjs(rangeEnd) : dayjs();
+        const dayStart = rangeStart ? dayjs(rangeStart) : now.subtract(24, 'hour');
 
-        const now = dayjs();
-        const dayStart = now.subtract(24, 'hour');
-        const totalMs = 24 * 60 * 60 * 1000;
+        const totalMs = now.diff(dayStart);
+        if (totalMs <= 0) return { segments: [], timeLabels: [] };
 
         const result: TimelineSegment[] = [];
         let currentState: number = STATE.OFFLINE; // Default state
@@ -199,13 +206,19 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
             dayjs(a.time).valueOf() - dayjs(b.time).valueOf()
         );
 
+        // Find initial state if possible (state before rangeStart)
+        // ... (Optional enhancement: look for last state before rangeStart)
+
+        // Simply process data within range
         for (const item of sortedData) {
             const time = dayjs(item.time);
 
             // Skip if time is before our range
             if (time.isBefore(dayStart)) continue;
+            // Skip if time is after our range (shouldn't happen usually)
+            if (time.isAfter(now)) continue;
 
-            // If state changes (not a reset to 0)
+            // If state changes
             if (Number(item.state) !== STATE.RESET && Number(item.state) !== currentState) {
                 // End previous segment
                 const startPct = Math.max(0, (segmentStart.valueOf() - dayStart.valueOf()) / totalMs * 100);
@@ -225,16 +238,13 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
                     });
                 }
 
-                // Start new segment
                 currentState = Number(item.state);
                 segmentStart = time;
-            } else if (Number(item.state) === STATE.RESET) {
-                // Reset means end of current activity, go back to previous base state
             }
         }
 
-        // Add final segment up to now
-        if (Number(currentState) !== 0) {
+        // Add final segment up to now/end
+        if (Number(currentState) !== 0 && segmentStart.isBefore(now)) {
             const startPct = Math.max(0, (segmentStart.valueOf() - dayStart.valueOf()) / totalMs * 100);
             const durationMin = Math.round(now.diff(segmentStart, 'minute'));
             result.push({
@@ -249,18 +259,37 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
             });
         }
 
-        // Generate time labels - adjust interval based on container width
-        // Wide screens: every 2 hours (13 labels)
-        // Medium screens: every 4 hours (7 labels)
-        // Narrow screens: every 6 hours (5 labels)
-        const hourInterval = containerWidth > 500 ? 2 : containerWidth > 300 ? 4 : 6;
+        // Generate time labels
+        const totalHours = totalMs / (1000 * 60 * 60);
+        const maxLabels = Math.floor(containerWidth / 80); // approx pixels per label
+        let intervalHours = Math.max(1, Math.ceil(totalHours / maxLabels));
+
+        // Snap to nice intervals
+        const snapIntervals = [1, 2, 3, 4, 6, 8, 12, 24, 48, 72, 96, 168];
+        for (const snap of snapIntervals) {
+            if (snap >= intervalHours) {
+                intervalHours = snap;
+                break;
+            }
+        }
+
         const labels: string[] = [];
-        for (let i = 0; i <= 24; i += hourInterval) {
-            labels.push(dayStart.add(i, 'hour').format('HH:mm'));
+        // Align first label? No, just start from dayStart
+
+        // If interval is >= 24h, align to start of day if possible?
+        // Let's just step by intervalHours
+        for (let h = 0; h <= totalHours; h += intervalHours) {
+            const labelTime = dayStart.add(h, 'hour');
+            // Format logic
+            let fmt = 'HH:mm';
+            if (totalHours > 24) fmt = 'MM-DD';
+            if (totalHours > 24 && intervalHours < 24) fmt = 'MM-DD HH:mm';
+
+            labels.push(labelTime.format(fmt));
         }
 
         return { segments: result, timeLabels: labels };
-    }, [data, language, containerWidth]);
+    }, [data, language, containerWidth, rangeStart, rangeEnd]);
 
     // Handle mouse move on segment
     const handleMouseMove = (seg: TimelineSegment, e: React.MouseEvent) => {
@@ -280,14 +309,54 @@ export function ActivityTimeline({ data, className = '' }: ActivityTimelineProps
     return (
         <div className={`glass rounded-2xl p-4 ${className}`}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 relative z-10">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{ background: colors.primary }} />
                     <h3 className="font-semibold">{t('activityTimeline').toUpperCase()}</h3>
                 </div>
-                <span className="text-xs px-2 py-1 rounded glass-strong" style={{ color: colors.muted }}>
-                    {t('last24h')}
-                </span>
+
+                <div className="relative">
+                    <button
+                        onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setFilterPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                            setShowFilter(!showFilter);
+                        }}
+                        className="text-xs px-2 py-1 rounded glass-strong hover:brightness-125 transition-all flex items-center gap-1"
+                        style={{ color: colors.muted }}
+                    >
+                        {rangeLabel || t('last24h')}
+                        <svg className={`w-3 h-3 transition-transform ${showFilter ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {showFilter && createPortal(
+                        <>
+                            <div
+                                className="fixed inset-0 z-[9999]"
+                                onClick={() => setShowFilter(false)}
+                            />
+                            <div
+                                className="fixed z-[10000] p-2 rounded-xl glass border border-white/10 shadow-2xl min-w-[280px]"
+                                style={{
+                                    top: filterPos.top,
+                                    right: filterPos.right,
+                                    background: 'rgba(20, 20, 30, 0.95)'
+                                }}
+                            >
+                                <DateFilter
+                                    className="flex-col items-stretch"
+                                    onFilter={(start, end) => {
+                                        onRangeChange?.(start, end);
+                                        setShowFilter(false);
+                                    }}
+                                />
+                            </div>
+                        </>,
+                        document.body
+                    )}
+                </div>
             </div>
 
             {/* Timeline Bar */}

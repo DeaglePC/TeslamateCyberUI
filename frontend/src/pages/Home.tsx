@@ -11,6 +11,7 @@ import { useTranslation } from '@/utils/i18n';
 import { getThemeColors } from '@/utils/theme';
 import type { Car, CarStatus, OverviewStats, SocDataPoint, StateTimelineItem } from '@/types';
 import clsx from 'clsx';
+import dayjs from 'dayjs';
 
 // Tesla color option codes for configurator API
 const COLOR_OPTION_CODES: Record<string, string> = {
@@ -84,6 +85,8 @@ export default function HomePage() {
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [socHistory, setSocHistory] = useState<SocDataPoint[]>([]);
   const [statesTimeline, setStatesTimeline] = useState<StateTimelineItem[]>([]);
+  const [socDateRange, setSocDateRange] = useState<{ start?: string; end?: string }>({});
+  const [timelineDateRange, setTimelineDateRange] = useState<{ start?: string; end?: string }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -107,17 +110,13 @@ export default function HomePage() {
           setSelectedCarId(carId);
         }
 
-        const [carStatus, overviewStats, socData, timelineData] = await Promise.all([
+        const [carStatus, overviewStats] = await Promise.all([
           carApi.getStatus(carId),
           statsApi.getOverview(carId),
-          statsApi.getSocHistory(carId, 24),
-          statsApi.getStatesTimeline(carId, 24),
         ]);
 
         setStatus(carStatus);
         setStats(overviewStats);
-        setSocHistory(socData);
-        setStatesTimeline(timelineData);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('error'));
@@ -129,6 +128,34 @@ export default function HomePage() {
   useEffect(() => {
     fetchData();
   }, [selectedCarId]);
+
+  // Fetch SOC History independently
+  useEffect(() => {
+    if (!currentCar) return;
+    const fetchSoc = async () => {
+      try {
+        const data = await statsApi.getSocHistory(currentCar.id, 24, socDateRange.start, socDateRange.end);
+        setSocHistory(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchSoc();
+  }, [currentCar?.id, socDateRange]);
+
+  // Fetch Timeline independently
+  useEffect(() => {
+    if (!currentCar) return;
+    const fetchTimeline = async () => {
+      try {
+        const data = await statsApi.getStatesTimeline(currentCar.id, 24, timelineDateRange.start, timelineDateRange.end);
+        setStatesTimeline(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchTimeline();
+  }, [currentCar?.id, timelineDateRange]);
 
   if (loading) return <Loading />;
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
@@ -462,12 +489,24 @@ export default function HomePage() {
       )}
 
       {/* Bottom Section - Charts */}
+      {/* Bottom Section - Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* SOC History */}
-        <SocHistoryChart data={socHistory} />
+        <SocHistoryChart
+          data={socHistory}
+          rangeLabel={socDateRange.start ? `${socDateRange.start} ~ ${socDateRange.end || t('today')}` : undefined}
+          days={socDateRange.start ? dayjs(socDateRange.end || undefined).diff(dayjs(socDateRange.start), 'day') : 1}
+          onRangeChange={(start, end) => setSocDateRange({ start, end })}
+        />
 
         {/* Activity Timeline */}
-        <ActivityTimeline data={statesTimeline} />
+        <ActivityTimeline
+          data={statesTimeline}
+          rangeLabel={timelineDateRange.start ? `${timelineDateRange.start} ~ ${timelineDateRange.end || t('today')}` : undefined}
+          rangeStart={timelineDateRange.start}
+          rangeEnd={timelineDateRange.end}
+          onRangeChange={(start, end) => setTimelineDateRange({ start, end })}
+        />
       </div>
     </div>
   );

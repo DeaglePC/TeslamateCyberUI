@@ -4,16 +4,24 @@ import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors } from '@/utils/theme';
 import type { SocDataPoint } from '@/types';
+import { DateFilter } from '@/components/DateFilter';
 import dayjs from 'dayjs';
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface SocHistoryChartProps {
     data: SocDataPoint[];
     className?: string;
+    rangeLabel?: string;
+    days?: number; // approx duration in days to decide format
+    onRangeChange?: (start: string | undefined, end: string | undefined) => void;
 }
 
-export function SocHistoryChart({ data, className = '' }: SocHistoryChartProps) {
+export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, onRangeChange }: SocHistoryChartProps) {
     const { theme, language } = useSettingsStore();
     const { t } = useTranslation(language);
+    const [showFilter, setShowFilter] = useState(false);
+    const [filterPos, setFilterPos] = useState({ top: 0, right: 0 });
 
     const colors = getThemeColors(theme);
 
@@ -23,7 +31,8 @@ export function SocHistoryChart({ data, className = '' }: SocHistoryChartProps) 
             ? data.filter((_, i) => i % Math.ceil(data.length / 200) === 0)
             : data;
 
-        const xData = sampledData.map(d => dayjs(d.date).format('HH:mm'));
+        const formatStr = days > 1 ? 'MM-DD HH:mm' : 'HH:mm';
+        const xData = sampledData.map(d => dayjs(d.date).format(formatStr));
         const yData = sampledData.map(d => d.soc);
 
         return {
@@ -110,19 +119,60 @@ export function SocHistoryChart({ data, className = '' }: SocHistoryChartProps) 
                 },
             ],
         };
-    }, [data, colors]);
+    }, [data, colors, days]);
 
     return (
         <div className={`glass rounded-2xl p-4 ${className}`}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 relative z-10">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{ background: colors.primary }} />
                     <h3 className="font-semibold">{t('socHistory').toUpperCase()}</h3>
                 </div>
-                <span className="text-xs px-2 py-1 rounded glass-strong" style={{ color: colors.muted }}>
-                    {t('last24h')}
-                </span>
+
+                <div className="relative">
+                    <button
+                        onClick={(e) => {
+                            // Calculate position on click
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setFilterPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                            setShowFilter(!showFilter);
+                        }}
+                        className="text-xs px-2 py-1 rounded glass-strong hover:brightness-125 transition-all flex items-center gap-1"
+                        style={{ color: colors.muted }}
+                    >
+                        {rangeLabel || t('last24h')}
+                        <svg className={`w-3 h-3 transition-transform ${showFilter ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {showFilter && createPortal(
+                        <>
+                            <div
+                                className="fixed inset-0 z-[9999]"
+                                onClick={() => setShowFilter(false)}
+                            />
+                            <div
+                                className="fixed z-[10000] p-2 rounded-xl glass border border-white/10 shadow-2xl min-w-[280px]"
+                                style={{
+                                    top: filterPos.top,
+                                    right: filterPos.right,
+                                    background: 'rgba(20, 20, 30, 0.95)'
+                                }}
+                            >
+                                <DateFilter
+                                    className="flex-col items-stretch"
+                                    onFilter={(start, end) => {
+                                        onRangeChange?.(start, end);
+                                        setShowFilter(false);
+                                    }}
+                                />
+                            </div>
+                        </>,
+                        document.body
+                    )}
+                </div>
             </div>
 
             {/* Chart */}

@@ -16,8 +16,8 @@ type StatsRepository interface {
 	GetOverview(ctx context.Context, carID int16) (*model.OverviewStats, error)
 	GetEfficiency(ctx context.Context, carID int16, days int) (*model.EfficiencyStats, error)
 	GetBattery(ctx context.Context, carID int16) (*model.BatteryStats, error)
-	GetSocHistory(ctx context.Context, carID int16, hours int) ([]model.SocDataPoint, error)
-	GetStatesTimeline(ctx context.Context, carID int16, hours int) ([]model.StateTimelineItem, error)
+	GetSocHistory(ctx context.Context, carID int16, start, end time.Time) ([]model.SocDataPoint, error)
+	GetStatesTimeline(ctx context.Context, carID int16, start, end time.Time) ([]model.StateTimelineItem, error)
 }
 
 type statsRepository struct {
@@ -435,24 +435,24 @@ func (r *statsRepository) GetBattery(ctx context.Context, carID int16) (*model.B
 }
 
 // GetSocHistory 获取SOC历史数据
-func (r *statsRepository) GetSocHistory(ctx context.Context, carID int16, hours int) ([]model.SocDataPoint, error) {
+func (r *statsRepository) GetSocHistory(ctx context.Context, carID int16, start, end time.Time) ([]model.SocDataPoint, error) {
 	query := `
 		SELECT date, battery_level AS soc
 		FROM (
 			SELECT battery_level, date
 			FROM positions
 			WHERE car_id = $1 AND ideal_battery_range_km IS NOT NULL 
-				AND date >= NOW() - INTERVAL '1 hour' * $2
+				AND date >= $2 AND date <= $3
 			UNION ALL
 			SELECT battery_level, date
 			FROM charges c 
 			JOIN charging_processes p ON p.id = c.charging_process_id
-			WHERE date >= NOW() - INTERVAL '1 hour' * $2 AND p.car_id = $1
+			WHERE p.car_id = $1 AND date >= $2 AND date <= $3
 		) AS data
 		ORDER BY date ASC
 	`
 
-	rows, err := r.db.QueryxContext(ctx, query, carID, hours)
+	rows, err := r.db.QueryxContext(ctx, query, carID, start, end)
 	if err != nil {
 		logger.Errorf("Failed to get SOC history: %v", err)
 		return nil, err
@@ -478,21 +478,45 @@ func (r *statsRepository) GetSocHistory(ctx context.Context, carID int16, hours 
 }
 
 // GetStatesTimeline 获取状态时间线数据
-func (r *statsRepository) GetStatesTimeline(ctx context.Context, carID int16, hours int) ([]model.StateTimelineItem, error) {
+func (r *statsRepository) GetStatesTimeline(ctx context.Context, carID int16, start, end time.Time) ([]model.StateTimelineItem, error) {
 	query := `
-		WITH states_data AS (
+		WITH initial_state AS (
+			SELECT
+				$2::timestamp AS date, -- Clamp to start time
+				state
+			FROM (
+				SELECT start_date, 2 AS state FROM charging_processes WHERE car_id = $1 AND start_date < $2
+				UNION ALL
+				SELECT start_date, 1 AS state FROM drives WHERE car_id = $1 AND start_date < $2
+				UNION ALL
+				SELECT start_date, 
+					CASE 
+						WHEN state = 'offline' THEN 3 
+						WHEN state = 'asleep' THEN 4 
+						WHEN state = 'online' THEN 5 
+					END AS state 
+				FROM states WHERE car_id = $1 AND start_date < $2
+				UNION ALL
+				SELECT start_date, 6 AS state FROM updates WHERE car_id = $1 AND start_date < $2
+			) past
+			ORDER BY start_date DESC
+			LIMIT 1
+		),
+		main_events AS (
+			-- Drivers and Charges (include overlapping)
 			SELECT
 				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
 				unnest(ARRAY [2, 0]) AS state
 			FROM charging_processes
-			WHERE car_id = $1 AND start_date >= NOW() - INTERVAL '1 hour' * $2
+			WHERE car_id = $1 AND start_date <= $3 AND (end_date >= $2 OR end_date IS NULL)
 			UNION ALL
 			SELECT
 				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
 				unnest(ARRAY [1, 0]) AS state
 			FROM drives
-			WHERE car_id = $1 AND start_date >= NOW() - INTERVAL '1 hour' * $2
+			WHERE car_id = $1 AND start_date <= $3 AND (end_date >= $2 OR end_date IS NULL)
 			UNION ALL
+			-- Point events
 			SELECT
 				start_date AS date,
 				CASE
@@ -501,21 +525,24 @@ func (r *statsRepository) GetStatesTimeline(ctx context.Context, carID int16, ho
 					WHEN state = 'online' THEN 5
 				END AS state
 			FROM states
-			WHERE car_id = $1 AND start_date >= NOW() - INTERVAL '1 hour' * $2
+			WHERE car_id = $1 AND start_date >= $2 AND start_date <= $3
 			UNION ALL
 			SELECT
 				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
 				unnest(ARRAY [6, 0]) AS state
 			FROM updates
-			WHERE car_id = $1 AND start_date >= NOW() - INTERVAL '1 hour' * $2
+			WHERE car_id = $1 AND start_date >= $2 AND start_date <= $3
 		)
-		SELECT date AS time, state
-		FROM states_data
-		WHERE date IS NOT NULL
+		SELECT date AS time, state FROM (
+			SELECT date, state FROM initial_state
+			UNION ALL
+			SELECT date, state FROM main_events
+		) combined
+		WHERE date >= $2 AND date <= $3 -- Filter final range
 		ORDER BY date ASC, state ASC
 	`
 
-	rows, err := r.db.QueryxContext(ctx, query, carID, hours)
+	rows, err := r.db.QueryxContext(ctx, query, carID, start, end)
 	if err != nil {
 		logger.Errorf("Failed to get states timeline: %v", err)
 		return nil, err

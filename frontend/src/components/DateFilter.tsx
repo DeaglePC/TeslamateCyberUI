@@ -8,19 +8,19 @@ interface DateFilterProps {
     className?: string;
 }
 
-type FilterPreset = 'all' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+type FilterPreset = 'last24h' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
 export function DateFilter({ onFilter, className = '' }: DateFilterProps) {
     const { theme, language } = useSettingsStore();
     const colors = getThemeColors(theme);
 
-    const [preset, setPreset] = useState<FilterPreset>('all');
+    const [preset, setPreset] = useState<FilterPreset>('last24h');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [showCustom, setShowCustom] = useState(false);
 
-    const presets: { id: FilterPreset; label: { zh: string; en: string } }[] = [
-        { id: 'all', label: { zh: '全部', en: 'All' } },
+    const presets: { id: FilterPreset | 'last24h'; label: { zh: string; en: string } }[] = [
+        { id: 'last24h', label: { zh: '近24小时', en: 'Last 24h' } },
         { id: 'week', label: { zh: '近一周', en: 'Week' } },
         { id: 'month', label: { zh: '近一月', en: 'Month' } },
         { id: 'quarter', label: { zh: '近三月', en: '3 Months' } },
@@ -28,11 +28,13 @@ export function DateFilter({ onFilter, className = '' }: DateFilterProps) {
         { id: 'custom', label: { zh: '自定义', en: 'Custom' } },
     ];
 
-    const getDateRange = (presetId: FilterPreset): { start?: string; end?: string } => {
+    const getDateRange = (presetId: FilterPreset | 'last24h'): { start?: string; end?: string } => {
         const now = new Date();
         const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
         switch (presetId) {
+            case 'last24h':
+                return { start: undefined, end: undefined };
             case 'week': {
                 const start = new Date(now);
                 start.setDate(start.getDate() - 7);
@@ -60,8 +62,8 @@ export function DateFilter({ onFilter, className = '' }: DateFilterProps) {
         }
     };
 
-    const handlePresetClick = (presetId: FilterPreset) => {
-        setPreset(presetId);
+    const handlePresetClick = (presetId: FilterPreset | 'last24h') => {
+        setPreset(presetId as FilterPreset);
         if (presetId === 'custom') {
             setShowCustom(true);
         } else {

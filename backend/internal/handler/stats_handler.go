@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"teslamate-cyberui/internal/logger"
 
@@ -100,12 +101,34 @@ func (h *Handler) GetSocHistory(c *gin.Context) {
 	}
 	carID := int16(carID64)
 
-	hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
-	if hours < 1 || hours > 168 {
-		hours = 24
+	var start, end time.Time
+	fromStr := c.Query("from")
+	toStr := c.Query("to")
+
+	if fromStr != "" && toStr != "" {
+		// Try parsing as simple date first (YYYY-MM-DD)
+		s, err1 := time.Parse("2006-01-02", fromStr)
+		e, err2 := time.Parse("2006-01-02", toStr)
+		if err1 == nil && err2 == nil {
+			start = s
+			end = e.Add(24*time.Hour - time.Second) // End of the day
+		} else {
+			// Try RFC3339
+			start, _ = time.Parse(time.RFC3339, fromStr)
+			end, _ = time.Parse(time.RFC3339, toStr)
+		}
 	}
 
-	data, err := h.repo.Stats.GetSocHistory(c.Request.Context(), carID, hours)
+	if start.IsZero() || end.IsZero() {
+		hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
+		if hours < 1 {
+			hours = 24
+		}
+		end = time.Now().UTC()
+		start = end.Add(-time.Duration(hours) * time.Hour)
+	}
+
+	data, err := h.repo.Stats.GetSocHistory(c.Request.Context(), carID, start, end)
 	if err != nil {
 		logger.Errorf("Failed to get SOC history: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get SOC history"))
@@ -129,12 +152,32 @@ func (h *Handler) GetStatesTimeline(c *gin.Context) {
 	}
 	carID := int16(carID64)
 
-	hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
-	if hours < 1 || hours > 168 {
-		hours = 24
+	var start, end time.Time
+	fromStr := c.Query("from")
+	toStr := c.Query("to")
+
+	if fromStr != "" && toStr != "" {
+		s, err1 := time.Parse("2006-01-02", fromStr)
+		e, err2 := time.Parse("2006-01-02", toStr)
+		if err1 == nil && err2 == nil {
+			start = s
+			end = e.Add(24*time.Hour - time.Second)
+		} else {
+			start, _ = time.Parse(time.RFC3339, fromStr)
+			end, _ = time.Parse(time.RFC3339, toStr)
+		}
 	}
 
-	data, err := h.repo.Stats.GetStatesTimeline(c.Request.Context(), carID, hours)
+	if start.IsZero() || end.IsZero() {
+		hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
+		if hours < 1 {
+			hours = 24
+		}
+		end = time.Now().UTC()
+		start = end.Add(-time.Duration(hours) * time.Hour)
+	}
+
+	data, err := h.repo.Stats.GetStatesTimeline(c.Request.Context(), carID, start, end)
 	if err != nil {
 		logger.Errorf("Failed to get states timeline: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get states timeline"))
