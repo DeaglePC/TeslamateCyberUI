@@ -6,7 +6,7 @@ import { driveApi } from '@/services/api';
 import { Card, StatCard } from '@/components/Card';
 import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
-import { DriveMap } from '@/components/DriveMap';
+import { UniversalMap } from '@/components/UniversalMap';
 import { formatDate, formatDuration, formatDistance, formatSpeed, formatTemperature } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import type { DriveDetail, DrivePosition } from '@/types';
@@ -307,7 +307,7 @@ export default function DriveDetailPage() {
         <Card>
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>行驶轨迹</h3>
           <div className="h-64 md:h-96 w-full relative z-0">
-            <DriveMap positions={positions} />
+            <UniversalMap positions={positions} />
           </div>
         </Card>
       )}

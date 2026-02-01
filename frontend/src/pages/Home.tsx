@@ -386,11 +386,10 @@ export default function HomePage() {
           {/* Right - Map */}
           <div className="h-auto lg:h-full">
             <MapCard
-              className="h-full"
+              className="h-full min-h-[300px]"
               latitude={status.latitude ?? stats?.lastLatitude}
               longitude={status.longitude ?? stats?.lastLongitude}
               address={status.geofence ?? stats?.lastAddress}
-              state={status.state}
               timestamp={stats?.lastLocationTime}
             />
           </div>

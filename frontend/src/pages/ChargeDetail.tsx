@@ -4,6 +4,7 @@ import ReactECharts from 'echarts-for-react';
 import { useSettingsStore } from '@/store/settings';
 import { chargeApi } from '@/services/api';
 import { Card, StatCard } from '@/components/Card';
+import { MapCard } from '@/components/MapCard';
 import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
 import { formatDate, formatDuration, formatEnergy, formatCurrency, formatTemperature } from '@/utils/format';
@@ -170,23 +171,20 @@ export default function ChargeDetailPage() {
         <h1 className="text-2xl font-bold" style={{ color: colors.primary }}>
           充电详情
         </h1>
-        <p style={{ color: colors.muted }}>
-          {formatDate(detail.startDate)} @ {detail.location}
-        </p>
       </div>
 
       {/* 电量变化 */}
       <Card>
         <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>电量变化</h3>
         <BatteryBar startLevel={detail.startBatteryLevel} endLevel={detail.endBatteryLevel} />
-        <div className="flex justify-between mt-4 mb-6" style={{ color: colors.muted }}>
+        <div className="flex justify-between mt-4 mb-6 text-sm sm:text-base flex-wrap gap-y-1" style={{ color: colors.muted }}>
           <span>续航 {detail.startIdealRangeKm.toFixed(0)} km</span>
           <span>续航 {detail.endIdealRangeKm.toFixed(0)} km</span>
         </div>
 
         {/* Time Info Integration */}
         <div className="pt-4 border-t" style={{ borderColor: `${colors.muted}20` }}>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm" style={{ color: colors.muted }}>开始时间</p>
               <p className="font-semibold">{formatDate(detail.startDate)}</p>
@@ -202,7 +200,7 @@ export default function ChargeDetailPage() {
       </Card>
 
       {/* 统计数据 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="充电量" value={formatEnergy(detail.chargeEnergyAdded)} />
         <StatCard label="充电时长" value={formatDuration(detail.durationMin)} />
         {detail.chargeEnergyUsed !== undefined && (
@@ -219,16 +217,29 @@ export default function ChargeDetailPage() {
         )}
       </div>
 
+
+      {/* 地图位置 */}
+      {(detail.latitude !== undefined && detail.longitude !== undefined) && (
+        <MapCard
+          latitude={detail.latitude}
+          longitude={detail.longitude}
+          address={detail.location}
+          className="h-[300px]"
+        />
+      )}
+
       {/* 充电曲线 */}
       {chartOption && (
         <Card>
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>充电曲线</h3>
-          <ReactECharts
-            option={chartOption}
-            style={{ height: 'min(450px, 55vh)' }}
-            opts={{ renderer: 'svg' }}
-            className="!min-h-[320px]"
-          />
+          <div className="w-full overflow-hidden">
+            <ReactECharts
+              option={chartOption}
+              style={{ height: 'min(450px, 55vh)' }}
+              opts={{ renderer: 'svg' }}
+              className="!min-h-[320px]"
+            />
+          </div>
         </Card>
       )}
 

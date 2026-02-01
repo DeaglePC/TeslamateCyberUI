@@ -18,7 +18,16 @@ export default function ChargeListPage() {
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 20, total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>({});
+  const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setFullYear(start.getFullYear() - 1);
+    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+    return {
+      start: formatDate(start),
+      end: formatDate(now)
+    };
+  });
 
   const colors = getThemeColors(theme);
 
@@ -65,7 +74,7 @@ export default function ChargeListPage() {
         </div>
 
         {/* 日期筛选 */}
-        <DateFilter onFilter={handleDateFilter} />
+        <DateFilter onFilter={handleDateFilter} initialPreset="year" />
       </div>
 
       {loading ? (
@@ -117,41 +126,41 @@ export default function ChargeListPage() {
                   </div>
 
                   {/* 底部：充电数据 - 网格布局 */}
-                  <div className="grid grid-cols-3 gap-3 pt-3 border-t" style={{ borderColor: `${colors.muted}20` }}>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t" style={{ borderColor: `${colors.muted}20` }}>
                     {/* 充电量 */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${colors.primary}15` }}>
                         <svg className="w-4 h-4" style={{ color: colors.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="1" y="6" width="18" height="12" rx="2" ry="2" />
                           <line x1="23" y1="13" x2="23" y2="11" />
                         </svg>
                       </div>
-                      <div>
-                        <p className="text-xs" style={{ color: colors.muted }}>充电量</p>
-                        <p className="font-bold" style={{ color: colors.primary }}>
+                      <div className="min-w-0">
+                        <p className="text-xs truncate" style={{ color: colors.muted }}>充电量</p>
+                        <p className="font-bold truncate" style={{ color: colors.primary }}>
                           {formatEnergy(charge.chargeEnergyAdded)}
                         </p>
                       </div>
                     </div>
 
                     {/* 时长 */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.success}15` }}>
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${colors.success}15` }}>
                         <svg className="w-4 h-4" style={{ color: colors.success }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="12" cy="12" r="10" />
                           <polyline points="12 6 12 12 16 14" />
                         </svg>
                       </div>
-                      <div>
-                        <p className="text-xs" style={{ color: colors.muted }}>时长</p>
-                        <p className="font-semibold">{formatDuration(charge.durationMin)}</p>
+                      <div className="min-w-0">
+                        <p className="text-xs truncate" style={{ color: colors.muted }}>时长</p>
+                        <p className="font-semibold truncate">{formatDuration(charge.durationMin)}</p>
                       </div>
                     </div>
 
                     {/* 充电类型 AC/DC */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 overflow-hidden">
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                         style={{
                           background: charge.chargeType === 'DC' ? 'rgba(255,140,0,0.15)' : `${colors.primary}15`
                         }}
@@ -167,10 +176,10 @@ export default function ChargeListPage() {
                           <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                         </svg>
                       </div>
-                      <div>
-                        <p className="text-xs" style={{ color: colors.muted }}>类型</p>
+                      <div className="min-w-0">
+                        <p className="text-xs truncate" style={{ color: colors.muted }}>类型</p>
                         <p
-                          className="font-bold"
+                          className="font-bold truncate"
                           style={{ color: charge.chargeType === 'DC' ? '#ff8c00' : colors.primary }}
                         >
                           {charge.chargeType || '--'}

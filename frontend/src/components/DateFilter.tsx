@@ -6,15 +6,16 @@ import { DatePicker } from '@/components/DatePicker';
 interface DateFilterProps {
     onFilter: (startDate: string | undefined, endDate: string | undefined) => void;
     className?: string;
+    initialPreset?: FilterPreset;
 }
 
 type FilterPreset = 'last24h' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
-export function DateFilter({ onFilter, className = '' }: DateFilterProps) {
+export function DateFilter({ onFilter, className = '', initialPreset = 'last24h' }: DateFilterProps) {
     const { theme, language } = useSettingsStore();
     const colors = getThemeColors(theme);
 
-    const [preset, setPreset] = useState<FilterPreset>('last24h');
+    const [preset, setPreset] = useState<FilterPreset>(initialPreset);
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [showCustom, setShowCustom] = useState(false);
@@ -31,6 +32,10 @@ export function DateFilter({ onFilter, className = '' }: DateFilterProps) {
     const getDateRange = (presetId: FilterPreset | 'last24h'): { start?: string; end?: string } => {
         const now = new Date();
         const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+        // Reset time to end of day for end date, or just date part is handled by backend?
+        // Usually APIs taking T00:00:00.
+        // The implementation here just takes YYYY-MM-DD.
 
         switch (presetId) {
             case 'last24h':
