@@ -12,7 +12,7 @@ if (-not (Test-Path "node_modules")) {
 
 # Start the frontend development server.
 Write-Host "Starting frontend development server..."
-npm run dev
+npm run dev --host
 
 # Return to the original directory.
 Pop-Location

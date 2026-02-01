@@ -43,21 +43,7 @@ function SettingsIcon({ className }: { className?: string }) {
   );
 }
 
-function ChevronLeft({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
 
-function ChevronRight({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
 
 // ... existing code ...
 
@@ -70,7 +56,7 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const colors = getThemeColors(theme);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
 
   // Touch state for swipe detection
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -204,94 +190,8 @@ export default function Layout() {
       className={clsx('min-h-screen flex')}
       style={{ backgroundColor: colors.bg, color: colors.muted }}
     >
-      {/* PC端侧边栏 */}
-      <aside
-        className={clsx(
-          'hidden md:flex flex-col glass-strong border-r transition-all duration-300 ease-in-out',
-          isSidebarCollapsed ? 'w-20' : 'w-64'
-        )}
-        style={{ borderColor: colors.border }}
-      >
-        {/* Logo */}
-        <div
-          className={clsx(
-            'border-b flex items-center',
-            isSidebarCollapsed ? 'justify-center p-4' : 'p-6'
-          )}
-          style={{ borderColor: 'inherit', height: '88px' }}
-        >
-          <h1 className={clsx('font-bold transition-all', isSidebarCollapsed ? 'text-xl' : 'text-2xl')} style={{ color: colors.primary }}>
-            <span className="neon-text">{isSidebarCollapsed ? 'C' : 'CyberUI'}</span>
-          </h1>
-          {!isSidebarCollapsed && (
-            <p className="text-sm mt-1 absolute bottom-4 left-6 opacity-0 animate-fadeIn" style={{ color: colors.muted }}>
-              {/* Animation handled by CSS or just static is fine */}
-            </p>
-          )}
-        </div>
-
-        {!isSidebarCollapsed && (
-          <div className="px-6 pb-2 -mt-4 mb-2">
-            <p className="text-xs whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: colors.muted }}>TeslaMate Dashboard</p>
-          </div>
-        )}
-
-        {/* 导航 */}
-        <nav className="flex-1 p-3 space-y-2 overflow-x-hidden">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path ||
-              (item.path !== '/' && location.pathname.startsWith(item.path));
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                title={isSidebarCollapsed ? item.label : ''}
-                className={clsx(
-                  'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 border group',
-                  isActive ? '' : 'border-transparent hover:bg-white/5',
-                  isSidebarCollapsed ? 'justify-center' : ''
-                )}
-                style={{
-                  backgroundColor: isActive ? `${colors.primary}15` : 'transparent',
-                  borderColor: isActive ? `${colors.primary}40` : 'transparent',
-                  color: isActive ? colors.primary : colors.muted
-                }}
-              >
-                <item.icon className="w-6 h-6 shrink-0" />
-                <span
-                  className={clsx(
-                    'font-medium whitespace-nowrap transition-all duration-300 overflow-hidden',
-                    isSidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
-                  )}
-                >
-                  {item.label}
-                </span>
-              </NavLink>
-            );
-          })}
-        </nav>
-
-        {/* 底部信息 & 收起按钮 */}
-        <div className="p-4 border-t flex items-center justify-between" style={{ borderColor: 'inherit' }}>
-          <div className={clsx('overflow-hidden transition-all duration-300', isSidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100')}>
-            <p className="text-xs whitespace-nowrap" style={{ color: colors.muted }}>v1.0</p>
-          </div>
-
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-1.5 rounded-md hover:bg-white/10 transition-colors mx-auto"
-            style={{ color: colors.muted }}
-            title={isSidebarCollapsed ? "Expand" : "Collapse"}
-          >
-            {isSidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-          </button>
-        </div>
-      </aside>
-
-      {/* ... existing main content ... */}
-
       {/* 主内容区 - 添加 ref 用于滑动检测 */}
-      <main ref={mainContentRef} className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
+      <main ref={mainContentRef} className="flex-1 flex flex-col min-h-screen pb-24">
         <div
           key={location.pathname}
           className={clsx(
@@ -306,28 +206,50 @@ export default function Layout() {
         </div>
       </main>
 
-      {/* 移动端底部导航 */}
-      <nav
-        className={clsx('md:hidden fixed bottom-0 left-0 right-0 glass-strong border-t flex justify-around py-2 z-50')}
-        style={{ borderColor: colors.border }}
-      >
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path ||
-            (item.path !== '/' && location.pathname.startsWith(item.path));
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={clsx('flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all')}
-              style={{ color: isActive ? colors.primary : colors.muted }}
-            >
-              <item.icon className="w-6 h-6" />
-              <span className="text-[10px] font-bold tracking-wide leading-tight pt-0.5 antialiased">{item.label}</span>
-            </NavLink>
-          );
-        })}
-      </nav>
+      {/* 居中悬浮导航栏 (Apple Style Dock) */}
+      {/* 居中悬浮导航栏 (Apple Style Dock) */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100]">
+        <nav
+          className="flex items-center gap-1.5 px-1.5 py-1.5 rounded-full border shadow-2xl transition-all duration-300 animate-slideUp"
+          style={{
+            backgroundColor: theme === 'dark' || theme === 'cyber' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderColor: theme === 'dark' || theme === 'cyber' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+          }}
+        >
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path ||
+              (item.path !== '/' && location.pathname.startsWith(item.path));
+
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={clsx(
+                  'relative group flex flex-col items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full transition-all duration-300 ease-out',
+                  isActive ? 'scale-110' : 'hover:scale-110 hover:bg-white/10'
+                )}
+                style={{
+                  color: isActive ? '#fff' : colors.muted,
+                  background: isActive ? colors.primary : 'transparent',
+                  boxShadow: isActive ? `0 4px 12px ${colors.primary}60` : 'none',
+                }}
+              >
+                <item.icon className={clsx("w-4 h-4 md:w-5 md:h-5 transition-transform duration-300", isActive ? "scale-110" : "")} />
+
+                {/* Tooltip for Desktop */}
+                <span
+                  className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none backdrop-blur-sm hidden md:block"
+                >
+                  {item.label}
+                </span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 }
-
