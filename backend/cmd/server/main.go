@@ -81,6 +81,11 @@ func main() {
 		api.GET("/cars/:id/stats/battery", h.GetBatteryStats)
 		api.GET("/cars/:id/stats/soc-history", h.GetSocHistory)
 		api.GET("/cars/:id/stats/states-timeline", h.GetStatesTimeline)
+
+		// UI设置相关
+		api.GET("/settings", h.GetUISettings)
+		api.POST("/settings", h.UpdateUISetting)
+		api.PUT("/settings", h.BatchUpdateUISettings)
 	}
 
 	// 健康检查

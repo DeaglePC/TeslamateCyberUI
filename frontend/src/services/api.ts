@@ -157,3 +157,20 @@ export const statsApi = {
     return res.data.data || [];
   },
 };
+
+// 设置 API
+export const settingsApi = {
+  get: async (): Promise<Record<string, string>> => {
+    const res = await api.get<ApiResponse<Record<string, string>>>('/settings');
+    return res.data.data || {};
+  },
+
+  update: async (key: string, value: string): Promise<void> => {
+    await api.post('/settings', { key, value });
+  },
+
+  batchUpdate: async (settings: Record<string, string>): Promise<void> => {
+    await api.put('/settings', settings);
+  },
+};
+

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { settingsApi } from '@/services/api';
 
 export type ThemeType = 'cyber' | 'tesla' | 'dark' | 'tech' | 'aurora';
 export type UnitType = 'metric' | 'imperial';
@@ -20,11 +21,12 @@ interface SettingsState {
   setAmapKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setApiKey: (key: string) => void;
+  fetchRemoteSettings: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       theme: 'cyber',
       unit: 'metric',
       language: 'zh',
@@ -32,16 +34,51 @@ export const useSettingsStore = create<SettingsState>()(
       amapKey: '',
       baseUrl: '',
       apiKey: '',
-      setTheme: (theme) => set({ theme }),
-      setUnit: (unit) => set({ unit }),
-      setLanguage: (language) => set({ language }),
+      setTheme: (theme) => {
+        set({ theme });
+        settingsApi.update('theme', theme).catch(() => { });
+      },
+      setUnit: (unit) => {
+        set({ unit });
+        settingsApi.update('unit', unit).catch(() => { });
+      },
+      setLanguage: (language) => {
+        set({ language });
+        settingsApi.update('language', language).catch(() => { });
+      },
       setSelectedCarId: (id) => set({ selectedCarId: id }),
-      setAmapKey: (key) => set({ amapKey: key }),
+      setAmapKey: (key) => {
+        set({ amapKey: key });
+        settingsApi.update('amapKey', key).catch(() => { });
+      },
       setBaseUrl: (url) => set({ baseUrl: url }),
       setApiKey: (key) => set({ apiKey: key }),
+      fetchRemoteSettings: async () => {
+        try {
+          // Only fetch if base URL is set
+          const state = get();
+          if (!state.baseUrl) return;
+
+          const settings = await settingsApi.get();
+          set((prev) => ({
+            theme: (settings.theme as ThemeType) || prev.theme,
+            unit: (settings.unit as UnitType) || prev.unit,
+            language: (settings.language as LanguageType) || prev.language,
+            amapKey: settings.amapKey || prev.amapKey,
+          }));
+        } catch (e) {
+          console.error("Failed to fetch remote settings", e);
+        }
+      },
     }),
     {
       name: 'cyberui-settings',
+      onRehydrateStorage: () => (state) => {
+        // Fetch remote settings on hydration if possible
+        if (state?.baseUrl) {
+          state.fetchRemoteSettings();
+        }
+      }
     }
   )
 );

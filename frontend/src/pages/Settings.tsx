@@ -246,7 +246,7 @@ export default function SettingsPage() {
           </p>
         </div>
         <input
-          type="text"
+          type="password"
           value={amapKey}
           onChange={(e) => setAmapKey(e.target.value)}
           placeholder={t('amapKeyPlaceholder')}
