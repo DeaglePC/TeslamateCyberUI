@@ -116,6 +116,30 @@ export interface ChargeStats {
   dataPoints: ChargeDataPoint[];
 }
 
+export interface DailyChargeStat {
+  date: string;
+  energyAdded: number;
+  cost: number;
+  count: number;
+}
+
+export interface ChargeLocationStat {
+  location: string;
+  latitude: number;
+  longitude: number;
+  count: number;
+  totalEnergy: number;
+}
+
+export interface ChargeStatsSummary {
+  totalEnergy: number;
+  totalCost: number;
+  totalCount: number;
+  totalDuration: number;
+  dailyStats: DailyChargeStat[];
+  locationStats: ChargeLocationStat[];
+}
+
 // 驾驶记录列表项
 export interface DriveListItem {
   id: number;

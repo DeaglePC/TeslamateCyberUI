@@ -15,16 +15,16 @@ export function formatRelativeTime(date: string | Date): string {
   return dayjs(date).fromNow();
 }
 
-export function formatDuration(minutes: number): string {
+export function formatDuration(minutes: number, language: 'zh' | 'en' = 'zh'): string {
   if (minutes < 60) {
-    return `${minutes}分钟`;
+    return `${minutes}${language === 'zh' ? '分钟' : 'm'}`;
   }
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (mins === 0) {
-    return `${hours}小时`;
+    return `${hours}${language === 'zh' ? '小时' : 'h'}`;
   }
-  return `${hours}小时${mins}分钟`;
+  return `${hours}${language === 'zh' ? '小时' : 'h'}${mins}${language === 'zh' ? '分钟' : 'm'}`;
 }
 
 export function formatDistance(km: number, unit: 'metric' | 'imperial' = 'metric'): string {

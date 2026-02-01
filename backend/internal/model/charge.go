@@ -108,3 +108,32 @@ type ChargeDataPoint struct {
 	IdealRangeKm   float64   `json:"idealRangeKm"`
 	OutsideTemp    *float64  `json:"outsideTemp,omitempty"`
 }
+
+// NEW STATS STRUCTS
+
+// DailyChargeStat 每日充电统计
+type DailyChargeStat struct {
+	Date        string  `db:"date" json:"date"`                // YYYY-MM-DD
+	EnergyAdded float64 `db:"energy_added" json:"energyAdded"` // kWh
+	Cost        float64 `db:"cost" json:"cost"`                // Currency
+	Count       int     `db:"count" json:"count"`
+}
+
+// ChargeLocationStat 充电地点统计
+type ChargeLocationStat struct {
+	Location    string  `db:"location" json:"location"`
+	Latitude    float64 `db:"latitude" json:"latitude"`
+	Longitude   float64 `db:"longitude" json:"longitude"`
+	Count       int     `db:"count" json:"count"`
+	TotalEnergy float64 `db:"total_energy" json:"totalEnergy"`
+}
+
+// ChargeStatsSummary 充电统计概览
+type ChargeStatsSummary struct {
+	TotalEnergy   float64              `json:"totalEnergy"`   // kWh
+	TotalCost     float64              `json:"totalCost"`     // Currency
+	TotalCount    int                  `json:"totalCount"`    // Number of sessions
+	TotalDuration float64              `json:"totalDuration"` // Minutes
+	DailyStats    []DailyChargeStat    `json:"dailyStats"`
+	LocationStats []ChargeLocationStat `json:"locationStats"`
+}

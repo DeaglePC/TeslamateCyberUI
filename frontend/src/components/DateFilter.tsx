@@ -38,8 +38,11 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
         // The implementation here just takes YYYY-MM-DD.
 
         switch (presetId) {
-            case 'last24h':
-                return { start: undefined, end: undefined };
+            case 'last24h': {
+                const start = new Date(now);
+                start.setHours(start.getHours() - 24);
+                return { start: start.toISOString(), end: now.toISOString() };
+            }
             case 'week': {
                 const start = new Date(now);
                 start.setDate(start.getDate() - 7);

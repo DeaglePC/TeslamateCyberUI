@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, useMap, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Marker, useMap, Tooltip, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import { useSettingsStore } from '@/store/settings';
 import { isOutOfChina, wgsToGcj } from '@/utils/geo';
@@ -19,6 +19,14 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+export interface HeatmapPoint {
+    latitude: number;
+    longitude: number;
+    count: number;
+    value: number; // energy or other weight
+    label?: string;
+}
+
 interface UniversalMapProps {
     // For Path mode (Drive)
     positions?: DrivePosition[];
@@ -27,23 +35,27 @@ interface UniversalMapProps {
         latitude: number;
         longitude: number;
     };
+    // For Heatmap mode
+    heatmapData?: HeatmapPoint[];
     className?: string;
 }
 
 // Helper to fit bounds
-function BoundsFitter({ positions, marker }: { positions?: [number, number][]; marker?: [number, number] }) {
+function BoundsFitter({ positions, marker, heatmapData }: { positions?: [number, number][]; marker?: [number, number]; heatmapData?: [number, number][] }) {
     const map = useMap();
     useEffect(() => {
         if (positions && positions.length > 0) {
             map.fitBounds(positions, { padding: [50, 50] });
+        } else if (heatmapData && heatmapData.length > 0) {
+            map.fitBounds(heatmapData, { padding: [50, 50] });
         } else if (marker) {
             map.setView(marker, 15);
         }
-    }, [positions, marker, map]);
+    }, [positions, marker, heatmapData, map]);
     return null;
 }
 
-export function UniversalMap({ positions = [], marker, className = '' }: UniversalMapProps) {
+export function UniversalMap({ positions = [], marker, heatmapData = [], className = '' }: UniversalMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<unknown>(null);
     const { theme, amapKey } = useSettingsStore();
@@ -61,11 +73,15 @@ export function UniversalMap({ positions = [], marker, className = '' }: Univers
     // Strategy Determination
     const isPathMode = positions.length > 0;
     const isMarkerMode = !!marker;
-    const hasData = isPathMode || isMarkerMode;
+    const isHeatmapMode = heatmapData.length > 0;
+    const hasData = isPathMode || isMarkerMode || isHeatmapMode;
 
     // Check location for China checking
-    const checkLat = isPathMode ? positions[0].latitude : (marker?.latitude || 0);
-    const checkLon = isPathMode ? positions[0].longitude : (marker?.longitude || 0);
+    let checkLat = 0, checkLon = 0;
+    if (isPathMode) { checkLat = positions[0].latitude; checkLon = positions[0].longitude; }
+    else if (isMarkerMode && marker) { checkLat = marker.latitude; checkLon = marker.longitude; }
+    else if (isHeatmapMode && heatmapData.length > 0) { checkLat = heatmapData[0].latitude; checkLon = heatmapData[0].longitude; }
+
     const isChina = hasData && !isOutOfChina(checkLat, checkLon);
     const useAmap = isChina && !!amapKey;
 
@@ -94,7 +110,12 @@ export function UniversalMap({ positions = [], marker, className = '' }: Univers
     // Data prep
     const leafletPathPositions = positions.map(p => [p.latitude, p.longitude] as [number, number]);
     const leafletMarkerPosition = marker ? [marker.latitude, marker.longitude] as [number, number] : undefined;
-    const center = leafletPathPositions.length > 0 ? leafletPathPositions[0] : (leafletMarkerPosition || [0, 0]);
+    const leafletHeatmapPositions = heatmapData.map(p => [p.latitude, p.longitude] as [number, number]);
+
+    let center: [number, number] = [0, 0];
+    if (isPathMode && leafletPathPositions.length > 0) center = leafletPathPositions[0];
+    else if (isMarkerMode && leafletMarkerPosition) center = leafletMarkerPosition;
+    else if (isHeatmapMode && leafletHeatmapPositions.length > 0) center = leafletHeatmapPositions[0];
 
     // AMap Effect
     useEffect(() => {
@@ -108,7 +129,7 @@ export function UniversalMap({ positions = [], marker, className = '' }: Univers
                 const AMap = await AMapLoader.default.load({
                     key: amapKey,
                     version: '2.0',
-                    plugins: ['AMap.Polyline', 'AMap.Marker'],
+                    plugins: ['AMap.Polyline', 'AMap.Marker', 'AMap.CircleMarker'],
                 });
 
                 if (!mounted || !mapRef.current) return;
@@ -151,7 +172,7 @@ export function UniversalMap({ positions = [], marker, className = '' }: Univers
                     map.setFitView();
                 }
                 // Single Marker Mode
-                else if (marker) {
+                else if (isMarkerMode && marker) {
                     const [gLat, gLon] = wgsToGcj(marker.latitude, marker.longitude);
                     const center = [gLon, gLat];
                     map.setZoomAndCenter(15, center);
@@ -162,6 +183,28 @@ export function UniversalMap({ positions = [], marker, className = '' }: Univers
                         content: `<div style="width: 20px; height: 20px; border-radius: 50%; background: ${colors.primary}; border: 3px solid white; box-shadow: 0 0 10px ${colors.primary};"></div>`,
                     });
                     map.add(amapMarker);
+                }
+                // Heatmap Mode (Circles)
+                else if (isHeatmapMode) {
+                    const circles = heatmapData.map(p => {
+                        const [gLat, gLon] = wgsToGcj(p.latitude, p.longitude);
+                        // Scale radius by value (energy)
+                        const radius = Math.max(10, Math.min(100, Math.sqrt(p.value) * 5));
+
+                        return new AMap.CircleMarker({
+                            center: [gLon, gLat],
+                            radius: radius,
+                            strokeColor: colors.primary,
+                            strokeWeight: 1,
+                            strokeOpacity: 0.5,
+                            fillColor: colors.primary,
+                            fillOpacity: 0.4,
+                            zIndex: 10,
+                            bubble: true,
+                        });
+                    });
+                    map.add(circles);
+                    map.setFitView();
                 }
 
                 mapInstanceRef.current = map;
@@ -180,7 +223,7 @@ export function UniversalMap({ positions = [], marker, className = '' }: Univers
                 mapInstanceRef.current = null;
             }
         };
-    }, [useAmap, positions, marker, amapKey, colors, isPathMode]);
+    }, [useAmap, positions, marker, heatmapData, amapKey, colors, isPathMode, isMarkerMode, isHeatmapMode]);
 
     if (!hasData) return null;
 
@@ -190,7 +233,7 @@ export function UniversalMap({ positions = [], marker, className = '' }: Univers
 
     return (
         <MapContainer
-            center={center as [number, number]}
+            center={center}
             zoom={13}
             className={`w-full h-full rounded-lg overflow-hidden ${className}`}
             style={{ zIndex: 0 }}
@@ -224,6 +267,29 @@ export function UniversalMap({ positions = [], marker, className = '' }: Univers
                     <BoundsFitter marker={leafletMarkerPosition} />
                 </>
             )}
+
+            {isHeatmapMode && !isPathMode && heatmapData.map((p, i) => (
+                <CircleMarker
+                    key={i}
+                    center={[p.latitude, p.longitude]}
+                    pathOptions={{
+                        color: colors.primary,
+                        fillColor: colors.primary,
+                        fillOpacity: 0.4,
+                        weight: 1
+                    }}
+                    radius={Math.max(5, Math.min(30, Math.sqrt(p.value)))}
+                >
+                    <Tooltip>
+                        <div className="text-sm">
+                            <div className="font-bold">{p.label}</div>
+                            <div>{p.count} charges</div>
+                            <div>{p.value.toFixed(1)} kWh</div>
+                        </div>
+                    </Tooltip>
+                </CircleMarker>
+            ))}
+            {isHeatmapMode && <BoundsFitter heatmapData={leafletHeatmapPositions} />}
 
         </MapContainer>
     );

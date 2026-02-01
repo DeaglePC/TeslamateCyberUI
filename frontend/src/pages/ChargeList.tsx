@@ -9,6 +9,7 @@ import { Loading, ErrorState, EmptyState } from '@/components/States';
 import { formatDate, formatDuration, formatEnergy } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import type { ChargeListItem, Pagination } from '@/types';
+import { ChargeStats } from '@/components/ChargeStats/ChargeStats';
 import clsx from 'clsx';
 
 export default function ChargeListPage() {
@@ -76,6 +77,15 @@ export default function ChargeListPage() {
         {/* 日期筛选 */}
         <DateFilter onFilter={handleDateFilter} initialPreset="year" />
       </div>
+
+      {/* 统计概览 */}
+      {selectedCarId && (
+        <ChargeStats
+          carId={selectedCarId}
+          startDate={dateRange.start}
+          endDate={dateRange.end}
+        />
+      )}
 
       {loading ? (
         <Loading />

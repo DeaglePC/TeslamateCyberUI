@@ -17,6 +17,7 @@ type ChargeRepository interface {
 	GetList(ctx context.Context, carID int16, page, pageSize int, startDate, endDate *time.Time) (*model.ListResponse[model.ChargeListItem], error)
 	GetDetail(ctx context.Context, chargeID int64) (*model.ChargeDetail, error)
 	GetStats(ctx context.Context, chargeID int64) (*model.ChargeStats, error)
+	GetStatsSummary(ctx context.Context, carID int16, startDate, endDate *time.Time) (*model.ChargeStatsSummary, error)
 }
 
 type chargeRepository struct {
@@ -361,4 +362,133 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// GetStatsSummary 获取充电统计概览（包括总计、每日热力图数据、位置热力图数据）
+func (r *chargeRepository) GetStatsSummary(ctx context.Context, carID int16, startDate, endDate *time.Time) (*model.ChargeStatsSummary, error) {
+	summary := &model.ChargeStatsSummary{
+		DailyStats:    []model.DailyChargeStat{},
+		LocationStats: []model.ChargeLocationStat{},
+	}
+
+	// 1. 获取总体统计
+	baseWhere := "WHERE car_id = $1"
+	args := []interface{}{carID}
+	argIdx := 2
+
+	if startDate != nil {
+		baseWhere += fmt.Sprintf(" AND start_date >= $%d", argIdx)
+		args = append(args, *startDate)
+		argIdx++
+	}
+	if endDate != nil {
+		baseWhere += fmt.Sprintf(" AND start_date <= $%d", argIdx)
+		args = append(args, *endDate)
+		argIdx++
+	}
+
+	totalQuery := fmt.Sprintf(`
+		SELECT 
+			COALESCE(SUM(charge_energy_added), 0) as total_energy,
+			COALESCE(SUM(cost), 0) as total_cost,
+			COUNT(*) as total_count,
+			COALESCE(SUM(duration_min), 0) as total_duration
+		FROM charging_processes
+		%s
+	`, baseWhere)
+
+	var totalRow struct {
+		TotalEnergy   float64 `db:"total_energy"`
+		TotalCost     float64 `db:"total_cost"`
+		TotalCount    int     `db:"total_count"`
+		TotalDuration float64 `db:"total_duration"`
+	}
+
+	if err := r.db.GetContext(ctx, &totalRow, totalQuery, args...); err != nil {
+		logger.Errorf("Failed to get total stats: %v", err)
+		return nil, err
+	}
+	summary.TotalEnergy = totalRow.TotalEnergy
+	summary.TotalCost = totalRow.TotalCost
+	summary.TotalCount = totalRow.TotalCount
+	summary.TotalDuration = totalRow.TotalDuration
+
+	// 2. 获取每日统计（用于日历热力图）
+	dailyQuery := fmt.Sprintf(`
+		SELECT 
+			TO_CHAR(start_date, 'YYYY-MM-DD') as date,
+			COALESCE(SUM(charge_energy_added), 0) as energy_added,
+			COALESCE(SUM(cost), 0) as cost,
+			COUNT(*) as count
+		FROM charging_processes
+		%s
+		GROUP BY TO_CHAR(start_date, 'YYYY-MM-DD')
+		ORDER BY date ASC
+	`, baseWhere)
+
+	rows, err := r.db.QueryxContext(ctx, dailyQuery, args...)
+	if err != nil {
+		logger.Errorf("Failed to get daily stats: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var item model.DailyChargeStat
+		if err := rows.StructScan(&item); err != nil {
+			logger.Warnf("Failed to scan daily stat: %v", err)
+			continue
+		}
+		summary.DailyStats = append(summary.DailyStats, item)
+	}
+
+	// 3. 获取位置统计（用于地图热力图）
+	locWhere := "WHERE cp.car_id = $1"
+	locArgs := []interface{}{carID}
+	locArgIdx := 2
+
+	if startDate != nil {
+		locWhere += fmt.Sprintf(" AND cp.start_date >= $%d", locArgIdx)
+		locArgs = append(locArgs, *startDate)
+		locArgIdx++
+	}
+	if endDate != nil {
+		locWhere += fmt.Sprintf(" AND cp.start_date <= $%d", locArgIdx)
+		locArgs = append(locArgs, *endDate)
+		locArgIdx++
+	}
+
+	locQuery := fmt.Sprintf(`
+		SELECT 
+			COALESCE(g.name, a.display_name, 'Unknown') as location,
+			AVG(p.latitude) as latitude,
+			AVG(p.longitude) as longitude,
+			COUNT(*) as count,
+			COALESCE(SUM(cp.charge_energy_added), 0) as total_energy
+		FROM charging_processes cp
+		LEFT JOIN addresses a ON cp.address_id = a.id
+		LEFT JOIN geofences g ON cp.geofence_id = g.id
+		LEFT JOIN positions p ON cp.position_id = p.id
+		%s
+		GROUP BY COALESCE(g.name, a.display_name, 'Unknown')
+		HAVING AVG(p.latitude) IS NOT NULL AND AVG(p.longitude) IS NOT NULL
+	`, locWhere)
+
+	locRows, err := r.db.QueryxContext(ctx, locQuery, locArgs...)
+	if err != nil {
+		logger.Errorf("Failed to get location stats: %v", err)
+		return nil, err
+	}
+	defer locRows.Close()
+
+	for locRows.Next() {
+		var item model.ChargeLocationStat
+		if err := locRows.StructScan(&item); err != nil {
+			logger.Warnf("Failed to scan location stat: %v", err)
+			continue
+		}
+		summary.LocationStats = append(summary.LocationStats, item)
+	}
+
+	return summary, nil
 }

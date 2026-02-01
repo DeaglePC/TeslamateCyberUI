@@ -39,6 +39,8 @@ func (h *Handler) GetCharges(c *gin.Context) {
 	if startStr := c.Query("startDate"); startStr != "" {
 		if t, err := time.Parse("2006-01-02", startStr); err == nil {
 			startDate = &t
+		} else if t, err := time.Parse(time.RFC3339, startStr); err == nil {
+			startDate = &t
 		}
 	}
 	if endStr := c.Query("endDate"); endStr != "" {
@@ -46,6 +48,8 @@ func (h *Handler) GetCharges(c *gin.Context) {
 			// 设置为当天结束时间
 			endOfDay := t.Add(24*time.Hour - time.Second)
 			endDate = &endOfDay
+		} else if t, err := time.Parse(time.RFC3339, endStr); err == nil {
+			endDate = &t
 		}
 	}
 
@@ -98,4 +102,41 @@ func (h *Handler) GetChargeStats(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, SuccessResponse(stats))
+}
+
+// GetChargeStatsSummary 获取充电统计概览
+func (h *Handler) GetChargeStatsSummary(c *gin.Context) {
+	idStr := c.Param("id")
+	carID64, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Invalid car ID"))
+		return
+	}
+	carID := int16(carID64)
+
+	var startDate, endDate *time.Time
+	if startStr := c.Query("startDate"); startStr != "" {
+		if t, err := time.Parse("2006-01-02", startStr); err == nil {
+			startDate = &t
+		} else if t, err := time.Parse(time.RFC3339, startStr); err == nil {
+			startDate = &t
+		}
+	}
+	if endStr := c.Query("endDate"); endStr != "" {
+		if t, err := time.Parse("2006-01-02", endStr); err == nil {
+			endOfDay := t.Add(24*time.Hour - time.Second)
+			endDate = &endOfDay
+		} else if t, err := time.Parse(time.RFC3339, endStr); err == nil {
+			endDate = &t
+		}
+	}
+
+	summary, err := h.repo.Charge.GetStatsSummary(c.Request.Context(), carID, startDate, endDate)
+	if err != nil {
+		logger.Errorf("Failed to get charge stats summary: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get charge stats summary"))
+		return
+	}
+
+	c.JSON(http.StatusOK, SuccessResponse(summary))
 }

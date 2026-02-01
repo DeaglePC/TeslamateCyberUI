@@ -14,7 +14,8 @@ import type {
   EfficiencyStats,
   BatteryStats,
   SocDataPoint,
-  StateTimelineItem
+  StateTimelineItem,
+  ChargeStatsSummary
 } from '@/types';
 
 // Helper function to get settings from localStorage
@@ -94,6 +95,13 @@ export const chargeApi = {
 
   getStats: async (chargeId: number): Promise<ChargeStats> => {
     const res = await api.get<ApiResponse<ChargeStats>>(`/charges/${chargeId}/stats`);
+    return res.data.data!;
+  },
+
+  getStatsSummary: async (carId: number, startDate?: string, endDate?: string): Promise<ChargeStatsSummary> => {
+    const res = await api.get<ApiResponse<ChargeStatsSummary>>(`/cars/${carId}/charges/stats_summary`, {
+      params: { startDate, endDate },
+    });
     return res.data.data!;
   },
 };

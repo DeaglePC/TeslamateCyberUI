@@ -69,6 +69,7 @@ func main() {
 		api.GET("/cars/:id/charges", h.GetCharges)
 		api.GET("/charges/:id", h.GetChargeDetail)
 		api.GET("/charges/:id/stats", h.GetChargeStats)
+		api.GET("/cars/:id/charges/stats_summary", h.GetChargeStatsSummary)
 
 		// 驾驶相关
 		api.GET("/cars/:id/drives", h.GetDrives)
