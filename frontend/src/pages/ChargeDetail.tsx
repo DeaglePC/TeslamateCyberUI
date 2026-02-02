@@ -153,7 +153,7 @@ export default function ChargeDetailPage() {
   const chartOption = getChartOption();
 
   return (
-    <div className="space-y-6 animate-slideUp">
+    <div className="space-y-4 sm:space-y-6 animate-slideUp overflow-x-hidden min-w-0">
       {/* 返回按钮 */}
       <button
         onClick={() => navigate(-1)}
@@ -174,25 +174,25 @@ export default function ChargeDetailPage() {
       </div>
 
       {/* 电量变化 */}
-      <Card>
-        <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>电量变化</h3>
+      <Card className="!p-3 sm:!p-4">
+        <h3 className="font-semibold mb-2 sm:mb-4 text-sm sm:text-base" style={{ color: colors.primary }}>电量变化</h3>
         <BatteryBar startLevel={detail.startBatteryLevel} endLevel={detail.endBatteryLevel} />
-        <div className="flex justify-between mt-4 mb-6 text-sm sm:text-base flex-wrap gap-y-1" style={{ color: colors.muted }}>
+        <div className="flex justify-between mt-2 sm:mt-4 mb-3 sm:mb-6 text-xs sm:text-base flex-wrap gap-y-1" style={{ color: colors.muted }}>
           <span>续航 {detail.startIdealRangeKm.toFixed(0)} km</span>
           <span>续航 {detail.endIdealRangeKm.toFixed(0)} km</span>
         </div>
 
         {/* Time Info Integration */}
-        <div className="pt-4 border-t" style={{ borderColor: `${colors.muted}20` }}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="pt-3 sm:pt-4 border-t" style={{ borderColor: `${colors.muted}20` }}>
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
-              <p className="text-sm" style={{ color: colors.muted }}>开始时间</p>
-              <p className="font-semibold">{formatDate(detail.startDate)}</p>
+              <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>开始时间</p>
+              <p className="font-semibold text-sm sm:text-base">{formatDate(detail.startDate)}</p>
             </div>
             {detail.endDate && (
               <div>
-                <p className="text-sm" style={{ color: colors.muted }}>结束时间</p>
-                <p className="font-semibold">{formatDate(detail.endDate)}</p>
+                <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>结束时间</p>
+                <p className="font-semibold text-sm sm:text-base">{formatDate(detail.endDate)}</p>
               </div>
             )}
           </div>
@@ -200,7 +200,7 @@ export default function ChargeDetailPage() {
       </Card>
 
       {/* 统计数据 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
         <StatCard label="充电量" value={formatEnergy(detail.chargeEnergyAdded)} />
         <StatCard label="充电时长" value={formatDuration(detail.durationMin)} />
         {detail.chargeEnergyUsed !== undefined && (
@@ -224,7 +224,7 @@ export default function ChargeDetailPage() {
           latitude={detail.latitude}
           longitude={detail.longitude}
           address={detail.location}
-          className="h-[300px]"
+          className="h-[150px] sm:h-[250px] md:h-[300px]"
         />
       )}
 
@@ -232,12 +232,12 @@ export default function ChargeDetailPage() {
       {chartOption && (
         <Card>
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>充电曲线</h3>
-          <div className="w-full overflow-hidden">
+          <div className="w-full max-w-full overflow-hidden">
             <ReactECharts
               option={chartOption}
-              style={{ height: 'min(450px, 55vh)' }}
+              style={{ height: 'min(420px, 50vh)', width: '100%' }}
               opts={{ renderer: 'svg' }}
-              className="!min-h-[320px]"
+              className="!min-h-[280px] !w-full max-w-full"
             />
           </div>
         </Card>

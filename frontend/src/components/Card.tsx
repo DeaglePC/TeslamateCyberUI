@@ -18,7 +18,7 @@ export function Card({ children, className, onClick, hoverable = false, style }:
     <div
       onClick={onClick}
       className={clsx(
-        'glass rounded-xl p-4',
+        'glass rounded-xl p-3 sm:p-4',
         hoverable && 'cursor-pointer hover:scale-[1.02] transition-transform duration-200',
         onClick && 'cursor-pointer',
         className

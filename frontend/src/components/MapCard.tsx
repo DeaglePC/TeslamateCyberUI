@@ -27,7 +27,7 @@ export function MapCard({ latitude, longitude, address, timestamp, className = '
                 borderStyle: 'solid'
             }}>
             {/* Map Container */}
-            <div className="relative flex-1 min-h-[250px]">
+            <div className="relative flex-1 min-h-[120px] sm:min-h-[200px]">
                 {/* Timestamp Badge - Only show if timestamp provided */}
                 {timestamp && (
                     <div className="absolute top-3 left-3 z-[401] px-3 py-1.5 rounded-full glass-strong flex items-center gap-2 pointer-events-none max-w-[calc(100%-1.5rem)]">
@@ -62,15 +62,15 @@ export function MapCard({ latitude, longitude, address, timestamp, className = '
 
             {/* Address Section */}
             {address && (
-                <div className="px-4 py-3 border-t border-white/5 shrink-0 bg-black/20">
-                    <div className="flex items-center gap-2 min-w-0">
+                <div className="px-3 sm:px-4 py-2 sm:py-3 border-t border-white/5 shrink-0 bg-black/20 overflow-hidden">
+                    <div className="flex items-center gap-2 min-w-0 max-w-full">
                         <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke={colors.primary}>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <span className="text-sm font-medium truncate flex-1">{address}</span>
+                        <span className="text-xs sm:text-sm font-medium truncate">{address}</span>
                     </div>
                 </div>
             )}

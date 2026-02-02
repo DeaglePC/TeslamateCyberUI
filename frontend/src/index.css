@@ -23,6 +23,7 @@ body,
 #root {
   height: 100%;
   width: 100%;
+  overflow-x: hidden;
 }
 
 /* 渐变毛玻璃效果 */

@@ -7,9 +7,9 @@ import clsx from 'clsx';
 
 function HomeIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 10a2 2 0 0 1 .6-1.5l8-6a2 2 0 0 1 2.8 0l8 6a2 2 0 0 1 .6 1.5v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9z" />
+      <path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6" />
     </svg>
   );
 }
@@ -191,16 +191,16 @@ export default function Layout() {
       style={{ backgroundColor: colors.bg, color: colors.muted }}
     >
       {/* 主内容区 - 添加 ref 用于滑动检测 */}
-      <main ref={mainContentRef} className="flex-1 flex flex-col min-h-screen pb-24">
+      <main ref={mainContentRef} className="flex-1 min-w-0 flex flex-col min-h-screen pb-24 overflow-x-hidden">
         <div
           key={location.pathname}
           className={clsx(
-            'flex-1 p-4 md:p-6 overflow-auto',
+            'flex-1 min-w-0 p-4 md:p-6 overflow-auto',
             slideDirection === 'left' && 'page-slide-left',
             slideDirection === 'right' && 'page-slide-right'
           )}
         >
-          <div className="max-w-[1920px] mx-auto w-full">
+          <div className="max-w-[1920px] mx-auto w-full min-w-0 lg:w-[50%] lg:min-w-[960px] transition-all duration-300 overflow-x-hidden">
             <Outlet />
           </div>
         </div>
@@ -208,15 +208,15 @@ export default function Layout() {
 
       {/* 居中悬浮导航栏 (Apple Style Dock) */}
       {/* 居中悬浮导航栏 (Apple Style Dock) */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100]">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[90vw]">
         <nav
-          className="flex items-center gap-1.5 px-1.5 py-1.5 rounded-full border shadow-2xl transition-all duration-300 animate-slideUp"
+          className="flex items-center justify-between gap-8 px-8 py-1.5 rounded-full border shadow-2xl transition-all duration-300 animate-slideUp"
           style={{
-            backgroundColor: theme === 'dark' || theme === 'cyber' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderColor: theme === 'dark' || theme === 'cyber' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+            backgroundColor: theme === 'dark' || theme === 'cyber' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            borderColor: theme === 'dark' || theme === 'cyber' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.5)',
           }}
         >
           {navItems.map((item) => {
@@ -228,20 +228,23 @@ export default function Layout() {
                 key={item.path}
                 to={item.path}
                 className={clsx(
-                  'relative group flex flex-col items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full transition-all duration-300 ease-out',
-                  isActive ? 'scale-110' : 'hover:scale-110 hover:bg-white/10'
+                  'relative group flex flex-col items-center justify-center rounded-full transition-all duration-300 ease-out',
+                  'w-10 h-10 md:w-12 md:h-12',
+                  isActive ? '' : 'hover:bg-white/10'
                 )}
                 style={{
                   color: isActive ? '#fff' : colors.muted,
                   background: isActive ? colors.primary : 'transparent',
-                  boxShadow: isActive ? `0 4px 12px ${colors.primary}60` : 'none',
+                  boxShadow: isActive ? `0 0 25px ${colors.primary}60` : 'none',
                 }}
               >
-                <item.icon className={clsx("w-4 h-4 md:w-5 md:h-5 transition-transform duration-300", isActive ? "scale-110" : "")} />
+                <item.icon className={clsx("transition-transform duration-300",
+                  "w-5 h-5 md:w-6 md:h-6"
+                )} />
 
                 {/* Tooltip for Desktop */}
                 <span
-                  className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none backdrop-blur-sm hidden md:block"
+                  className="absolute -top-14 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/80 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none backdrop-blur-sm hidden md:block"
                 >
                   {item.label}
                 </span>
