@@ -224,7 +224,7 @@ export default function ChargeDetailPage() {
           latitude={detail.latitude}
           longitude={detail.longitude}
           address={detail.location}
-          className="h-[150px] sm:h-[250px] md:h-[300px]"
+          className="h-[250px] sm:h-[350px] md:h-[400px]"
         />
       )}
 
