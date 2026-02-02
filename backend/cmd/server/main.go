@@ -74,6 +74,7 @@ func main() {
 		// 驾驶相关
 		api.GET("/cars/:id/drives", h.GetDrives)
 		api.GET("/cars/:id/drives/stats_summary", h.GetDriveStatsSummary)
+		api.GET("/cars/:id/drives/speed_histogram", h.GetSpeedHistogram)
 		api.GET("/drives/:id", h.GetDriveDetail)
 		api.GET("/drives/:id/positions", h.GetDrivePositions)
 

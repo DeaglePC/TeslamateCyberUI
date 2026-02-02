@@ -97,3 +97,10 @@ type DriveStatsSummary struct {
 	DriveCount       int     `json:"driveCount"`       // 驾驶次数
 	DaysInPeriod     int     `json:"daysInPeriod"`     // 统计天数
 }
+
+// SpeedHistogramItem 速度直方图数据项
+type SpeedHistogramItem struct {
+	Speed       int     `json:"speed"`       // 速度区间 (km/h)
+	Elapsed     float64 `json:"elapsed"`     // 占比百分比
+	TimeSeconds float64 `json:"timeSeconds"` // 时长秒数
+}

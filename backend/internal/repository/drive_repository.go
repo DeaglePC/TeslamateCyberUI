@@ -18,6 +18,7 @@ type DriveRepository interface {
 	GetDetail(ctx context.Context, driveID int64) (*model.DriveDetail, error)
 	GetPositions(ctx context.Context, driveID int64) ([]model.DrivePosition, error)
 	GetStatsSummary(ctx context.Context, carID int16, startDate, endDate *time.Time) (*model.DriveStatsSummary, error)
+	GetSpeedHistogram(ctx context.Context, carID int16, startDate, endDate *time.Time) ([]model.SpeedHistogramItem, error)
 }
 
 type driveRepository struct {
@@ -429,4 +430,72 @@ func (r *driveRepository) GetStatsSummary(ctx context.Context, carID int16, star
 		DriveCount:       driveCount,
 		DaysInPeriod:     daysInPeriod,
 	}, nil
+}
+
+// GetSpeedHistogram 获取速度直方图数据
+func (r *driveRepository) GetSpeedHistogram(ctx context.Context, carID int16, startDate, endDate *time.Time) ([]model.SpeedHistogramItem, error) {
+	// 构建时间筛选条件
+	timeFilter := ""
+	args := []interface{}{carID}
+	argIdx := 2
+
+	if startDate != nil {
+		timeFilter += fmt.Sprintf(" AND p.date >= $%d", argIdx)
+		args = append(args, *startDate)
+		argIdx++
+	}
+	if endDate != nil {
+		timeFilter += fmt.Sprintf(" AND p.date <= $%d", argIdx)
+		args = append(args, *endDate)
+		argIdx++
+	}
+
+	// 参考 Grafana 的 SQL 查询
+	query := fmt.Sprintf(`
+		WITH drivedata AS (
+			SELECT
+				ROUND(p.speed::numeric / 10, 0) * 10 AS speed_section,
+				EXTRACT(EPOCH FROM (LEAD(p.date) OVER (PARTITION BY p.drive_id ORDER BY p.date) - p.date)) AS seconds_elapsed
+			FROM positions p
+			WHERE p.car_id = $1 %s AND p.ideal_battery_range_km IS NOT NULL
+		)
+		SELECT 
+			speed_section AS speed,
+			SUM(seconds_elapsed) * 100 / NULLIF(SUM(SUM(seconds_elapsed)) OVER (), 0) AS elapsed,
+			SUM(seconds_elapsed) AS time_seconds
+		FROM drivedata
+		WHERE speed_section > 0
+		GROUP BY speed_section
+		ORDER BY speed_section
+	`, timeFilter)
+
+	rows, err := r.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		logger.Errorf("Failed to get speed histogram for car %d: %v", carID, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []model.SpeedHistogramItem
+	for rows.Next() {
+		var item struct {
+			Speed       sql.NullInt64   `db:"speed"`
+			Elapsed     sql.NullFloat64 `db:"elapsed"`
+			TimeSeconds sql.NullFloat64 `db:"time_seconds"`
+		}
+
+		if err := rows.StructScan(&item); err != nil {
+			continue
+		}
+
+		histItem := model.SpeedHistogramItem{
+			Speed:       int(item.Speed.Int64),
+			Elapsed:     item.Elapsed.Float64,
+			TimeSeconds: item.TimeSeconds.Float64,
+		}
+
+		items = append(items, histItem)
+	}
+
+	return items, nil
 }

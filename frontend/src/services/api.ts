@@ -11,6 +11,7 @@ import type {
   DriveDetail,
   DrivePosition,
   DriveStatsSummary,
+  SpeedHistogramItem,
   OverviewStats,
   EfficiencyStats,
   BatteryStats,
@@ -131,6 +132,13 @@ export const driveApi = {
       params: { startDate, endDate },
     });
     return res.data.data!;
+  },
+
+  getSpeedHistogram: async (carId: number, startDate?: string, endDate?: string): Promise<SpeedHistogramItem[]> => {
+    const res = await api.get<ApiResponse<SpeedHistogramItem[]>>(`/cars/${carId}/drives/speed_histogram`, {
+      params: { startDate, endDate },
+    });
+    return res.data.data || [];
   },
 };
 

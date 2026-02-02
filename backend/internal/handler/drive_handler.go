@@ -115,3 +115,31 @@ func (h *Handler) GetDriveStatsSummary(c *gin.Context) {
 
 	c.JSON(http.StatusOK, SuccessResponse(result))
 }
+
+// GetSpeedHistogram 获取速度直方图数据
+func (h *Handler) GetSpeedHistogram(c *gin.Context) {
+	idStr := c.Param("id")
+	carID64, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Invalid car ID"))
+		return
+	}
+	if carID64 < -32768 || carID64 > 32767 {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Car ID out of valid range"))
+		return
+	}
+	carID := int16(carID64)
+
+	// 解析时间筛选参数
+	startDate := parseDateTime(c.Query("startDate"), false)
+	endDate := parseDateTime(c.Query("endDate"), true)
+
+	result, err := h.repo.Drive.GetSpeedHistogram(c.Request.Context(), carID, startDate, endDate)
+	if err != nil {
+		logger.Errorf("Failed to get speed histogram: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get speed histogram"))
+		return
+	}
+
+	c.JSON(http.StatusOK, SuccessResponse(result))
+}

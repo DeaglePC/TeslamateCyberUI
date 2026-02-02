@@ -202,6 +202,13 @@ export interface DriveStatsSummary {
   daysInPeriod: number;     // 统计天数
 }
 
+// 速度直方图数据项
+export interface SpeedHistogramItem {
+  speed: number;       // 速度区间 (km/h)
+  elapsed: number;     // 占比百分比
+  timeSeconds: number; // 时长秒数
+}
+
 // 概览统计
 export interface OverviewStats {
   totalDistance: number;
