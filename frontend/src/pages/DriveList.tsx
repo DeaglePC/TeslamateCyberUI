@@ -18,7 +18,21 @@ export default function DriveListPage() {
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 20, total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>({});
+  const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setFullYear(start.getFullYear() - 1);
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    return {
+      start: formatDate(start),
+      end: formatDate(now),
+    };
+  });
 
   const colors = getThemeColors(theme);
 
@@ -47,6 +61,9 @@ export default function DriveListPage() {
   }, [fetchData]);
 
   const handleDateFilter = (start: string | undefined, end: string | undefined) => {
+    if (dateRange.start === start && dateRange.end === end) {
+      return;
+    }
     setDateRange({ start, end });
   };
 
@@ -65,7 +82,7 @@ export default function DriveListPage() {
         </div>
 
         {/* 日期筛选 */}
-        <DateFilter onFilter={handleDateFilter} />
+        <DateFilter onFilter={handleDateFilter} initialPreset="year" />
       </div>
 
       {loading ? (

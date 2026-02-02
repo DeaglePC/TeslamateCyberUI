@@ -56,6 +56,8 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const colors = getThemeColors(theme);
+  const isDarkTheme = ['dark', 'cyber', 'tesla', 'aurora', 'tech'].includes(theme);
+
 
 
   // Touch state for swipe detection
@@ -212,10 +214,10 @@ export default function Layout() {
         <nav
           className="flex items-center justify-between gap-8 px-8 py-1.5 rounded-full border shadow-2xl transition-all duration-300 animate-slideUp"
           style={{
-            backgroundColor: theme === 'dark' || theme === 'cyber' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)',
+            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.45)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            borderColor: theme === 'dark' || theme === 'cyber' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+            borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
             boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.5)',
           }}
         >
