@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors } from '@/utils/theme';
 import type { SocDataPoint } from '@/types';
-import { DateFilter } from '@/components/DateFilter';
+import { DateFilter, FilterPreset } from '@/components/DateFilter';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -22,6 +22,8 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
     const { t } = useTranslation(language);
     const [showFilter, setShowFilter] = useState(false);
     const [filterPos, setFilterPos] = useState({ top: 0, right: 0 });
+    const isFirstMount = useRef(true);
+    const [currentPreset, setCurrentPreset] = useState<FilterPreset>('last24h');
 
     const colors = getThemeColors(theme);
 
@@ -137,6 +139,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                             const rect = e.currentTarget.getBoundingClientRect();
                             setFilterPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
                             setShowFilter(!showFilter);
+                            isFirstMount.current = true; // Reset for new mount
                         }}
                         className="text-xs px-2 py-1 rounded glass-strong hover:brightness-125 transition-all flex items-center gap-1"
                         style={{ color: colors.muted }}
@@ -160,13 +163,21 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                                     right: filterPos.right,
                                     background: 'rgba(20, 20, 30, 0.95)'
                                 }}
+                                onClick={(e) => e.stopPropagation()}
                             >
                                 <DateFilter
                                     className="flex-col items-stretch"
+                                    initialPreset={currentPreset}
                                     onFilter={(start, end) => {
                                         onRangeChange?.(start, end);
-                                        setShowFilter(false);
+                                        // Skip closing on first mount (initial useEffect call)
+                                        if (isFirstMount.current) {
+                                            isFirstMount.current = false;
+                                        } else {
+                                            setShowFilter(false);
+                                        }
                                     }}
+                                    onPresetChange={(preset) => setCurrentPreset(preset)}
                                 />
                             </div>
                         </>,

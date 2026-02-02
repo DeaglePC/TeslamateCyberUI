@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { UniversalMap } from '@/components/UniversalMap';
 import { useSettingsStore } from '@/store/settings';
 import { getThemeColors } from '@/utils/theme';
@@ -12,7 +13,7 @@ interface MapCardProps {
     title?: string;
 }
 
-export function MapCard({ latitude, longitude, address, timestamp, className = '', title }: MapCardProps) {
+export const MapCard = memo(function MapCard({ latitude, longitude, address, timestamp, className = '', title }: MapCardProps) {
     const { theme, language } = useSettingsStore();
     const { t } = useTranslation(language);
     const colors = getThemeColors(theme);
@@ -76,4 +77,4 @@ export function MapCard({ latitude, longitude, address, timestamp, className = '
             )}
         </div>
     );
-}
+});

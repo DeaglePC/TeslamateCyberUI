@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo, memo } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, useMap, Tooltip, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import { useSettingsStore } from '@/store/settings';
@@ -68,7 +68,7 @@ export function UniversalMap({ positions = [], marker, heatmapData = [], classNa
         aurora: { primary: '#72efdd', secondary: '#7678ed', bg: '#0b132b' },
     };
 
-    const colors = themeColors[theme] || themeColors.cyber;
+    const colors = useMemo(() => themeColors[theme] || themeColors.cyber, [theme]);
 
     // Strategy Determination
     const isPathMode = positions.length > 0;

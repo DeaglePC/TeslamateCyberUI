@@ -7,11 +7,12 @@ interface DateFilterProps {
     onFilter: (startDate: string | undefined, endDate: string | undefined) => void;
     className?: string;
     initialPreset?: FilterPreset;
+    onPresetChange?: (preset: FilterPreset) => void;
 }
 
-type FilterPreset = 'last24h' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+export type FilterPreset = 'last24h' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
-export function DateFilter({ onFilter, className = '', initialPreset = 'last24h' }: DateFilterProps) {
+export function DateFilter({ onFilter, className = '', initialPreset = 'last24h', onPresetChange }: DateFilterProps) {
     const { theme, language } = useSettingsStore();
     const colors = getThemeColors(theme);
 
@@ -85,6 +86,7 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
 
     const handlePresetClick = (presetId: FilterPreset | 'last24h') => {
         setPreset(presetId as FilterPreset);
+        onPresetChange?.(presetId as FilterPreset);
         if (presetId === 'custom') {
             setShowCustom(true);
         } else {
