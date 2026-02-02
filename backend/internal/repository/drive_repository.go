@@ -422,13 +422,26 @@ func (r *driveRepository) GetStatsSummary(ctx context.Context, carID int16, star
 		avgDailyDistance = totalDistance / float64(daysInPeriod)
 	}
 
+	// 计算外推里程 - 参考 Grafana 的计算方式
+	// 月度里程外推 = 总距离 / 实际天数 * (365/12)
+	// 年度里程外推 = 总距离 / 实际天数 * 365
+	extrapolatedMonthlyKm := 0.0
+	extrapolatedAnnualKm := 0.0
+	if daysInPeriod > 0 {
+		dailyAvg := totalDistance / float64(daysInPeriod)
+		extrapolatedMonthlyKm = dailyAvg * (365.0 / 12.0)
+		extrapolatedAnnualKm = dailyAvg * 365.0
+	}
+
 	return &model.DriveStatsSummary{
-		TotalDistance:    totalDistance,
-		MedianDistance:   medianDistance,
-		AvgDailyDistance: avgDailyDistance,
-		MaxSpeed:         maxSpeed,
-		DriveCount:       driveCount,
-		DaysInPeriod:     daysInPeriod,
+		TotalDistance:         totalDistance,
+		MedianDistance:        medianDistance,
+		AvgDailyDistance:      avgDailyDistance,
+		MaxSpeed:              maxSpeed,
+		DriveCount:            driveCount,
+		DaysInPeriod:          daysInPeriod,
+		ExtrapolatedMonthlyKm: extrapolatedMonthlyKm,
+		ExtrapolatedAnnualKm:  extrapolatedAnnualKm,
 	}, nil
 }
 

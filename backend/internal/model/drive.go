@@ -90,12 +90,14 @@ type DrivePosition struct {
 
 // DriveStatsSummary 驾驶统计摘要
 type DriveStatsSummary struct {
-	TotalDistance    float64 `json:"totalDistance"`    // 记录距离 (km)
-	MedianDistance   float64 `json:"medianDistance"`   // 中位距离 (km)
-	AvgDailyDistance float64 `json:"avgDailyDistance"` // 平均每日行驶距离 (km)
-	MaxSpeed         int     `json:"maxSpeed"`         // 最大速度 (km/h)
-	DriveCount       int     `json:"driveCount"`       // 驾驶次数
-	DaysInPeriod     int     `json:"daysInPeriod"`     // 统计天数
+	TotalDistance           float64 `json:"totalDistance"`           // 记录距离 (km)
+	MedianDistance          float64 `json:"medianDistance"`          // 中位距离 (km)
+	AvgDailyDistance        float64 `json:"avgDailyDistance"`        // 平均每日行驶距离 (km)
+	MaxSpeed                int     `json:"maxSpeed"`                // 最大速度 (km/h)
+	DriveCount              int     `json:"driveCount"`              // 驾驶次数
+	DaysInPeriod            int     `json:"daysInPeriod"`            // 统计天数
+	ExtrapolatedMonthlyKm   float64 `json:"extrapolatedMonthlyKm"`   // 月度里程外推 (km)
+	ExtrapolatedAnnualKm    float64 `json:"extrapolatedAnnualKm"`    // 年度里程外推 (km)
 }
 
 // SpeedHistogramItem 速度直方图数据项
