@@ -9,6 +9,7 @@ import { Loading, ErrorState, EmptyState } from '@/components/States';
 import { formatDate, formatDuration, formatDistance, formatSpeed } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import type { DriveListItem, Pagination } from '@/types';
+import { DriveStats } from '@/components/DriveStats';
 import clsx from 'clsx';
 
 export default function DriveListPage() {
@@ -84,6 +85,15 @@ export default function DriveListPage() {
         {/* 日期筛选 */}
         <DateFilter onFilter={handleDateFilter} initialPreset="year" />
       </div>
+
+      {/* 统计概览 */}
+      {selectedCarId && (
+        <DriveStats
+          carId={selectedCarId}
+          startDate={dateRange.start}
+          endDate={dateRange.end}
+        />
+      )}
 
       {loading ? (
         <Loading />

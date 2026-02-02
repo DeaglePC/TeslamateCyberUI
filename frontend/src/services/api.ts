@@ -10,6 +10,7 @@ import type {
   DriveListItem,
   DriveDetail,
   DrivePosition,
+  DriveStatsSummary,
   OverviewStats,
   EfficiencyStats,
   BatteryStats,
@@ -123,6 +124,13 @@ export const driveApi = {
   getPositions: async (driveId: number): Promise<DrivePosition[]> => {
     const res = await api.get<ApiResponse<DrivePosition[]>>(`/drives/${driveId}/positions`);
     return res.data.data || [];
+  },
+
+  getStatsSummary: async (carId: number, startDate?: string, endDate?: string): Promise<DriveStatsSummary> => {
+    const res = await api.get<ApiResponse<DriveStatsSummary>>(`/cars/${carId}/drives/stats_summary`, {
+      params: { startDate, endDate },
+    });
+    return res.data.data!;
   },
 };
 

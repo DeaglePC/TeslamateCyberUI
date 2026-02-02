@@ -17,6 +17,7 @@ type DriveRepository interface {
 	GetList(ctx context.Context, carID int16, page, pageSize int, startDate, endDate *time.Time) (*model.ListResponse[model.DriveListItem], error)
 	GetDetail(ctx context.Context, driveID int64) (*model.DriveDetail, error)
 	GetPositions(ctx context.Context, driveID int64) ([]model.DrivePosition, error)
+	GetStatsSummary(ctx context.Context, carID int16, startDate, endDate *time.Time) (*model.DriveStatsSummary, error)
 }
 
 type driveRepository struct {
@@ -323,4 +324,109 @@ func (r *driveRepository) GetPositions(ctx context.Context, driveID int64) ([]mo
 	}
 
 	return positions, nil
+}
+
+// GetStatsSummary 获取驾驶统计摘要
+func (r *driveRepository) GetStatsSummary(ctx context.Context, carID int16, startDate, endDate *time.Time) (*model.DriveStatsSummary, error) {
+	// 构建查询条件
+	whereClause := "WHERE car_id = $1 AND end_date IS NOT NULL"
+	args := []interface{}{carID}
+	argIdx := 2
+
+	if startDate != nil {
+		whereClause += fmt.Sprintf(" AND start_date >= $%d", argIdx)
+		args = append(args, *startDate)
+		argIdx++
+	}
+	if endDate != nil {
+		whereClause += fmt.Sprintf(" AND start_date <= $%d", argIdx)
+		args = append(args, *endDate)
+		argIdx++
+	}
+
+	// 查询总距离、驾驶次数、最大速度
+	statsQuery := fmt.Sprintf(`
+		SELECT 
+			COALESCE(SUM(distance), 0) as total_distance,
+			COALESCE(MAX(speed_max), 0) as max_speed,
+			COUNT(*) as drive_count
+		FROM drives
+		%s
+	`, whereClause)
+
+	var totalDistance float64
+	var maxSpeed int
+	var driveCount int
+
+	row := r.db.QueryRowxContext(ctx, statsQuery, args...)
+	if err := row.Scan(&totalDistance, &maxSpeed, &driveCount); err != nil {
+		logger.Errorf("Failed to get drive stats summary for car %d: %v", carID, err)
+		return nil, err
+	}
+
+	// 查询中位距离
+	medianQuery := fmt.Sprintf(`
+		SELECT COALESCE((percentile_cont(0.5) WITHIN GROUP (ORDER BY distance))::numeric, 0) as median_distance
+		FROM drives
+		%s
+	`, whereClause)
+
+	var medianDistance float64
+	if err := r.db.GetContext(ctx, &medianDistance, medianQuery, args...); err != nil {
+		logger.Errorf("Failed to get median distance for car %d: %v", carID, err)
+		medianDistance = 0
+	}
+
+	// 获取该车辆首次有记录的日期
+	var firstRecordDate time.Time
+	firstRecordQuery := `SELECT MIN(start_date) FROM drives WHERE car_id = $1 AND end_date IS NOT NULL`
+	if err := r.db.GetContext(ctx, &firstRecordDate, firstRecordQuery, carID); err != nil {
+		logger.Errorf("Failed to get first record date for car %d: %v", carID, err)
+		firstRecordDate = time.Time{}
+	}
+
+	// 计算统计天数 - 参考 Grafana 的计算方式
+	// 实际起始日期 = max(用户选择的开始日期, 首次有数据的日期)
+	// 这样如果用户选择近一年，但实际只有3个月的数据，就按3个月计算
+	var daysInPeriod int
+	if endDate != nil {
+		actualStartDate := firstRecordDate
+		if startDate != nil && startDate.After(firstRecordDate) {
+			actualStartDate = *startDate
+		}
+		// 计算实际起始日期到结束日期的天数
+		duration := endDate.Sub(actualStartDate)
+		daysInPeriod = int(duration.Hours()/24) + 1
+		if daysInPeriod < 1 {
+			daysInPeriod = 1
+		}
+	} else {
+		// 如果没有指定结束日期，计算第一条到最后一条记录的天数
+		daysQuery := fmt.Sprintf(`
+			SELECT GREATEST(
+				EXTRACT(DAY FROM (MAX(start_date) - MIN(start_date)))::int + 1,
+				1
+			) as days_in_period
+			FROM drives
+			%s
+		`, whereClause)
+		if err := r.db.GetContext(ctx, &daysInPeriod, daysQuery, args...); err != nil {
+			daysInPeriod = 1
+		}
+	}
+
+	// 计算平均每日行驶距离
+	avgDailyDistance := 0.0
+	if daysInPeriod > 0 {
+		avgDailyDistance = totalDistance / float64(daysInPeriod)
+	}
+
+	return &model.DriveStatsSummary{
+		TotalDistance:    totalDistance,
+		MedianDistance:   medianDistance,
+		AvgDailyDistance: avgDailyDistance,
+		MaxSpeed:         maxSpeed,
+		DriveCount:       driveCount,
+		DaysInPeriod:     daysInPeriod,
+	}, nil
 }

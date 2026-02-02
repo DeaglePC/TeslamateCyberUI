@@ -87,3 +87,31 @@ func (h *Handler) GetDrivePositions(c *gin.Context) {
 
 	c.JSON(http.StatusOK, SuccessResponse(positions))
 }
+
+// GetDriveStatsSummary 获取驾驶统计摘要
+func (h *Handler) GetDriveStatsSummary(c *gin.Context) {
+	idStr := c.Param("id")
+	carID64, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Invalid car ID"))
+		return
+	}
+	if carID64 < -32768 || carID64 > 32767 {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Car ID out of valid range"))
+		return
+	}
+	carID := int16(carID64)
+
+	// 解析时间筛选参数
+	startDate := parseDateTime(c.Query("startDate"), false)
+	endDate := parseDateTime(c.Query("endDate"), true)
+
+	result, err := h.repo.Drive.GetStatsSummary(c.Request.Context(), carID, startDate, endDate)
+	if err != nil {
+		logger.Errorf("Failed to get drive stats summary: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get drive stats summary"))
+		return
+	}
+
+	c.JSON(http.StatusOK, SuccessResponse(result))
+}

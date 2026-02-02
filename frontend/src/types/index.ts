@@ -192,6 +192,16 @@ export interface DrivePosition {
   elevation?: number;
 }
 
+// 驾驶统计摘要
+export interface DriveStatsSummary {
+  totalDistance: number;    // 记录距离 (km)
+  medianDistance: number;   // 中位距离 (km)
+  avgDailyDistance: number; // 平均每日行驶距离 (km)
+  maxSpeed: number;         // 最大速度 (km/h)
+  driveCount: number;       // 驾驶次数
+  daysInPeriod: number;     // 统计天数
+}
+
 // 概览统计
 export interface OverviewStats {
   totalDistance: number;

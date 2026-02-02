@@ -87,3 +87,13 @@ type DrivePosition struct {
 	BatteryLevel int       `json:"batteryLevel"`
 	Elevation    *int      `json:"elevation,omitempty"`
 }
+
+// DriveStatsSummary 驾驶统计摘要
+type DriveStatsSummary struct {
+	TotalDistance    float64 `json:"totalDistance"`    // 记录距离 (km)
+	MedianDistance   float64 `json:"medianDistance"`   // 中位距离 (km)
+	AvgDailyDistance float64 `json:"avgDailyDistance"` // 平均每日行驶距离 (km)
+	MaxSpeed         int     `json:"maxSpeed"`         // 最大速度 (km/h)
+	DriveCount       int     `json:"driveCount"`       // 驾驶次数
+	DaysInPeriod     int     `json:"daysInPeriod"`     // 统计天数
+}
