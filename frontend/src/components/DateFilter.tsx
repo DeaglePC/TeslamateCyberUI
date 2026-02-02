@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSettingsStore } from '@/store/settings';
 import { getThemeColors } from '@/utils/theme';
 import { DatePicker } from '@/components/DatePicker';
@@ -19,6 +19,7 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [showCustom, setShowCustom] = useState(false);
+    const initialized = useRef(false);
 
     const presets: { id: FilterPreset | 'last24h'; label: { zh: string; en: string } }[] = [
         { id: 'last24h', label: { zh: '近24小时', en: 'Last 24h' } },
@@ -31,17 +32,29 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
 
     const getDateRange = (presetId: FilterPreset | 'last24h'): { start?: string; end?: string } => {
         const now = new Date();
-        const formatDate = (date: Date) => date.toISOString().split('T')[0];
-
-        // Reset time to end of day for end date, or just date part is handled by backend?
-        // Usually APIs taking T00:00:00.
-        // The implementation here just takes YYYY-MM-DD.
+        // 统一使用 YYYY-MM-DD 格式（本地日期）
+        const formatDate = (date: Date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        // 本地时间格式（不带时区后缀）用于精确到秒的筛选
+        const formatLocalDateTime = (date: Date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        };
 
         switch (presetId) {
             case 'last24h': {
                 const start = new Date(now);
                 start.setHours(start.getHours() - 24);
-                return { start: start.toISOString(), end: now.toISOString() };
+                return { start: formatLocalDateTime(start), end: formatLocalDateTime(now) };
             }
             case 'week': {
                 const start = new Date(now);
@@ -85,6 +98,15 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
         const range = getDateRange('custom');
         onFilter(range.start, range.end);
     };
+
+    // 初始化时应用默认筛选
+    useEffect(() => {
+        if (!initialized.current && initialPreset !== 'custom') {
+            initialized.current = true;
+            const range = getDateRange(initialPreset);
+            onFilter(range.start, range.end);
+        }
+    }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <div className={`space-y-3 ${className}`}>

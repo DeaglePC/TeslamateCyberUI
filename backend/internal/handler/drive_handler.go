@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"teslamate-cyberui/internal/logger"
 
@@ -35,19 +34,8 @@ func (h *Handler) GetDrives(c *gin.Context) {
 	}
 
 	// 解析时间筛选参数
-	var startDate, endDate *time.Time
-	if startStr := c.Query("startDate"); startStr != "" {
-		if t, err := time.Parse("2006-01-02", startStr); err == nil {
-			startDate = &t
-		}
-	}
-	if endStr := c.Query("endDate"); endStr != "" {
-		if t, err := time.Parse("2006-01-02", endStr); err == nil {
-			// 设置为当天结束时间
-			endOfDay := t.Add(24*time.Hour - time.Second)
-			endDate = &endOfDay
-		}
-	}
+	startDate := parseDateTime(c.Query("startDate"), false)
+	endDate := parseDateTime(c.Query("endDate"), true)
 
 	result, err := h.repo.Drive.GetList(c.Request.Context(), carID, page, pageSize, startDate, endDate)
 	if err != nil {

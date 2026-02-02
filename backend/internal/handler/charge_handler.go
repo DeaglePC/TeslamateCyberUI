@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"teslamate-cyberui/internal/logger"
 
@@ -35,23 +34,8 @@ func (h *Handler) GetCharges(c *gin.Context) {
 	}
 
 	// 解析时间筛选参数
-	var startDate, endDate *time.Time
-	if startStr := c.Query("startDate"); startStr != "" {
-		if t, err := time.Parse("2006-01-02", startStr); err == nil {
-			startDate = &t
-		} else if t, err := time.Parse(time.RFC3339, startStr); err == nil {
-			startDate = &t
-		}
-	}
-	if endStr := c.Query("endDate"); endStr != "" {
-		if t, err := time.Parse("2006-01-02", endStr); err == nil {
-			// 设置为当天结束时间
-			endOfDay := t.Add(24*time.Hour - time.Second)
-			endDate = &endOfDay
-		} else if t, err := time.Parse(time.RFC3339, endStr); err == nil {
-			endDate = &t
-		}
-	}
+	startDate := parseDateTime(c.Query("startDate"), false)
+	endDate := parseDateTime(c.Query("endDate"), true)
 
 	result, err := h.repo.Charge.GetList(c.Request.Context(), carID, page, pageSize, startDate, endDate)
 	if err != nil {
@@ -114,22 +98,9 @@ func (h *Handler) GetChargeStatsSummary(c *gin.Context) {
 	}
 	carID := int16(carID64)
 
-	var startDate, endDate *time.Time
-	if startStr := c.Query("startDate"); startStr != "" {
-		if t, err := time.Parse("2006-01-02", startStr); err == nil {
-			startDate = &t
-		} else if t, err := time.Parse(time.RFC3339, startStr); err == nil {
-			startDate = &t
-		}
-	}
-	if endStr := c.Query("endDate"); endStr != "" {
-		if t, err := time.Parse("2006-01-02", endStr); err == nil {
-			endOfDay := t.Add(24*time.Hour - time.Second)
-			endDate = &endOfDay
-		} else if t, err := time.Parse(time.RFC3339, endStr); err == nil {
-			endDate = &t
-		}
-	}
+	// 解析时间筛选参数
+	startDate := parseDateTime(c.Query("startDate"), false)
+	endDate := parseDateTime(c.Query("endDate"), true)
 
 	summary, err := h.repo.Charge.GetStatsSummary(c.Request.Context(), carID, startDate, endDate)
 	if err != nil {
