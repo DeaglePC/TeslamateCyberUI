@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSettingsStore } from '@/store/settings';
 import { carApi, statsApi } from '@/services/api';
 import { Card, StatCard } from '@/components/Card';
@@ -9,6 +9,7 @@ import { ActivityTimeline } from '@/components/ActivityTimeline';
 import { formatDistance, formatRelativeTime } from '@/utils/format';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors } from '@/utils/theme';
+import { getCachedImage, setCachedImage } from '@/utils/imageCache';
 import type { Car, CarStatus, OverviewStats, SocDataPoint, StateTimelineItem } from '@/types';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
@@ -90,11 +91,66 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [cachedCarImageUrl, setCachedCarImageUrl] = useState<string>('');
 
   const colors = getThemeColors(theme);
 
   // Get current car info
   const currentCar = cars.find(c => c.id === selectedCarId) || cars[0];
+
+  // Get car image URL with caching
+  const carImageUrl = currentCar ? getCarImageUrl(currentCar.model, currentCar.exteriorColor, currentCar.trimBadging) : '';
+
+  // Load and cache car image
+  const loadCarImage = useCallback(async (url: string) => {
+    if (!url) {
+      setCachedCarImageUrl('');
+      return;
+    }
+
+    // Check cache first
+    const cached = getCachedImage(url);
+    if (cached) {
+      setCachedCarImageUrl(cached);
+      return;
+    }
+
+    // Load image and cache it
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const dataUrl = canvas.toDataURL('image/png');
+          setCachedImage(url, dataUrl);
+          setCachedCarImageUrl(dataUrl);
+        } else {
+          setCachedCarImageUrl(url);
+        }
+      } catch {
+        // CORS error, use original URL
+        setCachedCarImageUrl(url);
+      }
+    };
+    
+    img.onerror = () => {
+      setCachedCarImageUrl(url);
+    };
+    
+    img.src = url;
+  }, []);
+
+  // Effect to load car image when URL changes
+  useEffect(() => {
+    loadCarImage(carImageUrl);
+  }, [carImageUrl, loadCarImage]);
 
   const fetchData = async () => {
     try {
@@ -285,7 +341,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none pt-12">
                   {currentCar.model ? (
                     <img
-                      src={getCarImageUrl(currentCar.model, currentCar.exteriorColor, currentCar.trimBadging)}
+                      src={cachedCarImageUrl || carImageUrl}
                       alt={`Tesla Model ${currentCar.model}`}
                       className="w-full object-contain drop-shadow-xl
                         max-w-[600px] scale-[1.4] mx-auto
