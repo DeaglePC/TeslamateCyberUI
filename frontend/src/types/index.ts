@@ -192,6 +192,13 @@ export interface DrivePosition {
   elevation?: number;
 }
 
+// 单次行程轨迹
+export interface DriveTrack {
+  driveId: number;
+  startDate: string;
+  positions: DrivePosition[];
+}
+
 // 驾驶统计摘要
 export interface DriveStatsSummary {
   totalDistance: number;           // 记录距离 (km)

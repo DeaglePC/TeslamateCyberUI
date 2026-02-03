@@ -10,6 +10,7 @@ import (
 	"teslamate-cyberui/internal/model"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 // DriveRepository 驾驶数据仓储接口
@@ -17,6 +18,7 @@ type DriveRepository interface {
 	GetList(ctx context.Context, carID int16, page, pageSize int, startDate, endDate *time.Time) (*model.ListResponse[model.DriveListItem], error)
 	GetDetail(ctx context.Context, driveID int64) (*model.DriveDetail, error)
 	GetPositions(ctx context.Context, driveID int64) ([]model.DrivePosition, error)
+	GetAllDrivesPositions(ctx context.Context, carID int16, startDate, endDate *time.Time) ([]model.DriveTrack, error)
 	GetStatsSummary(ctx context.Context, carID int16, startDate, endDate *time.Time) (*model.DriveStatsSummary, error)
 	GetSpeedHistogram(ctx context.Context, carID int16, startDate, endDate *time.Time) ([]model.SpeedHistogramItem, error)
 }
@@ -325,6 +327,151 @@ func (r *driveRepository) GetPositions(ctx context.Context, driveID int64) ([]mo
 	}
 
 	return positions, nil
+}
+
+// GetAllDrivesPositions 获取指定时间范围内所有行程的轨迹点
+func (r *driveRepository) GetAllDrivesPositions(ctx context.Context, carID int16, startDate, endDate *time.Time) ([]model.DriveTrack, error) {
+	// 构建时间筛选条件，过滤掉距离小于2km的短途行程
+	whereClause := "WHERE d.car_id = $1 AND d.end_date IS NOT NULL AND COALESCE(d.distance, 0) >= 2"
+	args := []interface{}{carID}
+	argIdx := 2
+
+	if startDate != nil {
+		whereClause += fmt.Sprintf(" AND d.start_date >= $%d", argIdx)
+		args = append(args, *startDate)
+		argIdx++
+	}
+	if endDate != nil {
+		whereClause += fmt.Sprintf(" AND d.start_date <= $%d", argIdx)
+		args = append(args, *endDate)
+		argIdx++
+	}
+
+	// 获取所有符合条件的行程ID和开始时间
+	driveQuery := fmt.Sprintf(`
+		SELECT d.id, d.start_date
+		FROM drives d
+		%s
+		ORDER BY d.start_date DESC
+		LIMIT 100
+	`, whereClause)
+
+	driveRows, err := r.db.QueryxContext(ctx, driveQuery, args...)
+	if err != nil {
+		logger.Errorf("Failed to get drives for positions: %v", err)
+		return nil, err
+	}
+	defer driveRows.Close()
+
+	var tracks []model.DriveTrack
+	var driveIDs []int64
+	driveStartDates := make(map[int64]time.Time)
+
+	for driveRows.Next() {
+		var id int64
+		var startDateVal sql.NullTime
+		if err := driveRows.Scan(&id, &startDateVal); err != nil {
+			continue
+		}
+		driveIDs = append(driveIDs, id)
+		if startDateVal.Valid {
+			driveStartDates[id] = startDateVal.Time
+		}
+	}
+
+	if len(driveIDs) == 0 {
+		return tracks, nil
+	}
+
+	// 批量获取所有轨迹点，按 drive_id 分组
+	// 对轨迹点进行采样，每个行程最多100个点
+	posQuery := `
+		WITH numbered AS (
+			SELECT 
+				drive_id,
+				date,
+				latitude,
+				longitude,
+				COALESCE(speed, 0) as speed,
+				COALESCE(power, 0) as power,
+				COALESCE(battery_level, 0) as battery_level,
+				elevation,
+				ROW_NUMBER() OVER (PARTITION BY drive_id ORDER BY date) as rn,
+				COUNT(*) OVER (PARTITION BY drive_id) as total
+			FROM positions
+			WHERE drive_id = ANY($1)
+		)
+		SELECT 
+			drive_id,
+			date,
+			latitude,
+			longitude,
+			speed,
+			power,
+			battery_level,
+			elevation
+		FROM numbered
+		WHERE rn = 1 OR rn = total OR rn % GREATEST(1, total / 100) = 0
+		ORDER BY drive_id, date
+	`
+
+	posRows, err := r.db.QueryxContext(ctx, posQuery, pq.Array(driveIDs))
+	if err != nil {
+		logger.Errorf("Failed to get batch positions: %v", err)
+		return nil, err
+	}
+	defer posRows.Close()
+
+	// 按 drive_id 组织轨迹点
+	trackMap := make(map[int64][]model.DrivePosition)
+
+	for posRows.Next() {
+		var row struct {
+			DriveID      int64         `db:"drive_id"`
+			Date         sql.NullTime  `db:"date"`
+			Latitude     float64       `db:"latitude"`
+			Longitude    float64       `db:"longitude"`
+			Speed        int           `db:"speed"`
+			Power        int           `db:"power"`
+			BatteryLevel int           `db:"battery_level"`
+			Elevation    sql.NullInt64 `db:"elevation"`
+		}
+
+		if err := posRows.StructScan(&row); err != nil {
+			continue
+		}
+
+		pos := model.DrivePosition{
+			Latitude:     row.Latitude,
+			Longitude:    row.Longitude,
+			Speed:        row.Speed,
+			Power:        row.Power,
+			BatteryLevel: row.BatteryLevel,
+		}
+
+		if row.Date.Valid {
+			pos.Date = row.Date.Time
+		}
+		if row.Elevation.Valid {
+			elev := int(row.Elevation.Int64)
+			pos.Elevation = &elev
+		}
+
+		trackMap[row.DriveID] = append(trackMap[row.DriveID], pos)
+	}
+
+	// 按照原始顺序构建结果
+	for _, driveID := range driveIDs {
+		if positions, ok := trackMap[driveID]; ok && len(positions) > 0 {
+			tracks = append(tracks, model.DriveTrack{
+				DriveID:   driveID,
+				StartDate: driveStartDates[driveID],
+				Positions: positions,
+			})
+		}
+	}
+
+	return tracks, nil
 }
 
 // GetStatsSummary 获取驾驶统计摘要

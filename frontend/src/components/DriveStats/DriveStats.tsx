@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useSettingsStore } from '@/store/settings';
 import { driveApi } from '@/services/api';
 import { Card } from '@/components/Card';
-import { DriveStatsSummary } from '@/types';
+import { UniversalMap } from '@/components/UniversalMap';
+import { DriveStatsSummary, DriveTrack } from '@/types';
 import { formatDistance, formatSpeed } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import { Loading } from '@/components/States';
@@ -16,7 +17,9 @@ interface Props {
 export function DriveStats({ carId, startDate, endDate }: Props) {
     const { theme, unit, language } = useSettingsStore();
     const [stats, setStats] = useState<DriveStatsSummary | null>(null);
+    const [tracks, setTracks] = useState<DriveTrack[]>([]);
     const [loading, setLoading] = useState(true);
+    const [tracksLoading, setTracksLoading] = useState(false);
     const colors = getThemeColors(theme);
 
     useEffect(() => {
@@ -34,6 +37,25 @@ export function DriveStats({ carId, startDate, endDate }: Props) {
 
         if (carId) {
             fetchStats();
+        }
+    }, [carId, startDate, endDate]);
+
+    // 获取轨迹数据
+    useEffect(() => {
+        const fetchTracks = async () => {
+            try {
+                setTracksLoading(true);
+                const data = await driveApi.getAllDrivesPositions(carId, startDate, endDate);
+                setTracks(data);
+            } catch (err) {
+                console.error('Failed to fetch drive tracks', err);
+            } finally {
+                setTracksLoading(false);
+            }
+        };
+
+        if (carId) {
+            fetchTracks();
         }
     }, [carId, startDate, endDate]);
 
@@ -174,6 +196,31 @@ export function DriveStats({ carId, startDate, endDate }: Props) {
                     </div>
                 </Card>
             </div>
+
+            {/* 行驶轨迹地图 */}
+            <Card>
+                <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>
+                    {language === 'zh' ? '行驶轨迹' : 'Drive Tracks'}
+                    {tracks.length > 0 && (
+                        <span className="ml-2 text-sm font-normal" style={{ color: colors.muted }}>
+                            ({tracks.length} {language === 'zh' ? '条记录' : 'trips'})
+                        </span>
+                    )}
+                </h3>
+                <div className="h-64 md:h-96 w-full relative z-0">
+                    {tracksLoading ? (
+                        <div className="h-full flex items-center justify-center">
+                            <Loading />
+                        </div>
+                    ) : tracks.length > 0 ? (
+                        <UniversalMap tracks={tracks} />
+                    ) : (
+                        <div className="h-full flex items-center justify-center" style={{ color: colors.muted }}>
+                            {language === 'zh' ? '暂无轨迹数据' : 'No track data available'}
+                        </div>
+                    )}
+                </div>
+            </Card>
         </div>
     );
 }

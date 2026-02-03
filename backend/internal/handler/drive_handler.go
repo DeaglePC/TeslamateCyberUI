@@ -88,6 +88,34 @@ func (h *Handler) GetDrivePositions(c *gin.Context) {
 	c.JSON(http.StatusOK, SuccessResponse(positions))
 }
 
+// GetAllDrivesPositions 获取指定时间范围内所有行程的轨迹
+func (h *Handler) GetAllDrivesPositions(c *gin.Context) {
+	idStr := c.Param("id")
+	carID64, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Invalid car ID"))
+		return
+	}
+	if carID64 < -32768 || carID64 > 32767 {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Car ID out of valid range"))
+		return
+	}
+	carID := int16(carID64)
+
+	// 解析时间筛选参数
+	startDate := parseDateTime(c.Query("startDate"), false)
+	endDate := parseDateTime(c.Query("endDate"), true)
+
+	tracks, err := h.repo.Drive.GetAllDrivesPositions(c.Request.Context(), carID, startDate, endDate)
+	if err != nil {
+		logger.Errorf("Failed to get all drives positions: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get drives positions"))
+		return
+	}
+
+	c.JSON(http.StatusOK, SuccessResponse(tracks))
+}
+
 // GetDriveStatsSummary 获取驾驶统计摘要
 func (h *Handler) GetDriveStatsSummary(c *gin.Context) {
 	idStr := c.Param("id")

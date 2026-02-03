@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Polyline, Marker, useMap, Tooltip, CircleMarke
 import L from 'leaflet';
 import { useSettingsStore } from '@/store/settings';
 import { isOutOfChina, wgsToGcj } from '@/utils/geo';
-import { DrivePosition } from '@/types';
+import { DrivePosition, DriveTrack } from '@/types';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icon in Leaflet
@@ -19,6 +19,32 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// Global AMap SDK cache to avoid repeated loading
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let amapSDKPromise: Promise<any> | null = null;
+let amapSDKLoadedKey: string | null = null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function loadAMapSDK(amapKey: string): Promise<any> {
+    // If already loading/loaded with same key, return cached promise
+    if (amapSDKPromise && amapSDKLoadedKey === amapKey) {
+        return amapSDKPromise;
+    }
+
+    // Start new loading
+    amapSDKLoadedKey = amapKey;
+    amapSDKPromise = (async () => {
+        const AMapLoader = await import('@amap/amap-jsapi-loader');
+        return await AMapLoader.default.load({
+            key: amapKey,
+            version: '2.0',
+            plugins: ['AMap.Polyline', 'AMap.Marker', 'AMap.CircleMarker'],
+        });
+    })();
+
+    return amapSDKPromise;
+}
+
 export interface HeatmapPoint {
     latitude: number;
     longitude: number;
@@ -30,6 +56,8 @@ export interface HeatmapPoint {
 interface UniversalMapProps {
     // For Path mode (Drive)
     positions?: DrivePosition[];
+    // For Multi-track mode (multiple drives)
+    tracks?: DriveTrack[];
     // For Single Point mode (Charge)
     marker?: {
         latitude: number;
@@ -38,6 +66,16 @@ interface UniversalMapProps {
     // For Heatmap mode
     heatmapData?: HeatmapPoint[];
     className?: string;
+}
+
+// Generate colors for multiple tracks
+function getTrackColor(index: number, totalTracks: number, baseColor: string): string {
+    // For single track, use the base color
+    if (totalTracks === 1) return baseColor;
+    
+    // Generate colors with varying hue based on index
+    const hue = (index * 360 / totalTracks) % 360;
+    return `hsl(${hue}, 70%, 50%)`;
 }
 
 // Helper to fit bounds
@@ -55,7 +93,7 @@ function BoundsFitter({ positions, marker, heatmapData }: { positions?: [number,
     return null;
 }
 
-export function UniversalMap({ positions = [], marker, heatmapData = [], className = '' }: UniversalMapProps) {
+export function UniversalMap({ positions = [], tracks = [], marker, heatmapData = [], className = '' }: UniversalMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<unknown>(null);
     const { theme, amapKey } = useSettingsStore();
@@ -72,13 +110,18 @@ export function UniversalMap({ positions = [], marker, heatmapData = [], classNa
 
     // Strategy Determination
     const isPathMode = positions.length > 0;
+    const isMultiTrackMode = tracks.length > 0;
     const isMarkerMode = !!marker;
     const isHeatmapMode = heatmapData.length > 0;
-    const hasData = isPathMode || isMarkerMode || isHeatmapMode;
+    const hasData = isPathMode || isMultiTrackMode || isMarkerMode || isHeatmapMode;
 
     // Check location for China checking
     let checkLat = 0, checkLon = 0;
     if (isPathMode) { checkLat = positions[0].latitude; checkLon = positions[0].longitude; }
+    else if (isMultiTrackMode && tracks[0]?.positions?.length > 0) {
+        checkLat = tracks[0].positions[0].latitude;
+        checkLon = tracks[0].positions[0].longitude;
+    }
     else if (isMarkerMode && marker) { checkLat = marker.latitude; checkLon = marker.longitude; }
     else if (isHeatmapMode && heatmapData.length > 0) { checkLat = heatmapData[0].latitude; checkLon = heatmapData[0].longitude; }
 
@@ -112,8 +155,19 @@ export function UniversalMap({ positions = [], marker, heatmapData = [], classNa
     const leafletMarkerPosition = marker ? [marker.latitude, marker.longitude] as [number, number] : undefined;
     const leafletHeatmapPositions = heatmapData.map(p => [p.latitude, p.longitude] as [number, number]);
 
+    // Multi-track data prep
+    const leafletTracks = tracks.map(track => ({
+        driveId: track.driveId,
+        startDate: track.startDate,
+        positions: track.positions.map(p => [p.latitude, p.longitude] as [number, number])
+    }));
+
+    // Get all positions for bounds fitting in multi-track mode
+    const allTrackPositions: [number, number][] = leafletTracks.flatMap(t => t.positions);
+
     let center: [number, number] = [0, 0];
     if (isPathMode && leafletPathPositions.length > 0) center = leafletPathPositions[0];
+    else if (isMultiTrackMode && allTrackPositions.length > 0) center = allTrackPositions[0];
     else if (isMarkerMode && leafletMarkerPosition) center = leafletMarkerPosition;
     else if (isHeatmapMode && leafletHeatmapPositions.length > 0) center = leafletHeatmapPositions[0];
 
@@ -125,12 +179,8 @@ export function UniversalMap({ positions = [], marker, heatmapData = [], classNa
 
         const initMap = async () => {
             try {
-                const AMapLoader = await import('@amap/amap-jsapi-loader');
-                const AMap = await AMapLoader.default.load({
-                    key: amapKey,
-                    version: '2.0',
-                    plugins: ['AMap.Polyline', 'AMap.Marker', 'AMap.CircleMarker'],
-                });
+                // Use cached SDK loader to avoid repeated API calls
+                const AMap = await loadAMapSDK(amapKey);
 
                 if (!mounted || !mapRef.current) return;
 
@@ -169,6 +219,29 @@ export function UniversalMap({ positions = [], marker, heatmapData = [], classNa
                     });
 
                     map.add([startMarker, endMarker]);
+                    map.setFitView();
+                }
+                // Multi-track Mode
+                else if (isMultiTrackMode) {
+                    const polylines: unknown[] = [];
+                    tracks.forEach((track, idx) => {
+                        if (track.positions.length < 2) return;
+                        
+                        const path = track.positions.map(p => {
+                            const [gLat, gLon] = wgsToGcj(p.latitude, p.longitude);
+                            return [gLon, gLat];
+                        });
+
+                        const trackColor = getTrackColor(idx, tracks.length, colors.primary);
+                        const polyline = new AMap.Polyline({
+                            path,
+                            strokeColor: trackColor,
+                            strokeWeight: 3,
+                            strokeOpacity: 0.7,
+                        });
+                        polylines.push(polyline);
+                    });
+                    map.add(polylines);
                     map.setFitView();
                 }
                 // Single Marker Mode
@@ -223,7 +296,7 @@ export function UniversalMap({ positions = [], marker, heatmapData = [], classNa
                 mapInstanceRef.current = null;
             }
         };
-    }, [useAmap, positions, marker, heatmapData, amapKey, colors, isPathMode, isMarkerMode, isHeatmapMode]);
+    }, [useAmap, positions, tracks, marker, heatmapData, amapKey, colors, isPathMode, isMultiTrackMode, isMarkerMode, isHeatmapMode]);
 
     if (!hasData) return null;
 
@@ -261,14 +334,31 @@ export function UniversalMap({ positions = [], marker, heatmapData = [], classNa
                 </>
             )}
 
-            {isMarkerMode && !isPathMode && leafletMarkerPosition && (
+            {isMultiTrackMode && !isPathMode && (
+                <>
+                    {leafletTracks.map((track, idx) => {
+                        if (track.positions.length < 2) return null;
+                        const trackColor = getTrackColor(idx, leafletTracks.length, colors.primary);
+                        return (
+                            <Polyline
+                                key={track.driveId}
+                                positions={track.positions}
+                                pathOptions={{ color: trackColor, weight: 3, opacity: 0.7 }}
+                            />
+                        );
+                    })}
+                    <BoundsFitter positions={allTrackPositions} />
+                </>
+            )}
+
+            {isMarkerMode && !isPathMode && !isMultiTrackMode && leafletMarkerPosition && (
                 <>
                     <Marker position={leafletMarkerPosition} icon={singleIcon} />
                     <BoundsFitter marker={leafletMarkerPosition} />
                 </>
             )}
 
-            {isHeatmapMode && !isPathMode && heatmapData.map((p, i) => (
+            {isHeatmapMode && !isPathMode && !isMultiTrackMode && heatmapData.map((p, i) => (
                 <CircleMarker
                     key={i}
                     center={[p.latitude, p.longitude]}

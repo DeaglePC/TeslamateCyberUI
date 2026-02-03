@@ -106,3 +106,10 @@ type SpeedHistogramItem struct {
 	Elapsed     float64 `json:"elapsed"`     // 占比百分比
 	TimeSeconds float64 `json:"timeSeconds"` // 时长秒数
 }
+
+// DriveTrack 单次行程轨迹（包含行程ID和轨迹点）
+type DriveTrack struct {
+	DriveID   int64           `json:"driveId"`
+	StartDate time.Time       `json:"startDate"`
+	Positions []DrivePosition `json:"positions"`
+}
