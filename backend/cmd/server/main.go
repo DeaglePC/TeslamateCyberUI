@@ -49,12 +49,22 @@ func main() {
 	// 中间件
 	r.Use(gin.Recovery())
 	r.Use(logger.GinLogger())
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     cfg.Server.CORSOrigins,
+
+	// CORS配置：如果配置了具体的Origin则使用，否则允许所有
+	corsConfig := cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-API-Key"},
+		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-	}))
+	}
+	// 如果配置了*或没有配置，使用AllowAllOrigins
+	if len(cfg.Server.CORSOrigins) == 0 || (len(cfg.Server.CORSOrigins) == 1 && cfg.Server.CORSOrigins[0] == "*") {
+		corsConfig.AllowAllOrigins = true
+		corsConfig.AllowCredentials = false // AllowAllOrigins和AllowCredentials不能同时为true
+	} else {
+		corsConfig.AllowOrigins = cfg.Server.CORSOrigins
+	}
+	r.Use(cors.New(corsConfig))
 
 	// 注册路由
 	// Note: the original code had /api/v1, keeping it for now.
