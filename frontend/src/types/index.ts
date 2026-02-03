@@ -270,6 +270,7 @@ export interface BatteryStats {
 export interface SocDataPoint {
   date: string;
   soc: number;
+  rangeKm?: number; // 剩余续航里程(km)
 }
 
 // 状态时间线数据项

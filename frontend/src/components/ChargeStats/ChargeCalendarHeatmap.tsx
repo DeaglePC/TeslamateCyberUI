@@ -115,7 +115,7 @@ export function ChargeCalendarHeatmap({ data, startDate, endDate }: Props) {
     }
 
     return (
-        <div className="w-full h-40"> {/* Reduced height from h-48 to h-40 */}
+        <div className="w-full h-40 lg:h-48"> {/* PC模式下更高 */}
             <ReactECharts
                 option={option}
                 style={{ height: '100%', width: '100%' }}

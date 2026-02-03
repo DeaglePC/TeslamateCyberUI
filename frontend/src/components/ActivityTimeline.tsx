@@ -171,6 +171,19 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
     const isFirstMount = useRef(true);
     const [currentPreset, setCurrentPreset] = useState<FilterPreset>('last24h');
 
+    // Get preset label for display
+    const getPresetLabel = (preset: FilterPreset): string => {
+        const labels: Record<FilterPreset, string> = {
+            last24h: t('last24h'),
+            week: t('lastWeek'),
+            month: t('lastMonth'),
+            quarter: t('lastQuarter'),
+            year: t('lastYear'),
+            custom: rangeLabel || t('custom'),
+        };
+        return labels[preset];
+    };
+
     useEffect(() => {
         setMounted(true);
     }, []);
@@ -328,7 +341,7 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
                         className="text-xs px-2 py-1 rounded glass-strong hover:brightness-125 transition-all flex items-center gap-1"
                         style={{ color: colors.muted }}
                     >
-                        {rangeLabel || t('last24h')}
+                        {getPresetLabel(currentPreset)}
                         <svg className={`w-3 h-3 transition-transform ${showFilter ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>

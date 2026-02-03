@@ -59,8 +59,9 @@ type BatteryDataPoint struct {
 
 // SocDataPoint SOC历史数据点
 type SocDataPoint struct {
-	Date string `json:"date"`
-	Soc  int    `json:"soc"`
+	Date    string   `json:"date"`
+	Soc     int      `json:"soc"`
+	RangeKm *float64 `json:"rangeKm,omitempty"` // 剩余续航里程(km)
 }
 
 // StateTimelineItem 状态时间线数据项

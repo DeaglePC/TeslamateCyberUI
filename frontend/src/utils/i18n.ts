@@ -43,6 +43,11 @@ const translations = {
     // Charts
     socHistory: { zh: 'SOC历史', en: 'SOC History' },
     last24h: { zh: '近24小时', en: 'Last 24h' },
+    lastWeek: { zh: '近一周', en: 'Last Week' },
+    lastMonth: { zh: '近一月', en: 'Last Month' },
+    lastQuarter: { zh: '近三月', en: 'Last 3 Months' },
+    lastYear: { zh: '近一年', en: 'Last Year' },
+    custom: { zh: '自定义', en: 'Custom' },
     activityTimeline: { zh: '活动时间线', en: 'Activity Timeline' },
     today: { zh: '今日', en: 'Today' },
     drive: { zh: '行驶', en: 'Drive' },

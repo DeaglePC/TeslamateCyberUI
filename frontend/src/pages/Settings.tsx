@@ -30,7 +30,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-slideUp max-w-2xl">
+    <div className="space-y-6 animate-slideUp max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold" style={{ color: colors.primary }}>
         {t('settings')}
       </h1>

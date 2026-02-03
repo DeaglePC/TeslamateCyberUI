@@ -437,14 +437,14 @@ func (r *statsRepository) GetBattery(ctx context.Context, carID int16) (*model.B
 // GetSocHistory 获取SOC历史数据
 func (r *statsRepository) GetSocHistory(ctx context.Context, carID int16, start, end time.Time) ([]model.SocDataPoint, error) {
 	query := `
-		SELECT date, battery_level AS soc
+		SELECT date, battery_level AS soc, rated_battery_range_km AS range_km
 		FROM (
-			SELECT battery_level, date
+			SELECT battery_level, date, rated_battery_range_km
 			FROM positions
 			WHERE car_id = $1 AND ideal_battery_range_km IS NOT NULL 
 				AND date >= $2 AND date <= $3
 			UNION ALL
-			SELECT battery_level, date
+			SELECT battery_level, date, rated_battery_range_km
 			FROM charges c 
 			JOIN charging_processes p ON p.id = c.charging_process_id
 			WHERE p.car_id = $1 AND date >= $2 AND date <= $3
@@ -462,15 +462,17 @@ func (r *statsRepository) GetSocHistory(ctx context.Context, carID int16, start,
 	var result []model.SocDataPoint
 	for rows.Next() {
 		var row struct {
-			Date time.Time `db:"date"`
-			Soc  int       `db:"soc"`
+			Date    time.Time `db:"date"`
+			Soc     int       `db:"soc"`
+			RangeKm *float64  `db:"range_km"`
 		}
 		if err := rows.StructScan(&row); err != nil {
 			continue
 		}
 		result = append(result, model.SocDataPoint{
-			Date: row.Date.Format(time.RFC3339),
-			Soc:  row.Soc,
+			Date:    row.Date.Format(time.RFC3339),
+			Soc:     row.Soc,
+			RangeKm: row.RangeKm,
 		})
 	}
 

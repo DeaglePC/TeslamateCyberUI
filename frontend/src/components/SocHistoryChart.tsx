@@ -27,6 +27,19 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
 
     const colors = getThemeColors(theme);
 
+    // 根据预设获取显示标签
+    const getPresetLabel = (preset: FilterPreset): string => {
+        const labels: Record<FilterPreset, string> = {
+            last24h: t('last24h'),
+            week: t('lastWeek'),
+            month: t('lastMonth'),
+            quarter: t('lastQuarter'),
+            year: t('lastYear'),
+            custom: rangeLabel || t('custom'),
+        };
+        return labels[preset];
+    };
+
     const option = useMemo(() => {
         // Sample data every N points for performance
         const sampledData = data.length > 200
@@ -35,15 +48,29 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
 
         const formatStr = days > 1 ? 'MM-DD HH:mm' : 'HH:mm';
         const xData = sampledData.map(d => dayjs(d.date).format(formatStr));
-        const yData = sampledData.map(d => d.soc);
+        const socData = sampledData.map(d => d.soc);
+
+        // 计算满电续航里程（100% SOC对应的续航）
+        // 从数据中找到 rangeKm 和 soc 的比例关系
+        let maxRangeKm = 0;
+        for (const d of sampledData) {
+            if (d.rangeKm && d.soc > 0) {
+                const estimatedFullRange = (d.rangeKm / d.soc) * 100;
+                if (estimatedFullRange > maxRangeKm) {
+                    maxRangeKm = estimatedFullRange;
+                }
+            }
+        }
+        // 默认值
+        if (maxRangeKm === 0) maxRangeKm = 500;
 
         return {
             backgroundColor: 'transparent',
             grid: {
                 top: 20,
-                right: 20,
-                bottom: 40,
-                left: 50,
+                right: 45,
+                bottom: 35,
+                left: 40,
             },
             tooltip: {
                 trigger: 'axis',
@@ -53,11 +80,18 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                 textStyle: {
                     color: '#fff',
                 },
-                formatter: (params: { value: number; axisValue: string }[]) => {
+                formatter: (params: { seriesName: string; value: number; axisValue: string; color: string }[]) => {
                     if (!params.length) return '';
-                    const p = params[0];
-                    return `<div style="font-weight: 600;">${p.axisValue}</div>
-                  <div style="color: ${colors.primary};">SOC: ${p.value}%</div>`;
+                    const time = params[0].axisValue;
+                    let html = `<div style="font-weight: 600; margin-bottom: 4px;">${time}</div>`;
+                    params.forEach(p => {
+                        if (p.value !== null && p.value !== undefined) {
+                            const soc = Math.round(p.value);
+                            const rangeKm = Math.round((soc / 100) * maxRangeKm);
+                            html += `<div style="color: ${p.color};">SOC: ${soc}% (~${rangeKm}km)</div>`;
+                        }
+                    });
+                    return html;
                 },
             },
             xAxis: {
@@ -77,28 +111,49 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                     show: false,
                 },
             },
-            yAxis: {
-                type: 'value',
-                min: 0,
-                max: 100,
-                splitNumber: 5,
-                axisLine: {
-                    show: false,
-                },
-                axisLabel: {
-                    color: colors.muted,
-                    formatter: '{value}%',
-                },
-                splitLine: {
-                    lineStyle: {
-                        color: 'rgba(255, 255, 255, 0.05)',
+            yAxis: [
+                {
+                    type: 'value',
+                    min: 0,
+                    max: 100,
+                    splitNumber: 5,
+                    axisLine: {
+                        show: false,
+                    },
+                    axisLabel: {
+                        color: colors.muted,
+                        formatter: '{value}%',
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                        },
                     },
                 },
-            },
+                {
+                    type: 'value',
+                    min: 0,
+                    max: maxRangeKm,
+                    splitNumber: 5,
+                    position: 'right',
+                    axisLine: {
+                        show: false,
+                    },
+                    axisLabel: {
+                        color: colors.muted,
+                        fontSize: 10,
+                        formatter: (value: number) => `${Math.round(value)}km`,
+                    },
+                    splitLine: {
+                        show: false,
+                    },
+                },
+            ],
             series: [
                 {
+                    name: 'SOC',
                     type: 'line',
-                    data: yData,
+                    data: socData,
                     smooth: true,
                     symbol: 'none',
                     lineStyle: {
@@ -133,18 +188,18 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                 </div>
 
                 <div className="relative">
+                    {/* 时间筛选按钮 */}
                     <button
                         onClick={(e) => {
-                            // Calculate position on click
                             const rect = e.currentTarget.getBoundingClientRect();
                             setFilterPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
                             setShowFilter(!showFilter);
-                            isFirstMount.current = true; // Reset for new mount
+                            isFirstMount.current = true;
                         }}
                         className="text-xs px-2 py-1 rounded glass-strong hover:brightness-125 transition-all flex items-center gap-1"
                         style={{ color: colors.muted }}
                     >
-                        {rangeLabel || t('last24h')}
+                        {getPresetLabel(currentPreset)}
                         <svg className={`w-3 h-3 transition-transform ${showFilter ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
@@ -170,7 +225,6 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                                     initialPreset={currentPreset}
                                     onFilter={(start, end) => {
                                         onRangeChange?.(start, end);
-                                        // Skip closing on first mount (initial useEffect call)
                                         if (isFirstMount.current) {
                                             isFirstMount.current = false;
                                         } else {

@@ -488,25 +488,22 @@ export default function HomePage() {
       )}
 
       {/* Bottom Section - Charts */}
-      {/* Bottom Section - Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* SOC History */}
-        <SocHistoryChart
-          data={socHistory}
-          rangeLabel={socDateRange.start ? `${socDateRange.start} ~ ${socDateRange.end || t('today')}` : undefined}
-          days={socDateRange.start ? dayjs(socDateRange.end || undefined).diff(dayjs(socDateRange.start), 'day') : 1}
-          onRangeChange={(start, end) => setSocDateRange({ start, end })}
-        />
+      {/* SOC History - 独占一行 */}
+      <SocHistoryChart
+        data={socHistory}
+        rangeLabel={socDateRange.start ? `${socDateRange.start} ~ ${socDateRange.end || t('today')}` : undefined}
+        days={socDateRange.start ? dayjs(socDateRange.end || undefined).diff(dayjs(socDateRange.start), 'day') : 1}
+        onRangeChange={(start, end) => setSocDateRange({ start, end })}
+      />
 
-        {/* Activity Timeline */}
-        <ActivityTimeline
-          data={statesTimeline}
-          rangeLabel={timelineDateRange.start ? `${timelineDateRange.start} ~ ${timelineDateRange.end || t('today')}` : undefined}
-          rangeStart={timelineDateRange.start}
-          rangeEnd={timelineDateRange.end}
-          onRangeChange={(start, end) => setTimelineDateRange({ start, end })}
-        />
-      </div>
+      {/* Activity Timeline - 独占一行 */}
+      <ActivityTimeline
+        data={statesTimeline}
+        rangeLabel={timelineDateRange.start ? `${timelineDateRange.start} ~ ${timelineDateRange.end || t('today')}` : undefined}
+        rangeStart={timelineDateRange.start}
+        rangeEnd={timelineDateRange.end}
+        onRangeChange={(start, end) => setTimelineDateRange({ start, end })}
+      />
     </div>
   );
 }

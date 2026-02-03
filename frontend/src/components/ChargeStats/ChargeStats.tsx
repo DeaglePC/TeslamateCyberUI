@@ -137,29 +137,27 @@ export function ChargeStats({ carId, startDate, endDate }: Props) {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Calendar Heatmap */}
-                <Card className="min-h-[200px]">
-                    <h3 className="text-lg font-semibold mb-4" style={{ color: colors.primary }}>
-                        {language === 'zh' ? '充电日历' : 'Charging Calendar'}
-                    </h3>
-                    <ChargeCalendarHeatmap
-                        data={stats.dailyStats}
-                        startDate={startDate}
-                        endDate={endDate}
-                    />
-                </Card>
+            {/* Calendar Heatmap - 独占一行 */}
+            <Card className="min-h-[200px]">
+                <h3 className="text-lg font-semibold mb-4" style={{ color: colors.primary }}>
+                    {language === 'zh' ? '充电日历' : 'Charging Calendar'}
+                </h3>
+                <ChargeCalendarHeatmap
+                    data={stats.dailyStats}
+                    startDate={startDate}
+                    endDate={endDate}
+                />
+            </Card>
 
-                {/* Location Heatmap */}
-                <Card className="min-h-[200px] flex flex-col">
-                    <h3 className="text-lg font-semibold mb-4" style={{ color: colors.primary }}>
-                        {language === 'zh' ? '充电热力图' : 'Charging Heatmap'}
-                    </h3>
-                    <div className="flex-1 w-full min-h-[200px] relative rounded-lg overflow-hidden">
-                        <ChargeLocationHeatmap data={stats.locationStats} className="absolute inset-0" />
-                    </div>
-                </Card>
-            </div>
+            {/* Location Heatmap - 独占一行 */}
+            <Card className="flex flex-col">
+                <h3 className="text-lg font-semibold mb-4" style={{ color: colors.primary }}>
+                    {language === 'zh' ? '充电热力图' : 'Charging Heatmap'}
+                </h3>
+                <div className="w-full h-[300px] lg:h-[400px] relative rounded-lg overflow-hidden">
+                    <ChargeLocationHeatmap data={stats.locationStats} className="absolute inset-0" />
+                </div>
+            </Card>
         </div>
     );
 }
