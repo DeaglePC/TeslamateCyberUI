@@ -49,8 +49,8 @@ export function StatCard({ label, value, unit, icon, trend, trendValue, sublabel
   const colors = getThemeColors(theme);
 
   return (
-    <Card>
-      <div className="flex items-start justify-between gap-2">
+    <Card className="overflow-visible">
+      <div className="flex items-start justify-between gap-1 sm:gap-2 overflow-visible">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] sm:text-xs uppercase tracking-wider font-semibold" style={{ color: colors.muted }}>{label}</p>
           <div className="flex items-baseline gap-1 mt-1 flex-wrap">
@@ -79,11 +79,11 @@ export function StatCard({ label, value, unit, icon, trend, trendValue, sublabel
           )}
         </div>
         {icon && (
-          <div className="p-1.5 sm:p-2 rounded-lg shrink-0" style={{
+          <div className="p-1.5 sm:p-2 rounded-lg shrink-0 flex-none" style={{
             background: `${colors.primary}20`,
             color: colors.primary
           }}>
-            <div className="w-4 h-4 sm:w-5 sm:h-5">
+            <div className="w-4 h-4 sm:w-5 sm:h-5 [&>svg]:w-full [&>svg]:h-full">
               {icon}
             </div>
           </div>
