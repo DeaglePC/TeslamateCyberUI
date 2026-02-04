@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Polyline, Marker, useMap, Tooltip, CircleMarke
 import L from 'leaflet';
 import { useSettingsStore } from '@/store/settings';
 import { isOutOfChina, wgsToGcj } from '@/utils/geo';
+import { getThemeColors } from '@/utils/theme';
 import { DrivePosition, DriveTrack } from '@/types';
 import 'leaflet/dist/leaflet.css';
 
@@ -104,15 +105,13 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
     const stableTracks = useMemo(() => tracks, [JSON.stringify(tracks)]);
     const stableMarker = useMemo(() => marker, [marker?.latitude, marker?.longitude]);
 
-    const themeColors: Record<string, { primary: string; secondary: string; bg: string }> = {
-        cyber: { primary: '#00f0ff', secondary: '#ff00aa', bg: '#0a0a0f' },
-        tesla: { primary: '#cc0000', secondary: '#ffffff', bg: '#111111' },
-        dark: { primary: '#4361ee', secondary: '#f72585', bg: '#1a1a2e' },
-        tech: { primary: '#0077b6', secondary: '#90e0ef', bg: '#0d1b2a' },
-        aurora: { primary: '#72efdd', secondary: '#7678ed', bg: '#0b132b' },
-    };
-
-    const colors = useMemo(() => themeColors[theme] || themeColors.cyber, [theme]);
+    // Use global theme colors for consistency with DriveDetail page
+    const themeColors = useMemo(() => getThemeColors(theme), [theme]);
+    const colors = useMemo(() => ({
+        primary: themeColors.primary,
+        secondary: themeColors.chart?.[1] || themeColors.accent,  // Same as DriveDetail
+        bg: themeColors.bg
+    }), [themeColors]);
 
     // Strategy Determination - use stable refs
     const isPathMode = stablePositions.length > 0;

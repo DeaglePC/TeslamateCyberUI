@@ -119,15 +119,15 @@ export function ChargeStats({ carId, startDate, endDate }: Props) {
                 {/* Total Duration */}
                 <Card>
                     <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0 flex-1">
                             <span className="text-sm" style={{ color: colors.muted }}>
                                 {language === 'zh' ? '充电总时长' : 'Total Duration'}
                             </span>
-                            <span className="text-lg md:text-2xl font-bold mt-1" style={{ color: colors.primary }}>
+                            <span className="text-base md:text-xl font-bold mt-1 truncate" style={{ color: colors.primary }}>
                                 {formatDuration(stats.totalDuration, language === 'zh' ? 'zh' : 'en')}
                             </span>
                         </div>
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 ml-2" style={{ background: `${colors.primary}15` }}>
                             <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="10" />
                                 <polyline points="12 6 12 12 16 14" />
