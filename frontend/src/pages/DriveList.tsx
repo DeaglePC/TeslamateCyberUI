@@ -6,7 +6,7 @@ import { Card } from '@/components/Card';
 import { BatteryBar } from '@/components/Battery';
 import { DateFilter } from '@/components/DateFilter';
 import { Loading, ErrorState, EmptyState } from '@/components/States';
-import { formatDate, formatDuration, formatDistance, formatSpeed } from '@/utils/format';
+import { formatDate, formatDuration, formatDistance } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import type { DriveListItem, Pagination } from '@/types';
 import { DriveStats, SpeedHistogram } from '@/components/DriveStats';
@@ -162,7 +162,7 @@ export default function DriveListPage() {
                     />
                   </div>
 
-                  {/* 行程数据 - 2x2 网格布局 */}
+                  {/* 行程数据 */}
                   <div className="grid grid-cols-2 gap-3 pt-3 border-t" style={{ borderColor: `${colors.muted}20` }}>
                     {/* 距离 */}
                     <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function DriveListPage() {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-xs" style={{ color: colors.muted }}>距离</p>
+                        <p className="text-xs" style={{ color: colors.muted }}>{language === 'zh' ? '距离' : 'Distance'}</p>
                         <p className="font-bold" style={{ color: colors.primary }}>
                           {formatDistance(drive.distance, unit)}
                         </p>
@@ -182,41 +182,15 @@ export default function DriveListPage() {
 
                     {/* 时长 */}
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.accent}15` }}>
-                        <svg className="w-4 h-4" style={{ color: colors.accent }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.chart[1]}15` }}>
+                        <svg className="w-4 h-4" style={{ color: colors.chart[1] }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="12" cy="12" r="10" />
                           <polyline points="12 6 12 12 16 14" />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-xs" style={{ color: colors.muted }}>时长</p>
-                        <p className="font-semibold">{formatDuration(drive.durationMin)}</p>
-                      </div>
-                    </div>
-
-                    {/* 最高速度 */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
-                        <svg className="w-4 h-4" style={{ color: colors.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs" style={{ color: colors.muted }}>最高速度</p>
-                        <p className="font-semibold">{formatSpeed(drive.speedMax, unit)}</p>
-                      </div>
-                    </div>
-
-                    {/* 能效 */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${colors.accent}15` }}>
-                        <svg className="w-4 h-4" style={{ color: colors.accent }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs" style={{ color: colors.muted }}>能效</p>
-                        <p className="font-semibold">{drive.efficiency.toFixed(0)} Wh/km</p>
+                        <p className="text-xs" style={{ color: colors.muted }}>{language === 'zh' ? '时长' : 'Duration'}</p>
+                        <p className="font-bold" style={{ color: colors.chart[1] }}>{formatDuration(drive.durationMin, language)}</p>
                       </div>
                     </div>
                   </div>
