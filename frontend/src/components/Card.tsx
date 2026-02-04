@@ -54,10 +54,10 @@ export function StatCard({ label, value, unit, icon, trend, trendValue, sublabel
         <div className="min-w-0 flex-1">
           <p className="text-[10px] sm:text-xs uppercase tracking-wider font-semibold" style={{ color: colors.muted }}>{label}</p>
           <div className="flex items-baseline gap-1 mt-1 flex-wrap">
-            <span className="text-lg sm:text-xl lg:text-2xl font-bold break-all" style={{ color: colors.primary }}>
+            <span className="text-base sm:text-lg lg:text-xl font-bold break-all" style={{ color: colors.primary }}>
               {value}
             </span>
-            {unit && <span className="text-xs sm:text-sm shrink-0" style={{ color: colors.muted }}>{unit}</span>}
+            {unit && <span className="text-[10px] sm:text-xs shrink-0" style={{ color: colors.muted }}>{unit}</span>}
           </div>
           {sublabel && (
             <p className="text-[10px] sm:text-xs mt-1" style={{ color: sublabelColor || colors.muted }}>

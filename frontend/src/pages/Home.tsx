@@ -428,12 +428,6 @@ export default function HomePage() {
                       <p>{formatDistance(stats?.totalDistance || 0, unit)}</p>
                     </div>
                   </div>
-
-                  <div className="mt-auto text-center pt-2">
-                    <p className="text-xs" style={{ color: colors.muted }}>
-                      {language === 'zh' ? '点击返回' : 'Tap to go back'}
-                    </p>
-                  </div>
                 </div>
               </Card>
             </div>

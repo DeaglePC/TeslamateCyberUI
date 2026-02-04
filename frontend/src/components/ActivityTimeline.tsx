@@ -205,6 +205,10 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
     const colors = getThemeColors(theme);
 
     // Process data into continuous segments
+    // Grafana State Timeline logic:
+    // - States 1 (driving), 2 (charging), 6 (updating) have paired events: [start, end(=0)]
+    // - States 3 (offline), 4 (asleep), 5 (online) are point events that persist until next state
+    // - State 0 means "return to background state" (the last offline/asleep/online)
     const { segments, timeLabels } = useMemo(() => {
         const now = rangeEnd ? dayjs(rangeEnd) : dayjs();
         const dayStart = rangeStart ? dayjs(rangeStart) : now.subtract(24, 'hour');
@@ -213,65 +217,144 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
         if (totalMs <= 0) return { segments: [], timeLabels: [] };
 
         const result: TimelineSegment[] = [];
-        let currentState: number = STATE.OFFLINE; // Default state
-        let segmentStart = dayStart;
+        
+        // Sort data by time, then by state (ensure consistent ordering)
+        const sortedData = [...data].sort((a, b) => {
+            const timeDiff = dayjs(a.time).valueOf() - dayjs(b.time).valueOf();
+            if (timeDiff !== 0) return timeDiff;
+            // At same time, process state=0 first (end events), then higher states
+            return a.state - b.state;
+        });
 
-        // Sort data by time
-        const sortedData = [...data].sort((a, b) =>
-            dayjs(a.time).valueOf() - dayjs(b.time).valueOf()
-        );
+        // Background states (offline/asleep/online) persist until changed
+        // Activity states (driving/charging/updating) temporarily override background
+        let backgroundState: number = STATE.OFFLINE; // Default background
+        let activeState: number | null = null; // Currently active override (driving/charging/updating)
+        let segmentStart: dayjs.Dayjs = dayStart;
 
-        // Find initial state if possible (state before rangeStart)
-        // ... (Optional enhancement: look for last state before rangeStart)
+        const isBackgroundState = (s: number) => s === STATE.OFFLINE || s === STATE.ASLEEP || s === STATE.ONLINE;
+        const isActivityState = (s: number) => s === STATE.DRIVING || s === STATE.CHARGING || s === STATE.UPDATING;
 
-        // Simply process data within range
+        const getCurrentState = () => activeState !== null ? activeState : backgroundState;
+
+        const pushSegment = (endTime: dayjs.Dayjs, state: number) => {
+            if (state === STATE.RESET) return;
+            
+            const startPct = Math.max(0, (segmentStart.valueOf() - dayStart.valueOf()) / totalMs * 100);
+            const endPct = Math.min(100, (endTime.valueOf() - dayStart.valueOf()) / totalMs * 100);
+            
+            if (endPct > startPct) {
+                const durationMin = Math.round(endTime.diff(segmentStart, 'minute'));
+                result.push({
+                    start: startPct,
+                    width: endPct - startPct,
+                    state: state,
+                    color: getStateColor(state, colors.timeline),
+                    label: getStateLabel(state, language),
+                    startTime: segmentStart,
+                    endTime: endTime,
+                    durationMin,
+                });
+            }
+        };
+
+        // Group events by timestamp to handle simultaneous events correctly
+        // This prevents tiny segments when state=0 and new background state arrive at same time
+        const eventsByTime = new Map<number, Array<{time: dayjs.Dayjs, state: number}>>();
         for (const item of sortedData) {
             const time = dayjs(item.time);
+            const state = Number(item.state);
+            if (time.isBefore(dayStart) || time.isAfter(now)) continue;
+            
+            const timeKey = time.valueOf();
+            if (!eventsByTime.has(timeKey)) {
+                eventsByTime.set(timeKey, []);
+            }
+            eventsByTime.get(timeKey)!.push({ time, state });
+        }
 
-            // Skip if time is before our range
-            if (time.isBefore(dayStart)) continue;
-            // Skip if time is after our range (shouldn't happen usually)
-            if (time.isAfter(now)) continue;
+        // Process events grouped by timestamp
+        for (const [, events] of Array.from(eventsByTime.entries()).sort((a, b) => a[0] - b[0])) {
+            const time = events[0].time;
+            
+            // Extract all states at this timestamp
+            const hasReset = events.some(e => e.state === STATE.RESET);
+            const newBackground = events.find(e => isBackgroundState(e.state));
+            const newActivity = events.find(e => isActivityState(e.state));
 
-            // If state changes
-            if (Number(item.state) !== STATE.RESET && Number(item.state) !== currentState) {
-                // End previous segment
-                const startPct = Math.max(0, (segmentStart.valueOf() - dayStart.valueOf()) / totalMs * 100);
-                const endPct = Math.min(100, (time.valueOf() - dayStart.valueOf()) / totalMs * 100);
+            const prevState = getCurrentState();
 
-                if (endPct > startPct && Number(currentState) !== 0) {
-                    const durationMin = Math.round(time.diff(segmentStart, 'minute'));
-                    result.push({
-                        start: startPct,
-                        width: endPct - startPct,
-                        state: currentState,
-                        color: getStateColor(currentState, colors.timeline),
-                        label: getStateLabel(currentState, language),
-                        startTime: segmentStart,
-                        endTime: time,
-                        durationMin,
-                    });
+            // Process in order: first update background, then handle reset, then activity
+            if (newBackground) {
+                // Update background state (but don't create segment yet if activity is ending)
+                if (activeState === null && !hasReset && newBackground.state !== backgroundState) {
+                    pushSegment(time, prevState);
+                    segmentStart = time;
                 }
+                backgroundState = newBackground.state;
+            }
 
-                currentState = Number(item.state);
+            if (hasReset && activeState !== null) {
+                // End activity state - return to (possibly updated) background
+                pushSegment(time, prevState);
+                activeState = null;
+                segmentStart = time;
+            }
+
+            if (newActivity && newActivity.state !== activeState) {
+                // New activity state
+                pushSegment(time, getCurrentState());
+                activeState = newActivity.state;
                 segmentStart = time;
             }
         }
 
         // Add final segment up to now/end
-        if (Number(currentState) !== 0 && segmentStart.isBefore(now)) {
-            const startPct = Math.max(0, (segmentStart.valueOf() - dayStart.valueOf()) / totalMs * 100);
-            const durationMin = Math.round(now.diff(segmentStart, 'minute'));
-            result.push({
-                start: startPct,
-                width: 100 - startPct,
-                state: currentState,
-                color: getStateColor(currentState, colors.timeline),
-                label: getStateLabel(currentState, language),
-                startTime: segmentStart,
-                endTime: now,
-                durationMin,
-            });
+        const finalState = getCurrentState();
+        if (finalState !== STATE.RESET && segmentStart.isBefore(now)) {
+            pushSegment(now, finalState);
+        }
+
+        // Post-process: filter out very short background segments
+        // These typically appear as visual artifacts at state transitions
+        // The gaps will be filled by extending adjacent segments
+        const MIN_SEGMENT_SECONDS = 120; // Minimum 2 minutes to show a background segment
+        const filteredResult: TimelineSegment[] = [];
+        
+        for (let i = 0; i < result.length; i++) {
+            const segment = result[i];
+            const durationSeconds = segment.endTime.diff(segment.startTime, 'second');
+            const isShortSegment = durationSeconds < MIN_SEGMENT_SECONDS;
+            const isBackground = isBackgroundState(segment.state);
+            
+            // Skip very short background segments
+            if (isShortSegment && isBackground) {
+                continue;
+            }
+            
+            filteredResult.push(segment);
+        }
+        
+        // Now fill gaps by extending segments to meet their neighbors
+        const mergedResult: TimelineSegment[] = [];
+        for (let i = 0; i < filteredResult.length; i++) {
+            const segment = { ...filteredResult[i] }; // Clone to avoid mutation
+            const nextSegment = filteredResult[i + 1];
+            
+            // If there's a gap before next segment, extend current to fill it
+            if (nextSegment) {
+                const gapMs = nextSegment.startTime.valueOf() - segment.endTime.valueOf();
+                if (gapMs > 0) {
+                    // Extend current segment to next segment's start
+                    const newEndPct = Math.min(100, (nextSegment.startTime.valueOf() - dayStart.valueOf()) / totalMs * 100);
+                    const newDurationMin = Math.round(nextSegment.startTime.diff(segment.startTime, 'minute'));
+                    segment.width = newEndPct - segment.start;
+                    segment.endTime = nextSegment.startTime;
+                    segment.durationMin = newDurationMin;
+                }
+            }
+            
+            mergedResult.push(segment);
         }
 
         // Generate time labels
@@ -303,7 +386,7 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
             labels.push(labelTime.format(fmt));
         }
 
-        return { segments: result, timeLabels: labels };
+        return { segments: mergedResult, timeLabels: labels };
     }, [data, language, containerWidth, rangeStart, rangeEnd]);
 
     // Handle mouse move on segment

@@ -501,44 +501,31 @@ func (r *statsRepository) GetSocHistory(ctx context.Context, carID int16, start,
 
 // GetStatesTimeline 获取状态时间线数据
 func (r *statsRepository) GetStatesTimeline(ctx context.Context, carID int16, start, end time.Time) ([]model.StateTimelineItem, error) {
+	// SQL query matching Grafana's states timeline logic
+	// Reference: teslamate-grafana/core/overview.json - States panel
 	query := `
-		WITH initial_state AS (
-			SELECT
-				$2::timestamp AS date, -- Clamp to start time
-				state
-			FROM (
-				SELECT start_date, 2 AS state FROM charging_processes WHERE car_id = $1 AND start_date < $2
-				UNION ALL
-				SELECT start_date, 1 AS state FROM drives WHERE car_id = $1 AND start_date < $2
-				UNION ALL
-				SELECT start_date, 
-					CASE 
-						WHEN state = 'offline' THEN 3 
-						WHEN state = 'asleep' THEN 4 
-						WHEN state = 'online' THEN 5 
-					END AS state 
-				FROM states WHERE car_id = $1 AND start_date < $2
-				UNION ALL
-				SELECT start_date, 6 AS state FROM updates WHERE car_id = $1 AND start_date < $2
-			) past
-			ORDER BY start_date DESC
-			LIMIT 1
-		),
-		main_events AS (
-			-- Drivers and Charges (include overlapping)
+		WITH states AS (
+			-- Charging processes: start with state=2, end with state=0
 			SELECT
 				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
 				unnest(ARRAY [2, 0]) AS state
 			FROM charging_processes
-			WHERE car_id = $1 AND start_date <= $3 AND (end_date >= $2 OR end_date IS NULL)
-			UNION ALL
+			WHERE
+				car_id = $1 AND 
+				($2::timestamp - interval '30 day') < start_date AND 
+				(end_date < ($3::timestamp + interval '30 day') OR end_date IS NULL)
+			UNION
+			-- Drives: start with state=1, end with state=0
 			SELECT
 				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
 				unnest(ARRAY [1, 0]) AS state
 			FROM drives
-			WHERE car_id = $1 AND start_date <= $3 AND (end_date >= $2 OR end_date IS NULL)
-			UNION ALL
-			-- Point events
+			WHERE
+				car_id = $1 AND 
+				($2::timestamp - interval '30 day') < start_date AND 
+				(end_date < ($3::timestamp + interval '30 day') OR end_date IS NULL)
+			UNION
+			-- States table: point events (offline=3, asleep=4, online=5)
 			SELECT
 				start_date AS date,
 				CASE
@@ -547,20 +534,27 @@ func (r *statsRepository) GetStatesTimeline(ctx context.Context, carID int16, st
 					WHEN state = 'online' THEN 5
 				END AS state
 			FROM states
-			WHERE car_id = $1 AND start_date >= $2 AND start_date <= $3
-			UNION ALL
+			WHERE
+				car_id = $1 AND 
+				($2::timestamp - interval '30 day') < start_date AND 
+				(end_date < ($3::timestamp + interval '30 day') OR end_date IS NULL)
+			UNION
+			-- Updates: start with state=6, end with state=0
 			SELECT
 				unnest(ARRAY [start_date + interval '1 second', end_date]) AS date,
 				unnest(ARRAY [6, 0]) AS state
 			FROM updates
-			WHERE car_id = $1 AND start_date >= $2 AND start_date <= $3
+			WHERE
+				car_id = $1 AND 
+				($2::timestamp - interval '30 day') < start_date AND 
+				(end_date < ($3::timestamp + interval '30 day') OR end_date IS NULL)
 		)
-		SELECT date AS time, state FROM (
-			SELECT date, state FROM initial_state
-			UNION ALL
-			SELECT date, state FROM main_events
-		) combined
-		WHERE date >= $2 AND date <= $3 -- Filter final range
+		SELECT date AS "time", state
+		FROM states
+		WHERE 
+			date IS NOT NULL AND
+			($2::timestamp - interval '30 day') < date AND 
+			date < ($3::timestamp + interval '30 day') 
 		ORDER BY date ASC, state ASC
 	`
 
