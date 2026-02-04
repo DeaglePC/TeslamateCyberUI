@@ -112,6 +112,20 @@ body,
   background: rgba(0, 240, 255, 0.5);
 }
 
+/* 手机模式隐藏滚动条 */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+  
+  /* Firefox */
+  * {
+    scrollbar-width: none;
+  }
+}
+
 /* 优化动画 - 使用 will-change 和 transform3d 减少闪烁 */
 @keyframes fadeIn {
   from {

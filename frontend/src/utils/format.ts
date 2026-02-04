@@ -11,8 +11,8 @@ export function formatDate(date: string | Date, format = 'YYYY-MM-DD HH:mm'): st
   return dayjs(date).format(format);
 }
 
-export function formatRelativeTime(date: string | Date): string {
-  return dayjs(date).fromNow();
+export function formatRelativeTime(date: string | Date, language: 'zh' | 'en' = 'zh'): string {
+  return dayjs(date).locale(language === 'zh' ? 'zh-cn' : 'en').fromNow();
 }
 
 export function formatDuration(minutes: number, language: 'zh' | 'en' = 'zh'): string {

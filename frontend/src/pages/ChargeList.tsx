@@ -16,7 +16,7 @@ export default function ChargeListPage() {
   const navigate = useNavigate();
   const { theme, selectedCarId, language } = useSettingsStore();
   const [charges, setCharges] = useState<ChargeListItem[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 20, total: 0 });
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 9, total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>(() => {
@@ -42,7 +42,7 @@ export default function ChargeListPage() {
     try {
       setLoading(true);
       setError(null);
-      const result = await chargeApi.getList(selectedCarId, page, 20, dateRange.start, dateRange.end);
+      const result = await chargeApi.getList(selectedCarId, page, 9, dateRange.start, dateRange.end);
       setCharges(result.items || []);
       setPagination(result.pagination);
     } catch (err) {

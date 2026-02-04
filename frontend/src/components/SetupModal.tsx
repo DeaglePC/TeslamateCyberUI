@@ -37,10 +37,10 @@ export default function SetupModal({ onComplete }: SetupModalProps) {
                 // Save settings and complete
                 setBaseUrl(url);
                 setApiKey(apiKeyInput);
-                // Wait a bit for zustand persist to write to localStorage
+                // Wait for zustand persist to write to localStorage, then reload page
                 setTimeout(() => {
-                    onComplete();
-                }, 100);
+                    window.location.reload();
+                }, 200);
             } else {
                 setError(language === 'zh' ? '连接失败，请检查地址和 API Key' : 'Connection failed. Check URL and API Key.');
             }

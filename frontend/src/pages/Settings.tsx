@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSettingsStore, type ThemeType, type UnitType, type LanguageType } from '@/store/settings';
 import { Card } from '@/components/Card';
 import { useTranslation } from '@/utils/i18n';
@@ -7,8 +8,45 @@ import clsx from 'clsx';
 export default function SettingsPage() {
   const { theme, setTheme, unit, setUnit, language, setLanguage, amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey } = useSettingsStore();
   const { t } = useTranslation(language);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const colors = getThemeColors(theme);
+
+  // Test API connection
+  const testConnection = async () => {
+    if (!baseUrl) {
+      setTestResult({ success: false, message: language === 'zh' ? '请输入后端地址' : 'Please enter backend URL' });
+      return;
+    }
+
+    setTesting(true);
+    setTestResult(null);
+
+    try {
+      const url = baseUrl.replace(/\/$/, '');
+      const response = await fetch(`${url}/health`, {
+        method: 'GET',
+        headers: apiKey ? { 'X-API-Key': apiKey } : {},
+      });
+
+      if (response.ok) {
+        setTestResult({ success: true, message: language === 'zh' ? '连接成功！页面将刷新...' : 'Connected! Page will reload...' });
+        // Reload page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else if (response.status === 401) {
+        setTestResult({ success: false, message: language === 'zh' ? 'API Key 错误或未配置' : 'Invalid or missing API Key' });
+      } else {
+        setTestResult({ success: false, message: language === 'zh' ? '连接失败' : 'Connection failed' });
+      }
+    } catch {
+      setTestResult({ success: false, message: language === 'zh' ? '无法连接到服务器' : 'Cannot connect to server' });
+    } finally {
+      setTesting(false);
+    }
+  };
 
   // Theme options for UI display
   const themes: { id: ThemeType; name: Record<LanguageType, string>; colors: { bg: string; primary: string } }[] = [
@@ -209,9 +247,41 @@ export default function SettingsPage() {
           </div>
           <p className="text-xs" style={{ color: colors.muted }}>
             {language === 'zh'
-              ? '修改后刷新页面生效'
-              : 'Changes take effect after page refresh'}
+              ? '修改后点击测试连接'
+              : 'Click Test Connection after changes'}
           </p>
+
+          {/* Test result message */}
+          {testResult && (
+            <div
+              className="p-3 rounded-lg text-sm"
+              style={{
+                backgroundColor: testResult.success ? `${colors.success}15` : 'rgba(255,0,0,0.1)',
+                color: testResult.success ? colors.success : '#ff6b6b',
+                border: `1px solid ${testResult.success ? colors.success : 'rgba(255,0,0,0.3)'}`,
+              }}
+            >
+              {testResult.message}
+            </div>
+          )}
+
+          {/* Test connection button */}
+          <button
+            onClick={testConnection}
+            disabled={testing}
+            className={clsx(
+              'w-full p-3 rounded-lg font-semibold transition-all',
+              testing ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'
+            )}
+            style={{
+              backgroundColor: colors.primary,
+              color: colors.bg,
+            }}
+          >
+            {testing
+              ? (language === 'zh' ? '测试中...' : 'Testing...')
+              : (language === 'zh' ? '测试连接' : 'Test Connection')}
+          </button>
         </div>
       </Card>
 

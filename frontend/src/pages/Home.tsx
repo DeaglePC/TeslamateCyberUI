@@ -262,7 +262,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left - Combined Car & Status Card */}
           <div
-            className="perspective-1000 cursor-pointer min-h-[320px] lg:min-h-[420px]"
+            className="perspective-1000 cursor-pointer min-h-[240px] lg:min-h-[420px]"
             onClick={() => setIsCardFlipped(!isCardFlipped)}
           >
             <div
@@ -318,7 +318,7 @@ export default function HomePage() {
                       <p className="text-sm font-medium" style={{ color: colors.muted }}>
                         {getStateLabel(status.state)}
                         <span className="ml-1">
-                          {status.since && formatRelativeTime(status.since).replace('ago', '').replace('前', '')}
+                          {status.since && formatRelativeTime(status.since, language).replace('ago', '').replace('前', '')}
                         </span>
                       </p>
                     </div>
@@ -442,7 +442,7 @@ export default function HomePage() {
           {/* Right - Map */}
           <div className="h-auto lg:h-full">
             <MapCard
-              className="h-full min-h-[300px]"
+              className="h-full min-h-[220px] lg:min-h-[300px]"
               latitude={status.latitude ?? stats?.lastLatitude}
               longitude={status.longitude ?? stats?.lastLongitude}
               address={status.geofence ?? stats?.lastAddress}
