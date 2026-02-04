@@ -98,6 +98,12 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
     const mapInstanceRef = useRef<unknown>(null);
     const { theme, amapKey } = useSettingsStore();
 
+    // Memoize heatmapData to avoid unnecessary re-renders when data content is the same
+    const stableHeatmapData = useMemo(() => heatmapData, [JSON.stringify(heatmapData)]);
+    const stablePositions = useMemo(() => positions, [JSON.stringify(positions)]);
+    const stableTracks = useMemo(() => tracks, [JSON.stringify(tracks)]);
+    const stableMarker = useMemo(() => marker, [marker?.latitude, marker?.longitude]);
+
     const themeColors: Record<string, { primary: string; secondary: string; bg: string }> = {
         cyber: { primary: '#00f0ff', secondary: '#ff00aa', bg: '#0a0a0f' },
         tesla: { primary: '#cc0000', secondary: '#ffffff', bg: '#111111' },
@@ -108,22 +114,22 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
 
     const colors = useMemo(() => themeColors[theme] || themeColors.cyber, [theme]);
 
-    // Strategy Determination
-    const isPathMode = positions.length > 0;
-    const isMultiTrackMode = tracks.length > 0;
-    const isMarkerMode = !!marker;
-    const isHeatmapMode = heatmapData.length > 0;
+    // Strategy Determination - use stable refs
+    const isPathMode = stablePositions.length > 0;
+    const isMultiTrackMode = stableTracks.length > 0;
+    const isMarkerMode = !!stableMarker;
+    const isHeatmapMode = stableHeatmapData.length > 0;
     const hasData = isPathMode || isMultiTrackMode || isMarkerMode || isHeatmapMode;
 
     // Check location for China checking
     let checkLat = 0, checkLon = 0;
-    if (isPathMode) { checkLat = positions[0].latitude; checkLon = positions[0].longitude; }
-    else if (isMultiTrackMode && tracks[0]?.positions?.length > 0) {
-        checkLat = tracks[0].positions[0].latitude;
-        checkLon = tracks[0].positions[0].longitude;
+    if (isPathMode) { checkLat = stablePositions[0].latitude; checkLon = stablePositions[0].longitude; }
+    else if (isMultiTrackMode && stableTracks[0]?.positions?.length > 0) {
+        checkLat = stableTracks[0].positions[0].latitude;
+        checkLon = stableTracks[0].positions[0].longitude;
     }
-    else if (isMarkerMode && marker) { checkLat = marker.latitude; checkLon = marker.longitude; }
-    else if (isHeatmapMode && heatmapData.length > 0) { checkLat = heatmapData[0].latitude; checkLon = heatmapData[0].longitude; }
+    else if (isMarkerMode && stableMarker) { checkLat = stableMarker.latitude; checkLon = stableMarker.longitude; }
+    else if (isHeatmapMode && stableHeatmapData.length > 0) { checkLat = stableHeatmapData[0].latitude; checkLon = stableHeatmapData[0].longitude; }
 
     const isChina = hasData && !isOutOfChina(checkLat, checkLon);
     const useAmap = isChina && !!amapKey;
@@ -191,7 +197,7 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
 
                 // Path Mode
                 if (isPathMode) {
-                    const path = positions.map(p => {
+                    const path = stablePositions.map(p => {
                         const [gLat, gLon] = wgsToGcj(p.latitude, p.longitude);
                         return [gLon, gLat];
                     });
@@ -224,7 +230,7 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                 // Multi-track Mode
                 else if (isMultiTrackMode) {
                     const polylines: unknown[] = [];
-                    tracks.forEach((track, idx) => {
+                    stableTracks.forEach((track, idx) => {
                         if (track.positions.length < 2) return;
                         
                         const path = track.positions.map(p => {
@@ -232,7 +238,7 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                             return [gLon, gLat];
                         });
 
-                        const trackColor = getTrackColor(idx, tracks.length, colors.primary);
+                        const trackColor = getTrackColor(idx, stableTracks.length, colors.primary);
                         const polyline = new AMap.Polyline({
                             path,
                             strokeColor: trackColor,
@@ -245,8 +251,8 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                     map.setFitView();
                 }
                 // Single Marker Mode
-                else if (isMarkerMode && marker) {
-                    const [gLat, gLon] = wgsToGcj(marker.latitude, marker.longitude);
+                else if (isMarkerMode && stableMarker) {
+                    const [gLat, gLon] = wgsToGcj(stableMarker.latitude, stableMarker.longitude);
                     const center = [gLon, gLat];
                     map.setZoomAndCenter(15, center);
 
@@ -259,7 +265,7 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                 }
                 // Heatmap Mode (Circles)
                 else if (isHeatmapMode) {
-                    const circles = heatmapData.map(p => {
+                    const circles = stableHeatmapData.map(p => {
                         const [gLat, gLon] = wgsToGcj(p.latitude, p.longitude);
                         // Scale radius by value (energy)
                         const radius = Math.max(10, Math.min(100, Math.sqrt(p.value) * 5));
@@ -296,7 +302,7 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                 mapInstanceRef.current = null;
             }
         };
-    }, [useAmap, positions, tracks, marker, heatmapData, amapKey, colors, isPathMode, isMultiTrackMode, isMarkerMode, isHeatmapMode]);
+    }, [useAmap, stablePositions, stableTracks, stableMarker, stableHeatmapData, amapKey, colors, isPathMode, isMultiTrackMode, isMarkerMode, isHeatmapMode]);
 
     if (!hasData) return null;
 

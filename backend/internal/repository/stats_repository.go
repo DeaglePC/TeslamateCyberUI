@@ -87,9 +87,29 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 		}
 	}
 
-	// 平均能效
-	if stats.TotalDistance > 0 && stats.TotalEnergyAdded > 0 {
-		stats.AvgEfficiency = stats.TotalEnergyAdded / stats.TotalDistance * 1000 // Wh/km
+	// 平均能效：使用行程中的续航消耗 * 车辆能效系数 / 行驶距离
+	// 这比使用充入电量更准确，因为充入电量包含充电损耗和静态消耗
+	// 如果 efficiency 为 null，使用默认值 0.151
+	efficiencyQuery := `
+		SELECT 
+			COALESCE(SUM(d.distance), 0) as total_distance,
+			COALESCE(SUM((d.start_ideal_range_km - d.end_ideal_range_km) * COALESCE(c.efficiency, 0.151)), 0) as total_energy_used
+		FROM drives d
+		JOIN cars c ON c.id = d.car_id
+		WHERE d.car_id = $1 
+			AND d.distance > 0 
+			AND d.start_ideal_range_km IS NOT NULL 
+			AND d.end_ideal_range_km IS NOT NULL
+			AND d.start_ideal_range_km > d.end_ideal_range_km
+	`
+	var effStats struct {
+		TotalDistance   float64 `db:"total_distance"`
+		TotalEnergyUsed float64 `db:"total_energy_used"`
+	}
+	if err := r.db.GetContext(ctx, &effStats, efficiencyQuery, carID); err == nil {
+		if effStats.TotalDistance > 0 && effStats.TotalEnergyUsed > 0 {
+			stats.AvgEfficiency = effStats.TotalEnergyUsed / effStats.TotalDistance * 1000 // Wh/km
+		}
 	}
 
 	// 最后位置信息

@@ -136,11 +136,12 @@ func (r *driveRepository) GetList(ctx context.Context, carID int16, page, pageSi
 		}
 
 		// 计算能效 (Wh/km)
+		// 公式: (续航消耗 / 行驶距离) * 车辆能效系数 * 1000
+		// 车辆能效系数 0.151 kWh/km = 151 Wh/km
 		if row.Distance > 0 && row.StartIdealRangeKm.Valid && row.EndIdealRangeKm.Valid {
 			rangeUsed := row.StartIdealRangeKm.Float64 - row.EndIdealRangeKm.Float64
 			if rangeUsed > 0 {
-				// 假设续航基于某个能效值，这里用简化计算
-				item.Efficiency = rangeUsed / row.Distance * 161.0 // 近似 Wh/km
+				item.Efficiency = rangeUsed / row.Distance * 151.0 // Wh/km
 			}
 		}
 
@@ -258,10 +259,11 @@ func (r *driveRepository) GetDetail(ctx context.Context, driveID int64) (*model.
 	if row.DurationMin > 0 {
 		detail.SpeedAvg = row.Distance / (float64(row.DurationMin) / 60.0)
 	}
+	// 计算能效 (Wh/km): (续航消耗 / 行驶距离) * 151
 	if row.Distance > 0 {
 		rangeUsed := row.StartIdealRangeKm - row.EndIdealRangeKm
 		if rangeUsed > 0 {
-			detail.Efficiency = rangeUsed / row.Distance * 161.0
+			detail.Efficiency = rangeUsed / row.Distance * 151.0
 		}
 	}
 
