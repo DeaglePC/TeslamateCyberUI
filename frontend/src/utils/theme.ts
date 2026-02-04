@@ -142,7 +142,7 @@ export const themeConfigs: Record<ThemeType, ThemeColors> = {
             charging: '#05d9e8',  // Cyan
             offline: '#2d0669',   // Dark Purple (Merged)
             asleep: '#2d0669',    // Dark Purple (Merged)
-            online: '#ff2a6d',    // Pink
+            online: '#ff8c00',    // Orange - distinct from driving
             updating: '#ffc857',  // Yellow
         },
         chart: ['#ff2a6d', '#05d9e8', '#d300c5', '#ffc857', '#635985'],
