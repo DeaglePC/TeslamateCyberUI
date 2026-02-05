@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useSettingsStore, type ThemeType, type UnitType, type LanguageType, type MapType } from '@/store/settings';
+import { useSettingsStore, type ThemeType, type UnitType, type LanguageType } from '@/store/settings';
 import { Card } from '@/components/Card';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors, themeConfigs } from '@/utils/theme';
