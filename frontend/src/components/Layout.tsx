@@ -51,7 +51,7 @@ function SettingsIcon({ className }: { className?: string }) {
 const SWIPE_TABS = ['/', '/charges', '/drives', '/settings'];
 
 export default function Layout() {
-  const { theme, language, backgroundImage } = useSettingsStore();
+  const { theme, language, backgroundImage, cardOpacity } = useSettingsStore();
   const { t } = useTranslation(language);
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,6 +61,24 @@ export default function Layout() {
   
   // 如果有背景图片，Layout 使用透明背景
   const hasBackground = !!backgroundImage;
+
+  // 设置全局 CSS 变量，让 .glass 类也能响应设置
+  useEffect(() => {
+    // cardOpacity: 0 = 全透明, 100 = 完全不透明
+    const alpha = cardOpacity / 100;
+    
+    document.documentElement.style.setProperty('--card-opacity', String(alpha));
+    
+    // 背景色：使用 alpha 直接控制透明度
+    document.documentElement.style.setProperty('--card-bg-start', `rgba(30, 30, 50, ${alpha})`);
+    document.documentElement.style.setProperty('--card-bg-mid', `rgba(20, 20, 35, ${alpha * 0.85})`);
+    document.documentElement.style.setProperty('--card-bg-end', `rgba(25, 25, 45, ${alpha * 0.93})`);
+    
+    // glass-strong 使用相同逻辑
+    document.documentElement.style.setProperty('--card-strong-bg-start', `rgba(35, 35, 60, ${alpha})`);
+    document.documentElement.style.setProperty('--card-strong-bg-mid', `rgba(25, 25, 45, ${alpha * 0.94})`);
+    document.documentElement.style.setProperty('--card-strong-bg-end', `rgba(30, 30, 55, ${alpha * 0.96})`);
+  }, [cardOpacity]);
 
 
 

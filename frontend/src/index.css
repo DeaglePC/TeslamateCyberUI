@@ -17,6 +17,16 @@
   --theme-bg-dark: #282a36;
   --theme-bg-tech: #0b132b;
   --theme-bg-aurora: #18122B;
+
+  /* 卡片效果 CSS 变量（默认值，对应 70% 透明度） */
+  --card-blur: 16px;
+  --card-opacity: 0.7;
+  --card-bg-start: rgba(30, 30, 50, 0.7);
+  --card-bg-mid: rgba(20, 20, 35, 0.595);
+  --card-bg-end: rgba(25, 25, 45, 0.651);
+  --card-strong-bg-start: rgba(35, 35, 60, 0.7);
+  --card-strong-bg-mid: rgba(25, 25, 45, 0.658);
+  --card-strong-bg-end: rgba(30, 30, 55, 0.672);
 }
 
 * {
@@ -50,14 +60,14 @@ body {
   overflow-x: hidden;
 }
 
-/* 渐变毛玻璃效果 */
+/* 渐变毛玻璃效果 - 使用 CSS 变量实现动态调整 */
 .glass {
   background: linear-gradient(135deg,
-      rgba(30, 30, 50, 0.7) 0%,
-      rgba(20, 20, 35, 0.6) 50%,
-      rgba(25, 25, 45, 0.65) 100%);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+      var(--card-bg-start) 0%,
+      var(--card-bg-mid) 50%,
+      var(--card-bg-end) 100%);
+  backdrop-filter: blur(var(--card-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
@@ -66,11 +76,11 @@ body {
 
 .glass-strong {
   background: linear-gradient(145deg,
-      rgba(35, 35, 60, 0.85) 0%,
-      rgba(25, 25, 45, 0.8) 50%,
-      rgba(30, 30, 55, 0.82) 100%);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
+      var(--card-strong-bg-start) 0%,
+      var(--card-strong-bg-mid) 50%,
+      var(--card-strong-bg-end) 100%);
+  backdrop-filter: blur(calc(var(--card-blur) * 1.5)) saturate(200%);
+  -webkit-backdrop-filter: blur(calc(var(--card-blur) * 1.5)) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.4),
@@ -81,10 +91,10 @@ body {
 .glass-gradient {
   position: relative;
   background: linear-gradient(135deg,
-      rgba(30, 30, 50, 0.7) 0%,
-      rgba(20, 20, 35, 0.6) 100%);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+      var(--card-bg-start) 0%,
+      var(--card-bg-mid) 100%);
+  backdrop-filter: blur(var(--card-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(180%);
   border: none;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
@@ -309,4 +319,56 @@ body {
   animation: slideInFromLeft 0.25s ease-out forwards;
   will-change: opacity, transform;
   backface-visibility: hidden;
+}
+
+/* Range slider 滑块样式 */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 240, 255, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 240, 255, 0.5);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 240, 255, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 240, 255, 0.5);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
 }

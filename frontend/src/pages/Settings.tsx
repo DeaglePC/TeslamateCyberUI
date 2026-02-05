@@ -10,7 +10,8 @@ export default function SettingsPage() {
     theme, setTheme, unit, setUnit, language, setLanguage, 
     amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey, 
     mapType, setMapType,
-    backgroundImage, uploadBackgroundImage, deleteBackgroundImage 
+    backgroundImage, uploadBackgroundImage, deleteBackgroundImage,
+    cardOpacity, setCardOpacity
   } = useSettingsStore();
   const { t } = useTranslation(language);
   const [testing, setTesting] = useState(false);
@@ -332,6 +333,54 @@ export default function SettingsPage() {
           {language === 'zh' 
             ? '背景图片会保存到服务端，所有设备同步显示。建议使用深色图片以获得更好的视觉效果。'
             : 'Background image is saved on server and synced across devices. Dark images work best.'}
+        </p>
+      </Card>
+
+      {/* Card Effect Settings */}
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18" />
+            <path d="M9 21V9" />
+          </svg>
+          <h3 className="font-semibold" style={{ color: colors.primary }}>
+            {language === 'zh' ? '卡片效果' : 'Card Effect'}
+          </h3>
+        </div>
+
+        {/* 透明度 */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-sm" style={{ color: colors.muted }}>
+              {language === 'zh' ? '卡片透明度' : 'Card Opacity'}
+            </label>
+            <span className="text-sm font-medium" style={{ color: colors.primary }}>
+              {cardOpacity}%
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={cardOpacity}
+            onChange={(e) => setCardOpacity(parseInt(e.target.value))}
+            className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, ${colors.primary} 0%, ${colors.primary} ${cardOpacity}%, rgba(255,255,255,0.1) ${cardOpacity}%, rgba(255,255,255,0.1) 100%)`,
+            }}
+          />
+          <div className="flex justify-between text-xs mt-1" style={{ color: colors.muted }}>
+            <span>{language === 'zh' ? '全透明' : 'Transparent'}</span>
+            <span>{language === 'zh' ? '不透明' : 'Opaque'}</span>
+          </div>
+        </div>
+
+        {/* 说明 */}
+        <p className="text-xs mt-4" style={{ color: colors.muted }}>
+          {language === 'zh' 
+            ? '调整卡片的透明度，设置会自动保存。'
+            : 'Adjust card opacity. Settings are saved automatically.'}
         </p>
       </Card>
 
