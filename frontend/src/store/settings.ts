@@ -5,6 +5,7 @@ import { settingsApi } from '@/services/api';
 export type ThemeType = 'cyber' | 'tesla' | 'dark' | 'tech' | 'aurora';
 export type UnitType = 'metric' | 'imperial';
 export type LanguageType = 'zh' | 'en';
+export type MapType = 'amap' | 'openstreet';
 
 interface SettingsState {
   theme: ThemeType;
@@ -14,6 +15,7 @@ interface SettingsState {
   amapKey: string;
   baseUrl: string;
   apiKey: string;
+  mapType: MapType;
   setTheme: (theme: ThemeType) => void;
   setUnit: (unit: UnitType) => void;
   setLanguage: (language: LanguageType) => void;
@@ -21,6 +23,7 @@ interface SettingsState {
   setAmapKey: (key: string) => void;
   setBaseUrl: (url: string) => void;
   setApiKey: (key: string) => void;
+  setMapType: (mapType: MapType) => void;
   fetchRemoteSettings: () => Promise<void>;
 }
 
@@ -34,6 +37,7 @@ export const useSettingsStore = create<SettingsState>()(
       amapKey: '',
       baseUrl: '',
       apiKey: '',
+      mapType: 'openstreet',  // 默认使用开源地图，无需配置
       setTheme: (theme) => {
         set({ theme });
         settingsApi.update('theme', theme).catch(() => { });
@@ -53,6 +57,10 @@ export const useSettingsStore = create<SettingsState>()(
       },
       setBaseUrl: (url) => set({ baseUrl: url }),
       setApiKey: (key) => set({ apiKey: key }),
+      setMapType: (mapType) => {
+        set({ mapType });
+        settingsApi.update('mapType', mapType).catch(() => { });
+      },
       fetchRemoteSettings: async () => {
         try {
           // Only fetch if base URL is set
@@ -65,6 +73,7 @@ export const useSettingsStore = create<SettingsState>()(
             unit: (settings.unit as UnitType) || prev.unit,
             language: (settings.language as LanguageType) || prev.language,
             amapKey: settings.amapKey || prev.amapKey,
+            mapType: (settings.mapType as MapType) || prev.mapType,
           }));
         } catch (e) {
           console.error("Failed to fetch remote settings", e);

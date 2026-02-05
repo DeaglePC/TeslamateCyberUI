@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { useSettingsStore, type ThemeType, type UnitType, type LanguageType } from '@/store/settings';
+import { useSettingsStore, type ThemeType, type UnitType, type LanguageType, type MapType } from '@/store/settings';
 import { Card } from '@/components/Card';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors, themeConfigs } from '@/utils/theme';
 import clsx from 'clsx';
 
 export default function SettingsPage() {
-  const { theme, setTheme, unit, setUnit, language, setLanguage, amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey } = useSettingsStore();
+  const { theme, setTheme, unit, setUnit, language, setLanguage, amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey, mapType, setMapType } = useSettingsStore();
   const { t } = useTranslation(language);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const colors = getThemeColors(theme);
+
+  // 高德地图是否可用（需要配置 API Key）
+  const isAmapAvailable = !!amapKey;
 
   // Test API connection
   const testConnection = async () => {
@@ -205,6 +208,95 @@ export default function SettingsPage() {
             </button>
           ))}
         </div>
+      </Card>
+
+      {/* Map Settings */}
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <h3 className="font-semibold" style={{ color: colors.primary }}>
+            {language === 'zh' ? '地图设置' : 'Map Settings'}
+          </h3>
+        </div>
+        
+        <div className="flex gap-3">
+          {/* OpenStreetMap */}
+          <button
+            onClick={() => setMapType('openstreet')}
+            className={clsx(
+              'flex-1 p-3 rounded-lg border transition-all',
+              mapType === 'openstreet' ? '' : 'opacity-70 hover:opacity-100'
+            )}
+            style={{
+              borderColor: mapType === 'openstreet' ? colors.primary : colors.border,
+              background: mapType === 'openstreet' ? `${colors.primary}10` : 'transparent',
+              color: mapType === 'openstreet' ? colors.primary : colors.muted,
+            }}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              <span className="text-sm font-medium">
+                {language === 'zh' ? '开源地图' : 'OpenStreetMap'}
+              </span>
+              <span className="text-xs opacity-70">
+                {language === 'zh' ? '无需配置' : 'No config needed'}
+              </span>
+            </div>
+          </button>
+
+          {/* AMap / 高德地图 */}
+          <button
+            onClick={() => isAmapAvailable && setMapType('amap')}
+            disabled={!isAmapAvailable}
+            className={clsx(
+              'flex-1 p-3 rounded-lg border transition-all relative',
+              !isAmapAvailable && 'cursor-not-allowed',
+              mapType === 'amap' ? '' : isAmapAvailable ? 'opacity-70 hover:opacity-100' : 'opacity-40'
+            )}
+            style={{
+              borderColor: mapType === 'amap' ? colors.primary : colors.border,
+              background: mapType === 'amap' ? `${colors.primary}10` : 'transparent',
+              color: mapType === 'amap' ? colors.primary : colors.muted,
+            }}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="text-sm font-medium">
+                {language === 'zh' ? '高德地图' : 'AMap'}
+              </span>
+              <span className="text-xs opacity-70">
+                {isAmapAvailable 
+                  ? (language === 'zh' ? '中国地区推荐' : 'Best for China')
+                  : (language === 'zh' ? '需配置 API Key' : 'API Key required')
+                }
+              </span>
+            </div>
+            {/* 锁定图标 */}
+            {!isAmapAvailable && (
+              <div className="absolute top-2 right-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+              </div>
+            )}
+          </button>
+        </div>
+
+        {/* 提示信息 */}
+        <p className="text-xs mt-3" style={{ color: colors.muted }}>
+          {language === 'zh' 
+            ? '高德地图在中国地区有更精确的坐标纠偏，国外地区请使用开源地图。'
+            : 'AMap provides better accuracy in China. Use OpenStreetMap for other regions.'}
+        </p>
       </Card>
 
       {/* API Settings */}

@@ -97,7 +97,7 @@ function BoundsFitter({ positions, marker, heatmapData }: { positions?: [number,
 export function UniversalMap({ positions = [], tracks = [], marker, heatmapData = [], className = '' }: UniversalMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<unknown>(null);
-    const { theme, amapKey } = useSettingsStore();
+    const { theme, amapKey, mapType } = useSettingsStore();
 
     // Memoize heatmapData to avoid unnecessary re-renders when data content is the same
     const stableHeatmapData = useMemo(() => heatmapData, [JSON.stringify(heatmapData)]);
@@ -131,7 +131,12 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
     else if (isHeatmapMode && stableHeatmapData.length > 0) { checkLat = stableHeatmapData[0].latitude; checkLon = stableHeatmapData[0].longitude; }
 
     const isChina = hasData && !isOutOfChina(checkLat, checkLon);
-    const useAmap = isChina && !!amapKey;
+    
+    // 使用高德地图的条件：
+    // 1. 用户选择了高德地图 (mapType === 'amap')
+    // 2. 并且配置了高德地图 API Key
+    // 3. 并且位置在中国境内（高德地图在境外数据不准确）
+    const useAmap = mapType === 'amap' && !!amapKey && isChina;
 
     // Leaflet Icons
     const startIcon = L.divIcon({
