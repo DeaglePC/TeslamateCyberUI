@@ -1,0 +1,33 @@
+# Dependencies and vendor
+vendor/
+
+# Build output
+*.exe
+server
+
+# Development files
+*.log
+.env*
+!.env.example
+.DS_Store
+configs/config.yaml
+
+# IDE files
+.vscode/
+.idea/
+
+# Test files
+*_test.go
+coverage/
+
+# Git
+.git/
+.gitignore
+
+# Misc
+README.md
+*.md
+
+# Development scripts
+*.ps1
+*.sh

@@ -33,7 +33,7 @@ const COLOR_OPTION_CODES: Record<string, string> = {
 };
 
 // Get Tesla configurator image URL based on model, color, and trim
-const getCarImageUrl = (model?: string, exteriorColor?: string, trimBadging?: string): string => {
+const getCarImageUrl = (model?: string, exteriorColor?: string, _trimBadging?: string): string => {
   if (!model) return '';
 
   const modelLower = model.toLowerCase();

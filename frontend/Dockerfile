@@ -1,33 +1,50 @@
-# Dockerfile for the frontend service
+# ============================================
+# TeslamateCyberUI Frontend Dockerfile
+# Multi-stage build for optimized production image
+# ============================================
+
 # Stage 1: Build the React application
+# 如果拉取失败，可以替换为: registry.cn-hangzhou.aliyuncs.com/library/node:18-alpine
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency files and install dependencies
+# Copy package files first for better layer caching
 COPY package*.json ./
-RUN npm install
 
-# Copy the rest of the frontend source code
+# Install dependencies
+RUN npm ci --only=production=false
+
+# Copy source code
 COPY . .
 
-# Build the frontend application
+# Build the application
 RUN npm run build
 
-# Stage 2: Serve the application with Nginx
+# ============================================
+# Stage 2: Production image with Nginx
+# ============================================
+# 如果拉取失败，可以替换为: registry.cn-hangzhou.aliyuncs.com/library/nginx:1.25-alpine
 FROM nginx:1.25-alpine
 
-# Remove the default Nginx configuration
+LABEL maintainer="TeslamateCyberUI"
+LABEL description="TeslamateCyberUI Frontend - Modern dashboard for TeslaMate"
+
+# Remove default Nginx config
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy the custom Nginx configuration
+# Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy the built frontend assets from the builder stage
+# Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose the port Nginx will listen on
+# Add healthcheck - 使用 GET 请求
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget -q -O- http://localhost:80/ > /dev/null || exit 1
+
+# Expose port
 EXPOSE 80
 
-# Command to start Nginx in the foreground
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]

@@ -1,60 +1,84 @@
-version: '3.8'
+# ============================================
+# TeslamateCyberUI Docker Compose Configuration
+# 一键部署命令: docker compose up -d
+# ============================================
 
 services:
+  # ==========================================
+  # Backend API Service
+  # ==========================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: teslamate-cyberui-backend:latest
     container_name: teslamate-cyberui-backend
     restart: unless-stopped
     environment:
-      # Database configuration (connecting to external TeslaMate database)
-      - TESLAMATE_DB_HOST=${TESLAMATE_DB_HOST}
+      # Database configuration (TeslaMate PostgreSQL)
+      - TESLAMATE_DB_HOST=${TESLAMATE_DB_HOST:?Database host is required}
       - TESLAMATE_DB_PORT=${TESLAMATE_DB_PORT:-5432}
-      - TESLAMATE_DB_USER=${TESLAMATE_DB_USER}
-      - TESLAMATE_DB_PASSWORD=${TESLAMATE_DB_PASSWORD}
-      - TESLAMATE_DB_NAME=${TESLAMATE_DB_NAME}
+      - TESLAMATE_DB_USER=${TESLAMATE_DB_USER:?Database user is required}
+      - TESLAMATE_DB_PASSWORD=${TESLAMATE_DB_PASSWORD:?Database password is required}
+      - TESLAMATE_DB_NAME=${TESLAMATE_DB_NAME:-teslamate}
       - TESLAMATE_DB_SSLMODE=${TESLAMATE_DB_SSLMODE:-disable}
-      
       # Server configuration
-      - CYBERUI_SERVER_HOST=${CYBERUI_SERVER_HOST:-0.0.0.0}
-      - CYBERUI_SERVER_PORT=${CYBERUI_SERVER_PORT:-8080}
+      - CYBERUI_SERVER_HOST=0.0.0.0
+      - CYBERUI_SERVER_PORT=8080
       - CYBERUI_SERVER_MODE=${CYBERUI_SERVER_MODE:-release}
-      
-      # Log configuration
+      # API Key (optional, leave empty to disable authentication)
+      - CYBERUI_API_KEY=${CYBERUI_API_KEY:-}
+      # Logging
       - LOG_LEVEL=${LOG_LEVEL:-info}
-
-      # Timezone from host
-      - TZ=${TZ}
+      # Timezone
+      - TZ=${TZ:-Asia/Shanghai}
     networks:
-      - teslamate-network
+      - cyberui-internal
+    # 后端 API 端口（可选，用于直接访问后端 API 调试）
+    ports:
+      - "${CYBERUI_API_PORT:-8899}:8080"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    ports:
-      - "8081:8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1"]
+      # 注意：使用 wget -q -O- 发送 GET 请求，而不是 --spider (HEAD 请求)
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # ==========================================
+  # Frontend Web Service (Nginx)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: teslamate-cyberui:latest
+    container_name: teslamate-cyberui
+    restart: unless-stopped
+    ports:
+      - "${CYBERUI_PORT:-8080}:80"
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - cyberui-internal
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:80/ > /dev/null || exit 1"]
       interval: 30s
       timeout: 3s
       start_period: 5s
       retries: 3
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: teslamate-cyberui
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - teslamate-network
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-
+# ==========================================
+# Networks
+# ==========================================
 networks:
-  teslamate-network:
+  cyberui-internal:
     driver: bridge
+    name: cyberui-network

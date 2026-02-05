@@ -6,7 +6,7 @@ interface SetupModalProps {
     onComplete: () => void;
 }
 
-export default function SetupModal({ onComplete }: SetupModalProps) {
+export default function SetupModal({ onComplete: _onComplete }: SetupModalProps) {
     const { language, setBaseUrl, setApiKey } = useSettingsStore();
 
     const [baseUrlInput, setBaseUrlInput] = useState('');
