@@ -10,6 +10,13 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* 各主题背景色 CSS 变量 */
+  --theme-bg-cyber: #050505;
+  --theme-bg-tesla: #18181b;
+  --theme-bg-dark: #282a36;
+  --theme-bg-tech: #0b132b;
+  --theme-bg-aurora: #18122B;
 }
 
 * {
@@ -18,10 +25,27 @@
   box-sizing: border-box;
 }
 
-html,
-body,
-#root {
+html {
   height: 100%;
+  width: 100%;
+  /* 默认背景色，防止白屏闪烁 */
+  background-color: #050505;
+}
+
+body {
+  min-height: 100%;
+  width: 100%;
+  /* 使用 CSS 变量，方便 JS 动态切换 */
+  background-color: var(--theme-bg, #050505);
+  /* 安全区域适配：让内容延伸到刘海和底部 */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+#root {
+  min-height: 100%;
   width: 100%;
   overflow-x: hidden;
 }

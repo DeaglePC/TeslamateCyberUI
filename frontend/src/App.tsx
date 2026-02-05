@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useSettingsStore } from '@/store/settings';
+import { getThemeColors } from '@/utils/theme';
 import Layout from '@/components/Layout';
 import SetupModal from '@/components/SetupModal';
 import HomePage from '@/pages/Home';
@@ -14,6 +15,21 @@ function App() {
   const { theme, baseUrl } = useSettingsStore();
   const [showSetup, setShowSetup] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  // 更新主题颜色：影响浏览器地址栏、iOS 安全区域等
+  useEffect(() => {
+    const colors = getThemeColors(theme);
+    
+    // 更新 <meta name="theme-color"> 标签
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute('content', colors.bg);
+    }
+    
+    // 更新 CSS 变量，让 body 背景色与主题一致
+    document.documentElement.style.setProperty('--theme-bg', colors.bg);
+    document.body.style.backgroundColor = colors.bg;
+  }, [theme]);
 
   // Check if setup is needed on mount
   useEffect(() => {
