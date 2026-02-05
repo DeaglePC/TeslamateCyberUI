@@ -100,6 +100,11 @@ func main() {
 		api.GET("/settings", h.GetUISettings)
 		api.POST("/settings", h.UpdateUISetting)
 		api.PUT("/settings", h.BatchUpdateUISettings)
+
+		// 背景图片相关
+		api.GET("/background-image", h.GetBackgroundImage)
+		api.POST("/background-image", h.UploadBackgroundImage)
+		api.DELETE("/background-image", h.DeleteBackgroundImage)
 	}
 
 	// 健康检查

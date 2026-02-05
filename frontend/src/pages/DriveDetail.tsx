@@ -50,8 +50,10 @@ export default function DriveDetailPage() {
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
   if (!detail) return <ErrorState message="驾驶记录不存在" />;
 
-  // 数据采样函数 - 对密集数据进行降采样和平滑处理
-  const sampleData = (data: number[], targetPoints: number = 150): number[] => {
+  // 数据采样函数 - 对密集数据进行降采样
+  // mode: 'max' 保留区间最大值（适用于速度，确保峰值显示）
+  // mode: 'avg' 取区间平均值（适用于平滑曲线）
+  const sampleData = (data: number[], targetPoints: number = 150, mode: 'max' | 'avg' = 'avg'): number[] => {
     if (data.length <= targetPoints) return data;
 
     const step = data.length / targetPoints;
@@ -61,12 +63,21 @@ export default function DriveDetailPage() {
       const startIdx = Math.floor(i * step);
       const endIdx = Math.min(Math.floor((i + 1) * step), data.length);
 
-      // 计算窗口内的平均值（简单移动平均）
-      let sum = 0;
-      for (let j = startIdx; j < endIdx; j++) {
-        sum += data[j];
+      if (mode === 'max') {
+        // 保留区间最大值，确保峰值速度能够显示
+        let maxVal = data[startIdx];
+        for (let j = startIdx + 1; j < endIdx; j++) {
+          if (data[j] > maxVal) maxVal = data[j];
+        }
+        sampled.push(maxVal);
+      } else {
+        // 计算窗口内的平均值（简单移动平均）
+        let sum = 0;
+        for (let j = startIdx; j < endIdx; j++) {
+          sum += data[j];
+        }
+        sampled.push(Math.round(sum / (endIdx - startIdx)));
       }
-      sampled.push(Math.round(sum / (endIdx - startIdx)));
     }
 
     return sampled;
@@ -91,9 +102,9 @@ export default function DriveDetailPage() {
       rawPowers.push(positions[idx].power);
     }
 
-    // 对速度和功率进行平滑处理
-    const speeds = sampleData(positions.map(p => p.speed), targetPoints);
-    const powers = sampleData(positions.map(p => p.power), targetPoints);
+    // 对速度使用最大值采样（保留峰值），功率使用平均值采样（平滑曲线）
+    const speeds = sampleData(positions.map(p => p.speed), targetPoints, 'max');
+    const powers = sampleData(positions.map(p => p.power), targetPoints, 'avg');
 
     return {
       backgroundColor: 'transparent',

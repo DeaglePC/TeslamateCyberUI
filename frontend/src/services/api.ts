@@ -206,3 +206,22 @@ export const settingsApi = {
   },
 };
 
+// 背景图片 API
+export const backgroundApi = {
+  // 获取背景图片
+  get: async (): Promise<string> => {
+    const res = await api.get<ApiResponse<{ image: string }>>('/background-image');
+    return res.data.data?.image || '';
+  },
+
+  // 上传背景图片（Base64 格式）
+  upload: async (imageBase64: string): Promise<void> => {
+    await api.post('/background-image', { image: imageBase64 });
+  },
+
+  // 删除背景图片
+  delete: async (): Promise<void> => {
+    await api.delete('/background-image');
+  },
+};
+

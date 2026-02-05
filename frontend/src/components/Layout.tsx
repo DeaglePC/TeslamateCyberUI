@@ -5,6 +5,7 @@ import { getThemeColors } from '@/utils/theme';
 import { useRef, useCallback, useEffect, useState } from 'react';
 import clsx from 'clsx';
 
+
 function HomeIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -50,13 +51,16 @@ function SettingsIcon({ className }: { className?: string }) {
 const SWIPE_TABS = ['/', '/charges', '/drives', '/settings'];
 
 export default function Layout() {
-  const { theme, language } = useSettingsStore();
+  const { theme, language, backgroundImage } = useSettingsStore();
   const { t } = useTranslation(language);
   const location = useLocation();
   const navigate = useNavigate();
 
   const colors = getThemeColors(theme);
   const isDarkTheme = ['dark', 'cyber', 'tesla', 'aurora', 'tech'].includes(theme);
+  
+  // 如果有背景图片，Layout 使用透明背景
+  const hasBackground = !!backgroundImage;
 
 
 
@@ -190,7 +194,7 @@ export default function Layout() {
   return (
     <div
       className={clsx('min-h-screen flex')}
-      style={{ backgroundColor: colors.bg, color: colors.muted }}
+      style={{ backgroundColor: hasBackground ? 'transparent' : colors.bg, color: colors.muted }}
     >
       {/* 主内容区 - 添加 ref 用于滑动检测 */}
       <main ref={mainContentRef} className="flex-1 min-w-0 flex flex-col min-h-screen pb-24 overflow-x-hidden">

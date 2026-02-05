@@ -12,7 +12,7 @@ import DriveDetailPage from '@/pages/DriveDetail';
 import SettingsPage from '@/pages/Settings';
 
 function App() {
-  const { theme, baseUrl } = useSettingsStore();
+  const { theme, baseUrl, backgroundImage, fetchBackgroundImage } = useSettingsStore();
   const [showSetup, setShowSetup] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
@@ -30,6 +30,13 @@ function App() {
     document.documentElement.style.setProperty('--theme-bg', colors.bg);
     document.body.style.backgroundColor = colors.bg;
   }, [theme]);
+
+  // 初始化时加载背景图片
+  useEffect(() => {
+    if (baseUrl) {
+      fetchBackgroundImage();
+    }
+  }, [baseUrl, fetchBackgroundImage]);
 
   // Check if setup is needed on mount
   useEffect(() => {
@@ -68,22 +75,45 @@ function App() {
     return null; // Wait for initialization
   }
 
+  // 背景图片样式
+  const backgroundStyle: React.CSSProperties = backgroundImage ? {
+    backgroundImage: `url(${backgroundImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+  } : {};
+
   return (
-    <div className={`min-h-screen bg-${theme}-bg text-${theme}-text`}>
-      {showSetup && <SetupModal onComplete={handleSetupComplete} />}
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="charges" element={<ChargeListPage />} />
-            <Route path="charges/:id" element={<ChargeDetailPage />} />
-            <Route path="drives" element={<DriveListPage />} />
-            <Route path="drives/:id" element={<DriveDetailPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+    <div 
+      className={`min-h-screen bg-${theme}-bg text-${theme}-text`}
+      style={backgroundStyle}
+    >
+      {/* 如果有背景图片，添加一个半透明遮罩层以保证文字可读性 */}
+      {backgroundImage && (
+        <div 
+          className="fixed inset-0 pointer-events-none"
+          style={{ 
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 0 
+          }} 
+        />
+      )}
+      <div className="relative z-10">
+        {showSetup && <SetupModal onComplete={handleSetupComplete} />}
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<HomePage />} />
+              <Route path="charges" element={<ChargeListPage />} />
+              <Route path="charges/:id" element={<ChargeDetailPage />} />
+              <Route path="drives" element={<DriveListPage />} />
+              <Route path="drives/:id" element={<DriveDetailPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </div>
     </div>
   );
 }

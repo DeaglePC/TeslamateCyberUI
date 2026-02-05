@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { settingsApi } from '@/services/api';
+import { settingsApi, backgroundApi } from '@/services/api';
 
 export type ThemeType = 'cyber' | 'tesla' | 'dark' | 'tech' | 'aurora';
 export type UnitType = 'metric' | 'imperial';
@@ -16,6 +16,8 @@ interface SettingsState {
   baseUrl: string;
   apiKey: string;
   mapType: MapType;
+  backgroundImage: string;  // Base64 格式的背景图片
+  backgroundLoaded: boolean; // 标记背景图片是否已加载
   setTheme: (theme: ThemeType) => void;
   setUnit: (unit: UnitType) => void;
   setLanguage: (language: LanguageType) => void;
@@ -24,7 +26,11 @@ interface SettingsState {
   setBaseUrl: (url: string) => void;
   setApiKey: (key: string) => void;
   setMapType: (mapType: MapType) => void;
+  setBackgroundImage: (image: string) => void;
+  uploadBackgroundImage: (image: string) => Promise<void>;
+  deleteBackgroundImage: () => Promise<void>;
   fetchRemoteSettings: () => Promise<void>;
+  fetchBackgroundImage: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -38,6 +44,8 @@ export const useSettingsStore = create<SettingsState>()(
       baseUrl: '',
       apiKey: '',
       mapType: 'openstreet',  // 默认使用开源地图，无需配置
+      backgroundImage: '',
+      backgroundLoaded: false,
       setTheme: (theme) => {
         set({ theme });
         settingsApi.update('theme', theme).catch(() => { });
@@ -61,6 +69,27 @@ export const useSettingsStore = create<SettingsState>()(
         set({ mapType });
         settingsApi.update('mapType', mapType).catch(() => { });
       },
+      setBackgroundImage: (image) => set({ backgroundImage: image }),
+      uploadBackgroundImage: async (image) => {
+        await backgroundApi.upload(image);
+        set({ backgroundImage: image });
+      },
+      deleteBackgroundImage: async () => {
+        await backgroundApi.delete();
+        set({ backgroundImage: '' });
+      },
+      fetchBackgroundImage: async () => {
+        try {
+          const state = get();
+          if (!state.baseUrl) return;
+          
+          const image = await backgroundApi.get();
+          set({ backgroundImage: image, backgroundLoaded: true });
+        } catch (e) {
+          console.error("Failed to fetch background image", e);
+          set({ backgroundLoaded: true });
+        }
+      },
       fetchRemoteSettings: async () => {
         try {
           // Only fetch if base URL is set
@@ -75,6 +104,9 @@ export const useSettingsStore = create<SettingsState>()(
             amapKey: settings.amapKey || prev.amapKey,
             mapType: (settings.mapType as MapType) || prev.mapType,
           }));
+          
+          // 同时获取背景图片
+          get().fetchBackgroundImage();
         } catch (e) {
           console.error("Failed to fetch remote settings", e);
         }
@@ -82,6 +114,18 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'cyberui-settings',
+      // 不持久化背景图片到 localStorage（太大）
+      partialize: (state) => ({
+        theme: state.theme,
+        unit: state.unit,
+        language: state.language,
+        selectedCarId: state.selectedCarId,
+        amapKey: state.amapKey,
+        baseUrl: state.baseUrl,
+        apiKey: state.apiKey,
+        mapType: state.mapType,
+        // backgroundImage 不保存到 localStorage
+      }),
       onRehydrateStorage: () => (state) => {
         // Fetch remote settings on hydration if possible
         if (state?.baseUrl) {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSettingsStore, type ThemeType, type UnitType, type LanguageType, type MapType } from '@/store/settings';
 import { Card } from '@/components/Card';
 import { useTranslation } from '@/utils/i18n';
@@ -6,10 +6,18 @@ import { getThemeColors, themeConfigs } from '@/utils/theme';
 import clsx from 'clsx';
 
 export default function SettingsPage() {
-  const { theme, setTheme, unit, setUnit, language, setLanguage, amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey, mapType, setMapType } = useSettingsStore();
+  const { 
+    theme, setTheme, unit, setUnit, language, setLanguage, 
+    amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey, 
+    mapType, setMapType,
+    backgroundImage, uploadBackgroundImage, deleteBackgroundImage 
+  } = useSettingsStore();
   const { t } = useTranslation(language);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const colors = getThemeColors(theme);
 
@@ -69,6 +77,68 @@ export default function SettingsPage() {
     { id: 'zh', name: t('chinese') },
     { id: 'en', name: t('english') },
   ];
+
+  // 处理背景图片上传
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+      setUploadError(language === 'zh' ? '请选择图片文件' : 'Please select an image file');
+      return;
+    }
+
+    // 验证文件大小（5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError(language === 'zh' ? '图片大小不能超过 5MB' : 'Image size cannot exceed 5MB');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      // 读取文件为 Base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+        try {
+          await uploadBackgroundImage(base64);
+          setUploadError(null);
+        } catch (err) {
+          setUploadError(language === 'zh' ? '上传失败，请重试' : 'Upload failed, please try again');
+          console.error('Upload error:', err);
+        } finally {
+          setUploading(false);
+        }
+      };
+      reader.onerror = () => {
+        setUploadError(language === 'zh' ? '读取文件失败' : 'Failed to read file');
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setUploadError(language === 'zh' ? '处理图片失败' : 'Failed to process image');
+      setUploading(false);
+    }
+
+    // 清空 input 以便再次选择同一文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // 删除背景图片
+  const handleDeleteBackground = async () => {
+    try {
+      await deleteBackgroundImage();
+      setUploadError(null);
+    } catch (err) {
+      setUploadError(language === 'zh' ? '删除失败' : 'Delete failed');
+      console.error('Delete error:', err);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-slideUp max-w-2xl mx-auto">
@@ -160,6 +230,109 @@ export default function SettingsPage() {
             );
           })}
         </div>
+      </Card>
+
+      {/* Background Image Settings */}
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          <h3 className="font-semibold" style={{ color: colors.primary }}>
+            {language === 'zh' ? '背景图片' : 'Background Image'}
+          </h3>
+        </div>
+
+        {/* 当前背景预览 */}
+        {backgroundImage && (
+          <div className="mb-4 relative">
+            <div 
+              className="w-full h-32 rounded-lg bg-cover bg-center border"
+              style={{ 
+                backgroundImage: `url(${backgroundImage})`,
+                borderColor: colors.border 
+              }}
+            />
+            <button
+              onClick={handleDeleteBackground}
+              className="absolute top-2 right-2 p-2 rounded-full bg-black/50 hover:bg-red-500/80 transition-colors"
+              title={language === 'zh' ? '删除背景' : 'Delete background'}
+            >
+              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* 上传区域 */}
+        <div 
+          className={clsx(
+            'border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer',
+            uploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-opacity-100'
+          )}
+          style={{ borderColor: `${colors.primary}50` }}
+          onClick={() => !uploading && fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+            disabled={uploading}
+          />
+          
+          {uploading ? (
+            <div className="flex flex-col items-center gap-2">
+              <svg className="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+                <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+              </svg>
+              <span style={{ color: colors.muted }}>
+                {language === 'zh' ? '上传中...' : 'Uploading...'}
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span style={{ color: colors.muted }}>
+                {language === 'zh' 
+                  ? (backgroundImage ? '点击更换背景图片' : '点击上传背景图片')
+                  : (backgroundImage ? 'Click to change background' : 'Click to upload background')}
+              </span>
+              <span className="text-xs" style={{ color: colors.muted }}>
+                {language === 'zh' ? '支持 JPG、PNG、WebP，最大 5MB' : 'Supports JPG, PNG, WebP, max 5MB'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* 错误提示 */}
+        {uploadError && (
+          <div 
+            className="mt-3 p-2 rounded-lg text-sm"
+            style={{ backgroundColor: 'rgba(255,0,0,0.1)', color: '#ff6b6b' }}
+          >
+            {uploadError}
+          </div>
+        )}
+
+        {/* 说明 */}
+        <p className="text-xs mt-3" style={{ color: colors.muted }}>
+          {language === 'zh' 
+            ? '背景图片会保存到服务端，所有设备同步显示。建议使用深色图片以获得更好的视觉效果。'
+            : 'Background image is saved on server and synced across devices. Dark images work best.'}
+        </p>
       </Card>
 
       {/* Language Settings */}
