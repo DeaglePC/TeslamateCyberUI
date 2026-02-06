@@ -120,9 +120,10 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
                         onClick={() => handlePresetClick(p.id)}
                         className="px-3 py-1.5 text-sm rounded-lg transition-all"
                         style={{
-                            background: preset === p.id ? `${colors.primary}30` : 'transparent',
+                            background: `linear-gradient(135deg, var(--card-bg-start) 0%, var(--card-bg-mid) 50%, var(--card-bg-end) 100%)`,
                             color: preset === p.id ? colors.primary : colors.muted,
-                            border: `1px solid ${preset === p.id ? colors.primary : colors.border}`,
+                            border: `1px solid ${preset === p.id ? colors.primary : 'rgba(255, 255, 255, 0.08)'}`,
+                            boxShadow: preset === p.id ? `0 0 0 1px ${colors.primary}40` : '0 8px 32px rgba(0, 0, 0, 0.2)',
                         }}
                     >
                         {p.label[language]}

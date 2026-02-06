@@ -462,7 +462,6 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
                                 style={{
                                     top: filterPos.top,
                                     right: filterPos.right,
-                                    background: 'rgba(20, 20, 30, 0.95)'
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                             >

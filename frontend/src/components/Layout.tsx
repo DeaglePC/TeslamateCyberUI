@@ -51,7 +51,7 @@ function SettingsIcon({ className }: { className?: string }) {
 const SWIPE_TABS = ['/', '/charges', '/drives', '/settings'];
 
 export default function Layout() {
-  const { theme, language, backgroundImage, cardOpacity } = useSettingsStore();
+  const { theme, language, backgroundImage, cardOpacity, cardBlur } = useSettingsStore();
   const { t } = useTranslation(language);
   const location = useLocation();
   const navigate = useNavigate();
@@ -66,19 +66,24 @@ export default function Layout() {
   useEffect(() => {
     // cardOpacity: 0 = 全透明, 100 = 完全不透明
     const alpha = cardOpacity / 100;
+    // 当开启模糊时，保留少量透明度确保毛玻璃可见
+    const blurVisibleAlpha = cardBlur > 0 ? Math.min(alpha, 0.92) : alpha;
     
     document.documentElement.style.setProperty('--card-opacity', String(alpha));
+    document.documentElement.style.setProperty('--card-blur', `${cardBlur}px`);
     
-    // 背景色：使用 alpha 直接控制透明度
-    document.documentElement.style.setProperty('--card-bg-start', `rgba(30, 30, 50, ${alpha})`);
-    document.documentElement.style.setProperty('--card-bg-mid', `rgba(20, 20, 35, ${alpha * 0.85})`);
-    document.documentElement.style.setProperty('--card-bg-end', `rgba(25, 25, 45, ${alpha * 0.93})`);
+    // 背景色：使用 blurVisibleAlpha 直接控制透明度
+    // 使用统一的颜色基础 (30, 30, 50) 确保视觉一致性
+    document.documentElement.style.setProperty('--card-bg-start', `rgba(30, 30, 50, ${blurVisibleAlpha})`);
+    document.documentElement.style.setProperty('--card-bg-mid', `rgba(20, 20, 35, ${blurVisibleAlpha * 0.85})`);
+    document.documentElement.style.setProperty('--card-bg-end', `rgba(25, 25, 45, ${blurVisibleAlpha * 0.93})`);
     
-    // glass-strong 使用相同逻辑
-    document.documentElement.style.setProperty('--card-strong-bg-start', `rgba(35, 35, 60, ${alpha})`);
-    document.documentElement.style.setProperty('--card-strong-bg-mid', `rgba(25, 25, 45, ${alpha * 0.94})`);
-    document.documentElement.style.setProperty('--card-strong-bg-end', `rgba(30, 30, 55, ${alpha * 0.96})`);
-  }, [cardOpacity]);
+    // glass-strong 使用相同的颜色基础，只是透明度稍高
+    const strongAlpha = Math.min(blurVisibleAlpha * 1.15, 0.98);
+    document.documentElement.style.setProperty('--card-strong-bg-start', `rgba(30, 30, 50, ${strongAlpha})`);
+    document.documentElement.style.setProperty('--card-strong-bg-mid', `rgba(20, 20, 35, ${strongAlpha * 0.9})`);
+    document.documentElement.style.setProperty('--card-strong-bg-end', `rgba(25, 25, 45, ${strongAlpha * 0.95})`);
+  }, [cardOpacity, cardBlur]);
 
 
 

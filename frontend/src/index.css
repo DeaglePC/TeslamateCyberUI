@@ -24,9 +24,10 @@
   --card-bg-start: rgba(30, 30, 50, 0.7);
   --card-bg-mid: rgba(20, 20, 35, 0.595);
   --card-bg-end: rgba(25, 25, 45, 0.651);
-  --card-strong-bg-start: rgba(35, 35, 60, 0.7);
-  --card-strong-bg-mid: rgba(25, 25, 45, 0.658);
-  --card-strong-bg-end: rgba(30, 30, 55, 0.672);
+  /* glass-strong 使用相同颜色基础，透明度稍高 */
+  --card-strong-bg-start: rgba(30, 30, 50, 0.805);
+  --card-strong-bg-mid: rgba(20, 20, 35, 0.725);
+  --card-strong-bg-end: rgba(25, 25, 45, 0.765);
 }
 
 * {

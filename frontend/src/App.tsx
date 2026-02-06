@@ -15,6 +15,7 @@ function App() {
   const { theme, baseUrl, backgroundImage, fetchBackgroundImage } = useSettingsStore();
   const [showSetup, setShowSetup] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // 更新主题颜色：影响浏览器地址栏、iOS 安全区域等
   useEffect(() => {
@@ -60,6 +61,19 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Detect mobile to avoid background-attachment: fixed (breaks backdrop-filter on some browsers)
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+
+    setIsMobile(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
   // Also check when baseUrl changes
   useEffect(() => {
     if (initialized && !baseUrl) {
@@ -75,12 +89,12 @@ function App() {
     return null; // Wait for initialization
   }
 
-  // 背景图片样式
+  // 背景图片样式（使用渐变叠加代替遮罩层，避免阻断毛玻璃）
   const backgroundStyle: React.CSSProperties = backgroundImage ? {
-    backgroundImage: `url(${backgroundImage})`,
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(${backgroundImage})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
+    backgroundAttachment: isMobile ? 'scroll' : 'fixed',
   } : {};
 
   return (
@@ -88,16 +102,6 @@ function App() {
       className={`min-h-screen bg-${theme}-bg text-${theme}-text`}
       style={backgroundStyle}
     >
-      {/* 如果有背景图片，添加一个半透明遮罩层以保证文字可读性 */}
-      {backgroundImage && (
-        <div 
-          className="fixed inset-0 pointer-events-none"
-          style={{ 
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 0 
-          }} 
-        />
-      )}
       <div className="relative z-10">
         {showSetup && <SetupModal onComplete={handleSetupComplete} />}
         <BrowserRouter>
