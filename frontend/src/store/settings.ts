@@ -19,6 +19,7 @@ interface SettingsState {
   backgroundImage: string;  // Base64 格式的背景图片
   backgroundLoaded: boolean; // 标记背景图片是否已加载
   cardOpacity: number;  // 卡片透明度 (0-100)
+  cardBlur: number;     // 卡片模糊度 (0-30px)
   setTheme: (theme: ThemeType) => void;
   setUnit: (unit: UnitType) => void;
   setLanguage: (language: LanguageType) => void;
@@ -29,6 +30,7 @@ interface SettingsState {
   setMapType: (mapType: MapType) => void;
   setBackgroundImage: (image: string) => void;
   setCardOpacity: (opacity: number) => void;
+  setCardBlur: (blur: number) => void;
   uploadBackgroundImage: (image: string) => Promise<void>;
   deleteBackgroundImage: () => Promise<void>;
   fetchRemoteSettings: () => Promise<void>;
@@ -49,6 +51,7 @@ export const useSettingsStore = create<SettingsState>()(
       backgroundImage: '',
       backgroundLoaded: false,
       cardOpacity: 70,  // 默认透明度 70%
+      cardBlur: 16,     // 默认模糊度 16px
       setTheme: (theme) => {
         set({ theme });
         settingsApi.update('theme', theme).catch(() => { });
@@ -76,6 +79,10 @@ export const useSettingsStore = create<SettingsState>()(
       setCardOpacity: (opacity) => {
         set({ cardOpacity: opacity });
         settingsApi.update('cardOpacity', String(opacity)).catch(() => { });
+      },
+      setCardBlur: (blur) => {
+        set({ cardBlur: blur });
+        settingsApi.update('cardBlur', String(blur)).catch(() => { });
       },
       uploadBackgroundImage: async (image) => {
         await backgroundApi.upload(image);
@@ -111,6 +118,7 @@ export const useSettingsStore = create<SettingsState>()(
             amapKey: settings.amapKey || prev.amapKey,
             mapType: (settings.mapType as MapType) || prev.mapType,
             cardOpacity: settings.cardOpacity ? parseInt(settings.cardOpacity) : prev.cardOpacity,
+            cardBlur: settings.cardBlur ? parseInt(settings.cardBlur) : prev.cardBlur,
           }));
           
           // 同时获取背景图片
@@ -133,6 +141,7 @@ export const useSettingsStore = create<SettingsState>()(
         apiKey: state.apiKey,
         mapType: state.mapType,
         cardOpacity: state.cardOpacity,
+        cardBlur: state.cardBlur,
         // backgroundImage 不保存到 localStorage
       }),
       onRehydrateStorage: () => (state) => {
