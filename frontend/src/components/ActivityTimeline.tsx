@@ -97,15 +97,36 @@ function Tooltip({
         return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
     };
 
+    // 计算安全的位置，避免超出屏幕边缘
+    const tooltipWidth = 180; // 估算的 tooltip 宽度
+    const padding = 12; // 距离屏幕边缘的最小间距
+    const screenWidth = window.innerWidth;
+    
+    // 计算水平位置
+    let left = position.x;
+    let translateX = '-50%';
+    
+    // 检查左边界
+    if (position.x - tooltipWidth / 2 < padding) {
+        left = padding;
+        translateX = '0%';
+    }
+    // 检查右边界
+    else if (position.x + tooltipWidth / 2 > screenWidth - padding) {
+        left = screenWidth - padding;
+        translateX = '-100%';
+    }
+
     return createPortal(
         <div
             style={{
                 position: 'fixed',
-                left: position.x,
+                left: left,
                 top: position.y - 10,
-                transform: 'translate(-50%, -100%)',
+                transform: `translateX(${translateX}) translateY(-100%)`,
                 zIndex: 99999,
                 minWidth: '160px',
+                maxWidth: `calc(100vw - ${padding * 2}px)`,
                 padding: '12px',
                 borderRadius: '8px',
                 background: 'linear-gradient(145deg, rgba(35, 35, 60, 0.95), rgba(25, 25, 45, 0.95))',

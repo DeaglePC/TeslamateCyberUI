@@ -128,6 +128,14 @@ export default function Layout() {
 
   // Touch event handlers
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    // 检查是否在地图或可滚动元素内触摸，如果是则不触发滑动切换
+    const target = e.target as HTMLElement;
+    const isInMap = target.closest('.leaflet-container') || target.closest('[data-no-swipe]');
+    if (isInMap) {
+      touchStartRef.current = null;
+      return;
+    }
+    
     const touch = e.touches[0];
     touchStartRef.current = {
       x: touch.clientX,
