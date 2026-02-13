@@ -57,7 +57,7 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const colors = getThemeColors(theme);
-  const isDarkTheme = ['dark', 'cyber', 'tesla', 'aurora', 'tech'].includes(theme);
+  const isDarkTheme = ['dark', 'cyber', 'tesla', 'aurora', 'tech', 'auto'].includes(theme);
   
   // 如果有背景图片，Layout 使用透明背景
   const hasBackground = !!backgroundImage;

@@ -71,6 +71,11 @@ const translations = {
     amapApiKey: { zh: '高德地图 API Key', en: 'AMap API Key' },
     getApiKey: { zh: '获取 API Key', en: 'Get API Key' },
     amapKeyPlaceholder: { zh: '请输入高德地图 API Key', en: 'Enter AMap API Key' },
+    autoThemeFromBg: { zh: '自动主题色', en: 'Auto Theme Color' },
+    autoThemeFromBgDesc: { zh: '根据背景图片自动计算主题色', en: 'Auto-generate theme color from background image' },
+    autoThemeNoBg: { zh: '需要先上传背景图片', en: 'Upload a background image first' },
+    autoThemeExtracting: { zh: '正在分析图片颜色...', en: 'Analyzing image colors...' },
+    autoThemeActive: { zh: '自动主题', en: 'Auto' },
 
     // Drive list
     driveRecords: { zh: '行驶记录', en: 'Drive Records' },

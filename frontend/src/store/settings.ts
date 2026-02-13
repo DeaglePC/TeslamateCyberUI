@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { settingsApi, backgroundApi } from '@/services/api';
 
-export type ThemeType = 'cyber' | 'tesla' | 'dark' | 'tech' | 'aurora';
+export type ThemeType = 'cyber' | 'tesla' | 'dark' | 'tech' | 'aurora' | 'auto';
 export type UnitType = 'metric' | 'imperial';
 export type LanguageType = 'zh' | 'en';
 export type MapType = 'amap' | 'openstreet';
@@ -20,6 +20,8 @@ interface SettingsState {
   backgroundLoaded: boolean; // 标记背景图片是否已加载
   cardOpacity: number;  // 卡片透明度 (0-100)
   cardBlur: number;     // 卡片模糊度 (0-30px)
+  autoThemeFromBg: boolean; // 是否根据背景图片自动计算主题色
+  autoThemePrimaryColor: string; // 自动计算出的主题主色
   setTheme: (theme: ThemeType) => void;
   setUnit: (unit: UnitType) => void;
   setLanguage: (language: LanguageType) => void;
@@ -31,6 +33,8 @@ interface SettingsState {
   setBackgroundImage: (image: string) => void;
   setCardOpacity: (opacity: number) => void;
   setCardBlur: (blur: number) => void;
+  setAutoThemeFromBg: (enabled: boolean) => void;
+  setAutoThemePrimaryColor: (color: string) => void;
   uploadBackgroundImage: (image: string) => Promise<void>;
   deleteBackgroundImage: () => Promise<void>;
   fetchRemoteSettings: () => Promise<void>;
@@ -52,6 +56,8 @@ export const useSettingsStore = create<SettingsState>()(
       backgroundLoaded: false,
       cardOpacity: 70,  // 默认透明度 70%
       cardBlur: 16,     // 默认模糊度 16px
+      autoThemeFromBg: false,
+      autoThemePrimaryColor: '',
       setTheme: (theme) => {
         set({ theme });
         settingsApi.update('theme', theme).catch(() => { });
@@ -83,6 +89,17 @@ export const useSettingsStore = create<SettingsState>()(
       setCardBlur: (blur) => {
         set({ cardBlur: blur });
         settingsApi.update('cardBlur', String(blur)).catch(() => { });
+      },
+      setAutoThemeFromBg: (enabled) => {
+        set({ autoThemeFromBg: enabled });
+        if (enabled) {
+          set({ theme: 'auto' });
+          settingsApi.update('theme', 'auto').catch(() => { });
+        }
+        settingsApi.update('autoThemeFromBg', String(enabled)).catch(() => { });
+      },
+      setAutoThemePrimaryColor: (color) => {
+        set({ autoThemePrimaryColor: color });
       },
       uploadBackgroundImage: async (image) => {
         await backgroundApi.upload(image);
@@ -119,6 +136,7 @@ export const useSettingsStore = create<SettingsState>()(
             mapType: (settings.mapType as MapType) || prev.mapType,
             cardOpacity: settings.cardOpacity ? parseInt(settings.cardOpacity) : prev.cardOpacity,
             cardBlur: settings.cardBlur ? parseInt(settings.cardBlur) : prev.cardBlur,
+            autoThemeFromBg: settings.autoThemeFromBg === 'true' ? true : settings.autoThemeFromBg === 'false' ? false : prev.autoThemeFromBg,
           }));
           
           // 同时获取背景图片
@@ -142,7 +160,9 @@ export const useSettingsStore = create<SettingsState>()(
         mapType: state.mapType,
         cardOpacity: state.cardOpacity,
         cardBlur: state.cardBlur,
+        autoThemeFromBg: state.autoThemeFromBg,
         // backgroundImage 不保存到 localStorage
+        // autoThemePrimaryColor 不保存到 localStorage（从图片动态计算）
       }),
       onRehydrateStorage: () => (state) => {
         // Fetch remote settings on hydration if possible

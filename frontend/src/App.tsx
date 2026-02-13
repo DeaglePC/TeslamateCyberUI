@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useSettingsStore } from '@/store/settings';
-import { getThemeColors } from '@/utils/theme';
+import { getThemeColors, setAutoThemeColor } from '@/utils/theme';
+import { extractDominantColor } from '@/utils/colorExtractor';
 import Layout from '@/components/Layout';
 import SetupModal from '@/components/SetupModal';
 import HomePage from '@/pages/Home';
@@ -12,7 +13,7 @@ import DriveDetailPage from '@/pages/DriveDetail';
 import SettingsPage from '@/pages/Settings';
 
 function App() {
-  const { theme, baseUrl, backgroundImage, fetchBackgroundImage } = useSettingsStore();
+  const { theme, baseUrl, backgroundImage, fetchBackgroundImage, autoThemeFromBg, setAutoThemePrimaryColor, autoThemePrimaryColor } = useSettingsStore();
   const [showSetup, setShowSetup] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -30,7 +31,7 @@ function App() {
     // 更新 CSS 变量，让 body 背景色与主题一致
     document.documentElement.style.setProperty('--theme-bg', colors.bg);
     document.body.style.backgroundColor = colors.bg;
-  }, [theme]);
+  }, [theme, autoThemePrimaryColor]);
 
   // 初始化时加载背景图片
   useEffect(() => {
@@ -38,6 +39,25 @@ function App() {
       fetchBackgroundImage();
     }
   }, [baseUrl, fetchBackgroundImage]);
+
+  // 自动主题色：当背景图加载完成且开启了自动主题时，提取颜色
+  useEffect(() => {
+    if (autoThemeFromBg && backgroundImage) {
+      // 如果已有缓存的主色，先恢复
+      if (autoThemePrimaryColor) {
+        setAutoThemeColor(autoThemePrimaryColor);
+      }
+      // 然后异步提取（可能会更新）
+      extractDominantColor(backgroundImage)
+        .then((primaryColor) => {
+          setAutoThemePrimaryColor(primaryColor);
+          setAutoThemeColor(primaryColor);
+        })
+        .catch((err) => {
+          console.error('Failed to extract theme color from background:', err);
+        });
+    }
+  }, [backgroundImage, autoThemeFromBg]);
 
   // Check if setup is needed on mount
   useEffect(() => {

@@ -1,4 +1,5 @@
 import type { ThemeType } from '@/store/settings';
+import { generateThemeFromColor } from '@/utils/colorExtractor';
 
 // Complete theme color definitions
 export interface ThemeColors {
@@ -32,7 +33,14 @@ export interface ThemeColors {
     chart: string[];
 }
 
-export const themeConfigs: Record<ThemeType, ThemeColors> = {
+// 缓存自动生成的主题色
+let cachedAutoTheme: ThemeColors | null = null;
+let cachedAutoThemePrimary: string = '';
+
+// 预定义主题类型（不包含 auto）
+type PresetThemeType = Exclude<ThemeType, 'auto'>;
+
+export const themeConfigs: Record<PresetThemeType, ThemeColors> = {
     // 1. Cyberpunk: High contrast, neon lights. Cyan primary.
     cyber: {
         primary: '#00f0ff',   // Cyan
@@ -149,7 +157,32 @@ export const themeConfigs: Record<ThemeType, ThemeColors> = {
     },
 };
 
+// 设置自动主题色（从背景图提取的主色）
+export function setAutoThemeColor(primaryHex: string): ThemeColors {
+    if (primaryHex === cachedAutoThemePrimary && cachedAutoTheme) {
+        return cachedAutoTheme;
+    }
+    const generated = generateThemeFromColor(primaryHex);
+    cachedAutoTheme = generated as ThemeColors;
+    cachedAutoThemePrimary = primaryHex;
+    return cachedAutoTheme;
+}
+
+// 获取自动主题的缓存
+export function getAutoThemeColors(): ThemeColors | null {
+    return cachedAutoTheme;
+}
+
+// 清除自动主题缓存
+export function clearAutoThemeCache(): void {
+    cachedAutoTheme = null;
+    cachedAutoThemePrimary = '';
+}
+
 // Helper hook to get current theme colors
 export function getThemeColors(theme: ThemeType): ThemeColors {
-    return themeConfigs[theme] || themeConfigs.cyber;
+    if (theme === 'auto' && cachedAutoTheme) {
+        return cachedAutoTheme;
+    }
+    return themeConfigs[theme as PresetThemeType] || themeConfigs.cyber;
 }

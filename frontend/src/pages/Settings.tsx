@@ -1,9 +1,185 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSettingsStore, type ThemeType, type UnitType, type LanguageType } from '@/store/settings';
 import { Card } from '@/components/Card';
 import { useTranslation } from '@/utils/i18n';
-import { getThemeColors, themeConfigs } from '@/utils/theme';
+import { getThemeColors, themeConfigs, setAutoThemeColor } from '@/utils/theme';
+import { extractDominantColor, generateThemeFromColor } from '@/utils/colorExtractor';
+import type { ThemeColors } from '@/utils/theme';
 import clsx from 'clsx';
+
+// 自动主题色全部颜色预览组件
+function AutoThemeColorPreview({
+  primaryColor,
+  language,
+  themeColors,
+}: {
+  primaryColor: string;
+  language: LanguageType;
+  themeColors: ThemeColors;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const generated = generateThemeFromColor(primaryColor);
+
+  const baseColors: { label: Record<LanguageType, string>; color: string }[] = [
+    { label: { zh: '主色', en: 'Primary' }, color: generated.primary },
+    { label: { zh: '辅色', en: 'Accent' }, color: generated.accent },
+    { label: { zh: '柔和', en: 'Muted' }, color: generated.muted },
+    { label: { zh: '成功', en: 'Success' }, color: generated.success },
+    { label: { zh: '警告', en: 'Warning' }, color: generated.warning },
+    { label: { zh: '危险', en: 'Danger' }, color: generated.danger },
+    { label: { zh: '背景', en: 'BG' }, color: generated.bg },
+  ];
+
+  const timelineColors: { label: Record<LanguageType, string>; color: string }[] = [
+    { label: { zh: '行驶', en: 'Drive' }, color: generated.timeline.driving },
+    { label: { zh: '充电', en: 'Charge' }, color: generated.timeline.charging },
+    { label: { zh: '在线', en: 'Online' }, color: generated.timeline.online },
+    { label: { zh: '更新', en: 'Update' }, color: generated.timeline.updating },
+    { label: { zh: '离线', en: 'Offline' }, color: generated.timeline.offline },
+  ];
+
+  const getHex = (color: string) => color.startsWith('#') ? color.toUpperCase() : '';
+
+  return (
+    <div className="mt-3">
+      {/* 折叠标题栏：色块摘要 + 展开/收起 */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between group"
+      >
+        <div className="flex items-center gap-2">
+          {/* 主色+辅色小色块摘要 */}
+          <div
+            className="w-5 h-5 rounded"
+            style={{ backgroundColor: generated.primary, boxShadow: `0 0 6px ${generated.primary}50` }}
+          />
+          <div
+            className="w-5 h-5 rounded"
+            style={{ backgroundColor: generated.accent, boxShadow: `0 0 6px ${generated.accent}50` }}
+          />
+          <span className="text-xs font-mono" style={{ color: themeColors.primary }}>
+            {generated.primary.toUpperCase()}
+          </span>
+          <span className="text-xs" style={{ color: themeColors.muted }}>
+            {language === 'zh' ? '从背景图提取' : 'Extracted from BG'}
+          </span>
+        </div>
+        <svg
+          className="w-4 h-4 transition-transform duration-300"
+          style={{
+            color: themeColors.muted,
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {/* 可折叠内容 */}
+      <div
+        className="overflow-hidden transition-all duration-300"
+        style={{
+          maxHeight: expanded ? '500px' : '0px',
+          opacity: expanded ? 1 : 0,
+        }}
+      >
+        <div className="pt-3 space-y-3">
+          {/* 基础色 */}
+          <div>
+            <p className="text-xs font-medium mb-2" style={{ color: themeColors.muted }}>
+              {language === 'zh' ? '基础配色' : 'Base Colors'}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {baseColors.map((entry) => (
+                <div key={entry.label.en} className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-8 h-8 rounded-md border shadow-sm"
+                    style={{
+                      backgroundColor: entry.color,
+                      borderColor: 'rgba(255,255,255,0.15)',
+                      boxShadow: `0 0 6px ${entry.color}40`,
+                    }}
+                  />
+                  <span className="text-[11px] leading-tight" style={{ color: themeColors.muted }}>
+                    {entry.label[language]}
+                  </span>
+                  {getHex(entry.color) && (
+                    <span className="text-[9px] font-mono leading-tight" style={{ color: `${themeColors.primary}80` }}>
+                      {getHex(entry.color)}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 时间线色 */}
+          <div>
+            <p className="text-xs font-medium mb-2" style={{ color: themeColors.muted }}>
+              {language === 'zh' ? '时间线配色' : 'Timeline Colors'}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {timelineColors.map((entry) => (
+                <div key={entry.label.en} className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-8 h-8 rounded-md border shadow-sm"
+                    style={{
+                      backgroundColor: entry.color,
+                      borderColor: 'rgba(255,255,255,0.15)',
+                      boxShadow: `0 0 6px ${entry.color}40`,
+                    }}
+                  />
+                  <span className="text-[11px] leading-tight" style={{ color: themeColors.muted }}>
+                    {entry.label[language]}
+                  </span>
+                  {getHex(entry.color) && (
+                    <span className="text-[9px] font-mono leading-tight" style={{ color: `${themeColors.primary}80` }}>
+                      {getHex(entry.color)}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 图表色 */}
+          <div>
+            <p className="text-xs font-medium mb-2" style={{ color: themeColors.muted }}>
+              {language === 'zh' ? '图表配色' : 'Chart Colors'}
+            </p>
+            <div className="flex gap-1.5">
+              {generated.chart.map((color, idx) => (
+                <div
+                  key={idx}
+                  className="flex-1 h-5 rounded-sm first:rounded-l-md last:rounded-r-md"
+                  style={{ backgroundColor: color, boxShadow: `0 0 4px ${color}40` }}
+                  title={color.toUpperCase()}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 渐变预览 */}
+          <div>
+            <p className="text-xs font-medium mb-2" style={{ color: themeColors.muted }}>
+              {language === 'zh' ? '渐变色' : 'Gradient'}
+            </p>
+            <div
+              className="h-4 rounded-md"
+              style={{
+                background: `linear-gradient(to right, ${generated.gradient[0]}, ${generated.gradient[1]})`,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { 
@@ -11,16 +187,46 @@ export default function SettingsPage() {
     amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey, 
     mapType, setMapType,
     backgroundImage, uploadBackgroundImage, deleteBackgroundImage,
-    cardOpacity, setCardOpacity
+    cardOpacity, setCardOpacity,
+    autoThemeFromBg, setAutoThemeFromBg, autoThemePrimaryColor, setAutoThemePrimaryColor
   } = useSettingsStore();
   const { t } = useTranslation(language);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [extractingColor, setExtractingColor] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const colors = getThemeColors(theme);
+
+  // 当背景图片变化且开启了自动主题时，重新提取颜色
+  useEffect(() => {
+    if (autoThemeFromBg && backgroundImage) {
+      setExtractingColor(true);
+      extractDominantColor(backgroundImage)
+        .then((primaryColor) => {
+          setAutoThemePrimaryColor(primaryColor);
+          setAutoThemeColor(primaryColor);
+          if (theme !== 'auto') {
+            setTheme('auto');
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to extract color:', err);
+        })
+        .finally(() => {
+          setExtractingColor(false);
+        });
+    }
+  }, [backgroundImage, autoThemeFromBg]);
+
+  // 初始化时如果已有自动主题色，恢复缓存
+  useEffect(() => {
+    if (autoThemeFromBg && autoThemePrimaryColor && theme === 'auto') {
+      setAutoThemeColor(autoThemePrimaryColor);
+    }
+  }, []);
 
   // 高德地图是否可用（需要配置 API Key）
   const isAmapAvailable = !!amapKey;
@@ -135,6 +341,11 @@ export default function SettingsPage() {
     try {
       await deleteBackgroundImage();
       setUploadError(null);
+      // 删除背景图后，自动关闭自动主题色并回退到 cyber 主题
+      if (autoThemeFromBg) {
+        setAutoThemeFromBg(false);
+        setTheme('cyber');
+      }
     } catch (err) {
       setUploadError(language === 'zh' ? '删除失败' : 'Delete failed');
       console.error('Delete error:', err);
@@ -162,7 +373,12 @@ export default function SettingsPage() {
             return (
               <div key={th.id} className="flex flex-col gap-2 group items-center">
                 <button
-                  onClick={() => setTheme(th.id)}
+                  onClick={() => {
+                    if (autoThemeFromBg && th.id !== 'auto') {
+                      setAutoThemeFromBg(false);
+                    }
+                    setTheme(th.id);
+                  }}
                   className={clsx(
                     'relative w-full aspect-[4/3] rounded-lg border-2 transition-all duration-300 overflow-hidden',
                     isActive ? 'scale-105 ring-2 ring-offset-2 ring-offset-black/50' : 'hover:scale-105 opacity-80 hover:opacity-100 hover:border-white/20'
@@ -230,6 +446,94 @@ export default function SettingsPage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Auto Theme from Background Image */}
+        <div className="mt-5 pt-4 border-t" style={{ borderColor: colors.border }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium" style={{ color: colors.primary }}>
+                  {t('autoThemeFromBg')}
+                </p>
+                <p className="text-xs" style={{ color: colors.muted }}>
+                  {t('autoThemeFromBgDesc')}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                if (!autoThemeFromBg && !backgroundImage) return;
+                setAutoThemeFromBg(!autoThemeFromBg);
+                if (!autoThemeFromBg && backgroundImage) {
+                  // 开启时立即提取颜色
+                  setExtractingColor(true);
+                  extractDominantColor(backgroundImage)
+                    .then((primaryColor) => {
+                      setAutoThemePrimaryColor(primaryColor);
+                      setAutoThemeColor(primaryColor);
+                    })
+                    .catch(console.error)
+                    .finally(() => setExtractingColor(false));
+                }
+              }}
+              className={clsx(
+                'relative w-12 h-6 rounded-full transition-all duration-300',
+                !backgroundImage && !autoThemeFromBg && 'opacity-40 cursor-not-allowed'
+              )}
+              style={{
+                backgroundColor: autoThemeFromBg ? colors.primary : 'rgba(255,255,255,0.15)',
+              }}
+              disabled={!backgroundImage && !autoThemeFromBg}
+            >
+              <div
+                className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300"
+                style={{
+                  transform: autoThemeFromBg ? 'translateX(26px)' : 'translateX(2px)',
+                }}
+              />
+            </button>
+          </div>
+
+          {/* 无背景图提示 */}
+          {!backgroundImage && !autoThemeFromBg && (
+            <p className="text-xs mt-2" style={{ color: colors.warning }}>
+              {t('autoThemeNoBg')}
+            </p>
+          )}
+
+          {/* 正在提取颜色 */}
+          {extractingColor && (
+            <div className="flex items-center gap-2 mt-2">
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+                <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+              </svg>
+              <span className="text-xs" style={{ color: colors.muted }}>
+                {t('autoThemeExtracting')}
+              </span>
+            </div>
+          )}
+
+          {/* 当前提取的全部颜色预览 */}
+          {autoThemeFromBg && autoThemePrimaryColor && !extractingColor && (
+            <AutoThemeColorPreview
+              primaryColor={autoThemePrimaryColor}
+              language={language}
+              themeColors={colors}
+            />
+          )}
         </div>
       </Card>
 

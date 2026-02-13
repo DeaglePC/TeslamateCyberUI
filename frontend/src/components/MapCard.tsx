@@ -30,14 +30,31 @@ export const MapCard = memo(function MapCard({ latitude, longitude, address, tim
         if (!hasLocation) return '';
         // Convert WGS84 to GCJ02 for AMap
         const [gcjLat, gcjLon] = wgsToGcj(latitude!, longitude!);
-        const locationName = address ? encodeURIComponent(address) : encodeURIComponent(language === 'zh' ? '当前位置' : 'Current Location');
+        const locationName = address ? encodeURIComponent(address) : encodeURIComponent('当前位置');
         // AMap web URL format
         return `https://uri.amap.com/marker?position=${gcjLon},${gcjLat}&name=${locationName}&coordinate=gaode&callnative=1`;
     };
 
-    const handleOpenAmap = (e: React.MouseEvent) => {
+    // Generate Google Maps navigation URL
+    // Note: In China, Google Maps uses GCJ-02 coordinates, so we need to convert
+    // Outside China, Google Maps uses WGS-84 directly
+    const getGoogleMapsUrl = () => {
+        if (!hasLocation) return '';
+        // If in China, convert to GCJ-02 for better accuracy on Google Maps China
+        if (isChina) {
+            const [gcjLat, gcjLon] = wgsToGcj(latitude!, longitude!);
+            return `https://www.google.com/maps/search/?api=1&query=${gcjLat},${gcjLon}`;
+        }
+        // Outside China, use raw WGS-84 coordinates
+        return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    };
+
+    // Determine which map service to use based on language
+    const useGoogleMaps = language === 'en';
+
+    const handleOpenMap = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const url = getAmapUrl();
+        const url = useGoogleMaps ? getGoogleMapsUrl() : getAmapUrl();
         if (url) {
             window.open(url, '_blank');
         }
@@ -64,16 +81,16 @@ export const MapCard = memo(function MapCard({ latitude, longitude, address, tim
                     </div>
                 )}
 
-                {/* Open in AMap Button - Only show when using AMap */}
-                {useAmap && hasLocation && (
+                {/* Open in Map App Button */}
+                {hasLocation && (
                     <button
-                        onClick={handleOpenAmap}
+                        onClick={handleOpenMap}
                         className="absolute top-3 right-3 z-[401] px-3 py-1.5 rounded-full glass-strong flex items-center gap-1.5 hover:scale-105 transition-transform cursor-pointer"
-                        style={{ 
+                        style={{
                             background: `${colors.primary}20`,
                             border: `1px solid ${colors.primary}40`
                         }}
-                        title={language === 'zh' ? '在高德地图中打开' : 'Open in AMap'}
+                        title={useGoogleMaps ? 'Open in Google Maps' : '在高德地图中打开'}
                     >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -81,7 +98,7 @@ export const MapCard = memo(function MapCard({ latitude, longitude, address, tim
                             <line x1="10" y1="14" x2="21" y2="3" />
                         </svg>
                         <span className="text-xs font-medium" style={{ color: colors.primary }}>
-                            {language === 'zh' ? '高德地图' : 'AMap'}
+                            {useGoogleMaps ? 'Google Maps' : '高德地图'}
                         </span>
                     </button>
                 )}
