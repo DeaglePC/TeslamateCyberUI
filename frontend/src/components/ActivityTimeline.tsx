@@ -191,11 +191,15 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
     const containerRef = useRef<HTMLDivElement>(null);
     const isFirstMount = useRef(true);
     const [currentPreset, setCurrentPreset] = useState<FilterPreset>('last24h');
+    const [customHours, setCustomHours] = useState<number>(6);
 
     // Get preset label for display
     const getPresetLabel = (preset: FilterPreset): string => {
         const labels: Record<FilterPreset, string> = {
             last24h: t('last24h'),
+            lastNHours: customHours > 0
+                ? (language === 'zh' ? `近${customHours}小时` : `Last ${customHours}h`)
+                : (language === 'zh' ? '近N小时' : 'Last N h'),
             week: t('lastWeek'),
             month: t('lastMonth'),
             quarter: t('lastQuarter'),
@@ -458,16 +462,18 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
                                 onClick={() => setShowFilter(false)}
                             />
                             <div
-                                className="fixed z-[10000] p-2 rounded-xl glass border border-white/10 shadow-2xl min-w-[280px]"
+                                className="fixed z-[10000] p-2 rounded-xl glass border border-white/10 shadow-2xl min-w-[280px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-32px)] overflow-y-auto"
                                 style={{
-                                    top: filterPos.top,
-                                    right: filterPos.right,
+                                    top: Math.min(filterPos.top, window.innerHeight - 300),
+                                    right: Math.max(16, Math.min(filterPos.right, window.innerWidth - 280)),
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <DateFilter
                                     className="flex-col items-stretch"
                                     initialPreset={currentPreset}
+                                    customHours={customHours}
+                                    onCustomHoursChange={setCustomHours}
                                     onFilter={(start, end) => {
                                         onRangeChange?.(start, end);
                                         // Skip closing on first mount (initial useEffect call)

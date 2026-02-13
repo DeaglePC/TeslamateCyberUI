@@ -8,22 +8,48 @@ interface DateFilterProps {
     className?: string;
     initialPreset?: FilterPreset;
     onPresetChange?: (preset: FilterPreset) => void;
+    customHours?: number;
+    onCustomHoursChange?: (hours: number) => void;
 }
 
-export type FilterPreset = 'last24h' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+export type FilterPreset = 'last24h' | 'lastNHours' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
-export function DateFilter({ onFilter, className = '', initialPreset = 'last24h', onPresetChange }: DateFilterProps) {
+export function DateFilter({ onFilter, className = '', initialPreset = 'last24h', onPresetChange, customHours: externalCustomHours, onCustomHoursChange }: DateFilterProps) {
     const { theme, language } = useSettingsStore();
     const colors = getThemeColors(theme);
 
     const [preset, setPreset] = useState<FilterPreset>(initialPreset);
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
+    const [internalCustomHours, setInternalCustomHours] = useState<string>('6');
     const [showCustom, setShowCustom] = useState(false);
+    const [showCustomHours, setShowCustomHours] = useState(false);
     const initialized = useRef(false);
+
+    // Use external customHours if provided, otherwise use internal state
+    // When externalCustomHours is 0, treat it as empty (user cleared input)
+    const customHours = externalCustomHours !== undefined
+        ? (externalCustomHours === 0 ? '' : externalCustomHours.toString())
+        : internalCustomHours;
+    const setCustomHours = (value: string) => {
+        if (externalCustomHours !== undefined && onCustomHoursChange) {
+            // Allow empty string during input, only convert to number on apply
+            if (value === '') {
+                onCustomHoursChange(0); // Use 0 to represent empty state
+            } else {
+                const num = parseInt(value);
+                if (!isNaN(num)) {
+                    onCustomHoursChange(num);
+                }
+            }
+        } else {
+            setInternalCustomHours(value);
+        }
+    };
 
     const presets: { id: FilterPreset | 'last24h'; label: { zh: string; en: string } }[] = [
         { id: 'last24h', label: { zh: '近24小时', en: 'Last 24h' } },
+        { id: 'lastNHours', label: { zh: '近N小时', en: 'Last N h' } },
         { id: 'week', label: { zh: '近一周', en: 'Week' } },
         { id: 'month', label: { zh: '近一月', en: 'Month' } },
         { id: 'quarter', label: { zh: '近三月', en: '3 Months' } },
@@ -55,6 +81,13 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
             case 'last24h': {
                 const start = new Date(now);
                 start.setHours(start.getHours() - 24);
+                return { start: formatLocalDateTime(start), end: formatLocalDateTime(now) };
+            }
+            case 'lastNHours': {
+                const hours = parseInt(customHours) || 6;
+                const validHours = Math.max(1, Math.min(99, hours)); // Ensure hours is between 1-99
+                const start = new Date(now);
+                start.setHours(start.getHours() - validHours);
                 return { start: formatLocalDateTime(start), end: formatLocalDateTime(now) };
             }
             case 'week': {
@@ -89,8 +122,14 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
         onPresetChange?.(presetId as FilterPreset);
         if (presetId === 'custom') {
             setShowCustom(true);
+            setShowCustomHours(false);
+        } else if (presetId === 'lastNHours') {
+            setShowCustomHours(true);
+            setShowCustom(false);
+            // 不立即应用筛选，让用户先输入小时数
         } else {
             setShowCustom(false);
+            setShowCustomHours(false);
             const range = getDateRange(presetId);
             onFilter(range.start, range.end);
         }
@@ -130,6 +169,56 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
                     </button>
                 ))}
             </div>
+
+            {/* Custom hours input */}
+            {showCustomHours && (
+                <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg" style={{ background: `${colors.primary}10` }}>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm" style={{ color: colors.muted }}>
+                            {language === 'zh' ? '小时数' : 'Hours'}
+                        </span>
+                        <input
+                            type="number"
+                            min="1"
+                            max="99"
+                            value={customHours}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Allow empty string or valid numbers (for deletion and input)
+                                if (value === '') {
+                                    setCustomHours(value);
+                                } else {
+                                    const num = parseInt(value);
+                                    if (!isNaN(num) && num >= 1 && num <= 99) {
+                                        setCustomHours(value);
+                                    }
+                                }
+                            }}
+                            className="w-24 px-3 py-1.5 text-sm rounded-lg border"
+                            style={{
+                                color: '#e5e7eb',
+                                borderColor: colors.primary + '40',
+                                background: 'rgba(0, 0, 0, 0.2)',
+                            }}
+                            placeholder="6"
+                        />
+                    </div>
+                    <button
+                        onClick={() => {
+                            const range = getDateRange('lastNHours');
+                            onFilter(range.start, range.end);
+                        }}
+                        className="px-4 py-1.5 text-sm rounded-lg transition-all hover:opacity-80 ml-auto md:ml-0"
+                        style={{
+                            background: colors.primary,
+                            color: '#000',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        {language === 'zh' ? '应用' : 'Apply'}
+                    </button>
+                </div>
+            )}
 
             {/* Custom date inputs */}
             {showCustom && (
