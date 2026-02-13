@@ -31,6 +31,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
     const getPresetLabel = (preset: FilterPreset): string => {
         const labels: Record<FilterPreset, string> = {
             last24h: t('last24h'),
+            lastNHours: language === 'zh' ? '近N小时' : 'Last N h',
             week: t('lastWeek'),
             month: t('lastMonth'),
             quarter: t('lastQuarter'),

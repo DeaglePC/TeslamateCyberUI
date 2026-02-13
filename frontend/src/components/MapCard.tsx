@@ -15,7 +15,7 @@ interface MapCardProps {
 }
 
 export const MapCard = memo(function MapCard({ latitude, longitude, address, timestamp, className = '', title }: MapCardProps) {
-    const { theme, language, amapKey } = useSettingsStore();
+    const { theme, language } = useSettingsStore();
     const { t } = useTranslation(language);
     const colors = getThemeColors(theme);
 
@@ -23,7 +23,6 @@ export const MapCard = memo(function MapCard({ latitude, longitude, address, tim
     
     // Check if using AMap (in China and has API key)
     const isChina = hasLocation && !isOutOfChina(latitude!, longitude!);
-    const useAmap = isChina && !!amapKey;
 
     // Generate AMap navigation URL
     const getAmapUrl = () => {
