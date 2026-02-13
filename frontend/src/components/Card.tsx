@@ -13,19 +13,20 @@ interface CardProps {
 
 export function Card({ children, className, onClick, hoverable = false, style }: CardProps) {
   const { theme } = useSettingsStore();
+  const colors = getThemeColors(theme);
 
   return (
     <div
       onClick={onClick}
       className={clsx(
-        'glass rounded-xl p-3 sm:p-4',
-        hoverable && 'cursor-pointer hover:scale-[1.02] transition-transform duration-200',
+        'glass rounded-xl p-3 sm:p-4 transition-all',
+        hoverable && 'cursor-pointer hover:scale-[1.02] duration-200',
         onClick && 'cursor-pointer',
         className
       )}
       style={{
         ...style,
-        borderColor: `var(--${theme}-border, rgba(255,255,255,0.1))`,
+        borderColor: colors.border,
       }}
     >
       {children}
