@@ -350,7 +350,7 @@ export default function SettingsPage() {
     setIsReCropping(false);
     setUploading(true);
     try {
-      await uploadBackgroundImage(croppedImage, originalImage);
+      await uploadBackgroundImage(croppedImage, originalImage ?? undefined);
       setUploadError(null);
     } catch (err) {
       setUploadError(language === 'zh' ? '上传失败，请重试' : 'Upload failed, please try again');

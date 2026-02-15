@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { getThemeColors } from '@/utils/theme';
+import type { ThemeType } from '@/store/settings';
 
 interface CropArea {
   x: number;
@@ -15,7 +16,7 @@ interface Props {
   onCancel: () => void;
   aspectRatio?: number;
   language: 'zh' | 'en';
-  theme: string;
+  theme: ThemeType;
 }
 
 interface ResizeHandleProps {
