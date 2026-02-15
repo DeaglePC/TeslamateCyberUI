@@ -104,9 +104,9 @@ export default function DriveDetailPage() {
       rawPowers.push(positions[idx].power);
     }
 
-    // 对速度使用最大值采样（保留峰值），功率使用平均值采样（平滑曲线）
+    // 对速度和功率都使用最大值采样（保留峰值），确保关键数据点不丢失
     const speeds = sampleData(positions.map(p => p.speed), targetPoints, 'max');
-    const powers = sampleData(positions.map(p => p.power), targetPoints, 'avg');
+    const powers = sampleData(positions.map(p => p.power), targetPoints, 'max');
 
     return {
       backgroundColor: 'transparent',
