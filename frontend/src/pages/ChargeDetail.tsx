@@ -9,12 +9,14 @@ import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
 import { formatDate, formatDuration, formatEnergy, formatCurrency, formatTemperature } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
+import { useTranslation } from '@/utils/i18n';
 import type { ChargeDetail, ChargeStats } from '@/types';
 
 export default function ChargeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { theme, unit } = useSettingsStore();
+  const { theme, unit, language } = useSettingsStore();
+  const { t } = useTranslation(language);
   const [detail, setDetail] = useState<ChargeDetail | null>(null);
   const [stats, setStats] = useState<ChargeStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function ChargeDetailPage() {
       setDetail(chargeDetail);
       setStats(chargeStats);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载失败');
+      setError(err instanceof Error ? err.message : t('error'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ export default function ChargeDetailPage() {
 
   if (loading) return <Loading />;
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
-  if (!detail) return <ErrorState message="充电记录不存在" />;
+  if (!detail) return <ErrorState message={t('chargeRecordNotFound')} />;
 
   // 充电曲线图表配置
   const getChartOption = () => {
@@ -70,7 +72,7 @@ export default function ChargeDetailPage() {
         containLabel: true,
       },
       legend: {
-        data: ['电量 %', '功率 kW'],
+        data: [t('batteryLevel'), t('power')],
         textStyle: { color: colors.muted },
         top: 10,
       },
@@ -89,7 +91,7 @@ export default function ChargeDetailPage() {
       yAxis: [
         {
           type: 'value',
-          name: '电量 %',
+          name: t('batteryLevel'),
           min: 0,
           max: 100,
           axisLine: { lineStyle: { color: colors.primary } },
@@ -98,7 +100,7 @@ export default function ChargeDetailPage() {
         },
         {
           type: 'value',
-          name: '功率 kW',
+          name: t('power'),
           axisLine: { lineStyle: { color: secondaryColor } },
           axisLabel: { color: secondaryColor },
           splitLine: { show: false },
@@ -106,7 +108,7 @@ export default function ChargeDetailPage() {
       ],
       series: [
         {
-          name: '电量 %',
+          name: t('batteryLevel'),
           type: 'line',
           data: batteryLevels,
           smooth: 0.6, // 增加平滑度 (0-1)
@@ -131,7 +133,7 @@ export default function ChargeDetailPage() {
           itemStyle: { color: colors.primary },
         },
         {
-          name: '功率 kW',
+          name: t('power'),
           type: 'line',
           yAxisIndex: 1,
           data: chargerPowers,
@@ -163,35 +165,35 @@ export default function ChargeDetailPage() {
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        返回
+        {t('back')}
       </button>
 
       {/* 标题 */}
       <div>
         <h1 className="text-2xl font-bold" style={{ color: colors.primary }}>
-          充电详情
+          {t('chargeDetail')}
         </h1>
       </div>
 
       {/* 电量变化 */}
       <Card className="!p-3 sm:!p-4">
-        <h3 className="font-semibold mb-2 sm:mb-4 text-sm sm:text-base" style={{ color: colors.primary }}>电量变化</h3>
+        <h3 className="font-semibold mb-2 sm:mb-4 text-sm sm:text-base" style={{ color: colors.primary }}>{t('batteryChange')}</h3>
         <BatteryBar startLevel={detail.startBatteryLevel} endLevel={detail.endBatteryLevel} />
         <div className="flex justify-between mt-2 sm:mt-4 mb-3 sm:mb-6 text-xs sm:text-base flex-wrap gap-y-1" style={{ color: colors.muted }}>
-          <span>续航 {detail.startIdealRangeKm.toFixed(0)} km</span>
-          <span>续航 {detail.endIdealRangeKm.toFixed(0)} km</span>
+          <span>{t('range')} {detail.startIdealRangeKm.toFixed(0)} km</span>
+          <span>{t('range')} {detail.endIdealRangeKm.toFixed(0)} km</span>
         </div>
 
         {/* Time Info Integration */}
         <div className="pt-3 sm:pt-4 border-t" style={{ borderColor: `${colors.muted}20` }}>
           <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
-              <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>开始时间</p>
+              <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>{t('startTime')}</p>
               <p className="font-semibold text-sm sm:text-base">{formatDate(detail.startDate)}</p>
             </div>
             {detail.endDate && (
               <div>
-                <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>结束时间</p>
+                <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>{t('endTime')}</p>
                 <p className="font-semibold text-sm sm:text-base">{formatDate(detail.endDate)}</p>
               </div>
             )}
@@ -201,19 +203,19 @@ export default function ChargeDetailPage() {
 
       {/* 统计数据 */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
-        <StatCard label="充电量" value={formatEnergy(detail.chargeEnergyAdded)} />
-        <StatCard label="充电时长" value={formatDuration(detail.durationMin)} />
+        <StatCard label={t('energyAdded')} value={formatEnergy(detail.chargeEnergyAdded)} />
+        <StatCard label={t('chargeDuration')} value={formatDuration(detail.durationMin)} />
         {detail.chargeEnergyUsed !== undefined && (
-          <StatCard label="耗电量" value={formatEnergy(detail.chargeEnergyUsed)} />
+          <StatCard label={t('energyUsed')} value={formatEnergy(detail.chargeEnergyUsed)} />
         )}
         {detail.efficiency !== undefined && (
-          <StatCard label="充电效率" value={`${detail.efficiency.toFixed(1)}%`} />
+          <StatCard label={t('chargeEfficiency')} value={`${detail.efficiency.toFixed(1)}%`} />
         )}
         {detail.outsideTempAvg !== undefined && (
-          <StatCard label="平均温度" value={formatTemperature(detail.outsideTempAvg, unit)} />
+          <StatCard label={t('avgTemp')} value={formatTemperature(detail.outsideTempAvg, unit)} />
         )}
         {detail.cost !== undefined && detail.cost > 0 && (
-          <StatCard label="充电费用" value={formatCurrency(detail.cost)} />
+          <StatCard label={t('chargeCost')} value={formatCurrency(detail.cost)} />
         )}
       </div>
 
@@ -231,7 +233,7 @@ export default function ChargeDetailPage() {
       {/* 充电曲线 */}
       {chartOption && (
         <Card>
-          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>充电曲线</h3>
+          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('chargeCurve')}</h3>
           <div className="w-full max-w-full overflow-hidden">
             <ReactECharts
               option={chartOption}

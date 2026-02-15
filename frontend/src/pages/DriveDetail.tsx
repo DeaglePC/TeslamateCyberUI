@@ -9,12 +9,14 @@ import { Loading, ErrorState } from '@/components/States';
 import { UniversalMap } from '@/components/UniversalMap';
 import { formatDate, formatDuration, formatDistance, formatSpeed, formatTemperature } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
+import { useTranslation } from '@/utils/i18n';
 import type { DriveDetail, DrivePosition } from '@/types';
 
 export default function DriveDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { theme, unit } = useSettingsStore();
+  const { theme, unit, language } = useSettingsStore();
+  const { t } = useTranslation(language);
   const [detail, setDetail] = useState<DriveDetail | null>(null);
   const [positions, setPositions] = useState<DrivePosition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function DriveDetailPage() {
       setDetail(driveDetail);
       setPositions(drivePositions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载失败');
+      setError(err instanceof Error ? err.message : t('error'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ export default function DriveDetailPage() {
 
   if (loading) return <Loading />;
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
-  if (!detail) return <ErrorState message="驾驶记录不存在" />;
+  if (!detail) return <ErrorState message={t('driveRecordNotFound')} />;
 
   // 数据采样函数 - 对密集数据进行降采样
   // mode: 'max' 保留区间最大值（适用于速度，确保峰值显示）
@@ -116,7 +118,7 @@ export default function DriveDetailPage() {
         containLabel: true,
       },
       legend: {
-        data: ['速度 km/h', '功率 kW'],
+        data: [t('speedKmh'), t('power')],
         textStyle: { color: colors.muted },
         top: 10,
       },
@@ -141,14 +143,14 @@ export default function DriveDetailPage() {
       yAxis: [
         {
           type: 'value',
-          name: '速度 km/h',
+          name: t('speedKmh'),
           axisLine: { lineStyle: { color: colors.primary } },
           axisLabel: { color: colors.primary },
           splitLine: { lineStyle: { color: `${colors.muted}15` } },
         },
         {
           type: 'value',
-          name: '功率 kW',
+          name: t('power'),
           axisLine: { lineStyle: { color: secondaryColor } },
           axisLabel: { color: secondaryColor },
           splitLine: { show: false },
@@ -156,7 +158,7 @@ export default function DriveDetailPage() {
       ],
       series: [
         {
-          name: '速度 km/h',
+          name: t('speedKmh'),
           type: 'line',
           data: speeds,
           smooth: 0.4,
@@ -183,7 +185,7 @@ export default function DriveDetailPage() {
           itemStyle: { color: colors.primary },
         },
         {
-          name: '功率 kW',
+          name: t('power'),
           type: 'line',
           yAxisIndex: 1,
           data: powers,
@@ -225,13 +227,13 @@ export default function DriveDetailPage() {
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        返回
+        {t('back')}
       </button>
 
       {/* 标题 */}
       <div>
         <h1 className="text-2xl font-bold" style={{ color: colors.primary }}>
-          驾驶详情
+          {t('driveDetail')}
         </h1>
         <p style={{ color: colors.muted }}>
           {formatDate(detail.startDate)}
@@ -254,7 +256,7 @@ export default function DriveDetailPage() {
                 boxShadow: `0 0 8px ${colors.primary}60`
               }}
             >
-              <span style={{ color: '#fff', fontWeight: 'bold' }}>起</span>
+              <span style={{ color: '#fff', fontWeight: 'bold' }}>{t('start')}</span>
             </div>
           </div>
           <div className="py-3 min-w-0">
@@ -277,7 +279,7 @@ export default function DriveDetailPage() {
                 boxShadow: `0 0 8px ${secondaryColor}60`
               }}
             >
-              <span style={{ color: '#fff', fontWeight: 'bold' }}>终</span>
+              <span style={{ color: '#fff', fontWeight: 'bold' }}>{t('end')}</span>
             </div>
           </div>
           <div className="py-3 min-w-0">
@@ -291,32 +293,32 @@ export default function DriveDetailPage() {
 
       {/* 电量变化 */}
       <Card>
-        <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>电量消耗</h3>
+        <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('batteryConsumption')}</h3>
         <BatteryBar startLevel={detail.startBatteryLevel} endLevel={detail.endBatteryLevel} />
         <div className="flex justify-between mt-4" style={{ color: colors.muted }}>
-          <span>续航 {detail.startIdealRangeKm.toFixed(0)} km</span>
-          <span>续航 {detail.endIdealRangeKm.toFixed(0)} km</span>
+          <span>{t('range')} {detail.startIdealRangeKm.toFixed(0)} km</span>
+          <span>{t('range')} {detail.endIdealRangeKm.toFixed(0)} km</span>
         </div>
       </Card>
 
       {/* 统计数据 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="行驶距离" value={formatDistance(detail.distance, unit)} />
-        <StatCard label="行驶时长" value={formatDuration(detail.durationMin)} />
-        <StatCard label="平均速度" value={formatSpeed(detail.speedAvg, unit)} />
-        <StatCard label="最高速度" value={formatSpeed(detail.speedMax, unit)} />
-        <StatCard label="能效" value={`${detail.efficiency.toFixed(0)} Wh/km`} />
-        <StatCard label="最大功率" value={`${detail.powerMax} kW`} />
-        <StatCard label="最大回收" value={`${Math.abs(detail.powerMin)} kW`} />
+        <StatCard label={t('driveDistance')} value={formatDistance(detail.distance, unit)} />
+        <StatCard label={t('driveDuration')} value={formatDuration(detail.durationMin)} />
+        <StatCard label={t('avgSpeed')} value={formatSpeed(detail.speedAvg, unit)} />
+        <StatCard label={t('maxSpeed')} value={formatSpeed(detail.speedMax, unit)} />
+        <StatCard label={t('efficiency')} value={`${detail.efficiency.toFixed(0)} Wh/km`} />
+        <StatCard label={t('maxPower')} value={`${detail.powerMax} kW`} />
+        <StatCard label={t('maxRegen')} value={`${Math.abs(detail.powerMin)} kW`} />
         {detail.outsideTempAvg !== undefined && (
-          <StatCard label="室外温度" value={formatTemperature(detail.outsideTempAvg, unit)} />
+          <StatCard label={t('outsideTemp')} value={formatTemperature(detail.outsideTempAvg, unit)} />
         )}
       </div>
 
       {/* 地图轨迹 - 无需Key也能显示 */}
       {positions.length > 0 && (
         <Card>
-          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>行驶轨迹</h3>
+          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('driveRoute')}</h3>
           <div className="h-64 md:h-96 w-full relative z-0">
             <UniversalMap positions={positions} />
           </div>
@@ -326,7 +328,7 @@ export default function DriveDetailPage() {
       {/* 速度/功率曲线 */}
       {chartOption && (
         <Card>
-          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>速度/功率曲线</h3>
+          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('speedPowerCurve')}</h3>
           <ReactECharts
             option={chartOption}
             style={{ height: 'min(400px, 50vh)' }}

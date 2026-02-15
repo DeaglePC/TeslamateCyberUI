@@ -311,18 +311,28 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
     if (!hasData) return null;
 
     if (useAmap) {
-        return <div ref={mapRef} className={`w-full h-full rounded-lg overflow-hidden ${className}`} />;
+        return (
+            <div 
+                ref={mapRef} 
+                className={`w-full h-full rounded-lg overflow-hidden ${className}`}
+                data-no-swipe
+            />
+        );
     }
 
     return (
-        <MapContainer
-            center={center}
-            zoom={13}
-            className={`w-full h-full rounded-lg overflow-hidden ${className}`}
-            style={{ zIndex: 0 }}
-            zoomControl={false}
-            attributionControl={false}
+        <div 
+            className={`w-full h-full ${className}`}
+            data-no-swipe
         >
+            <MapContainer
+                center={center}
+                zoom={13}
+                className="w-full h-full rounded-lg overflow-hidden"
+                style={{ zIndex: 0 }}
+                zoomControl={false}
+                attributionControl={false}
+            >
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -392,5 +402,6 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
             {isHeatmapMode && <BoundsFitter heatmapData={leafletHeatmapPositions} />}
 
         </MapContainer>
+        </div>
     );
 }

@@ -41,37 +41,42 @@ func ErrorResponse(code int, message string) Response {
 }
 
 // parseDateTime 解析日期时间字符串，支持多种格式
-// 数据库使用 timestamp without time zone，存储的是北京时间
+// 返回 UTC 时间用于数据库查询
 func parseDateTime(dateStr string, isEndDate bool) *time.Time {
 	if dateStr == "" {
 		return nil
 	}
 
-	location := beijingLocation()
-
 	// 纯日期格式 YYYY-MM-DD（主要格式）
+	// 假设输入为本地时间（北京时间），转换为 UTC
+	location := beijingLocation()
 	if t, err := time.ParseInLocation("2006-01-02", dateStr, location); err == nil {
+		utcTime := t.UTC()
 		if isEndDate {
-			// 结束日期设置为当天结束时间 23:59:59
-			endOfDay := t.Add(24*time.Hour - time.Second)
+			// 结束日期设置为当天结束时间 23:59:59 北京时间
+			endOfDay := t.Add(24*time.Hour - time.Second).UTC()
 			return &endOfDay
 		}
-		return &t
+		return &utcTime
 	}
 
 	// 本地时间格式（不带时区后缀）2006-01-02T15:04:05
+	// 假设输入为本地时间（北京时间），转换为 UTC
 	if t, err := time.ParseInLocation("2006-01-02T15:04:05", dateStr, location); err == nil {
-		return &t
+		utcTime := t.UTC()
+		return &utcTime
 	}
 
-	// 兼容 UTC 格式，转换为北京时间
+	// 兼容 UTC 格式，直接使用
 	if t, err := time.Parse(time.RFC3339, dateStr); err == nil {
-		beijingTime := t.In(location)
-		return &beijingTime
+		return &t
 	}
 	if t, err := time.Parse("2006-01-02T15:04:05.000Z", dateStr); err == nil {
-		beijingTime := t.In(location)
-		return &beijingTime
+		return &t
+	}
+	// 尝试带毫秒的 ISO 格式
+	if t, err := time.Parse("2006-01-02T15:04:05.000Z07:00", dateStr); err == nil {
+		return &t
 	}
 
 	return nil

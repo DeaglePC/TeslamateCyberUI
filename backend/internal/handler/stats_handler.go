@@ -105,28 +105,8 @@ func (h *Handler) GetSocHistory(c *gin.Context) {
 	fromStr := c.Query("from")
 	toStr := c.Query("to")
 
-	if fromStr != "" && toStr != "" {
-		// Try parsing as simple date first (YYYY-MM-DD)
-		s, err1 := time.Parse("2006-01-02", fromStr)
-		e, err2 := time.Parse("2006-01-02", toStr)
-		if err1 == nil && err2 == nil {
-			start = s
-			end = e.Add(24*time.Hour - time.Second) // End of the day
-		} else {
-			// Try RFC3339
-			start, _ = time.Parse(time.RFC3339, fromStr)
-			end, _ = time.Parse(time.RFC3339, toStr)
-		}
-	}
-
-	if start.IsZero() || end.IsZero() {
-		hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
-		if hours < 1 {
-			hours = 24
-		}
-		end = time.Now().UTC()
-		start = end.Add(-time.Duration(hours) * time.Hour)
-	}
+	hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
+	start, end = parseTimeRange(fromStr, toStr, hours)
 
 	data, err := h.repo.Stats.GetSocHistory(c.Request.Context(), carID, start, end)
 	if err != nil {
@@ -156,26 +136,8 @@ func (h *Handler) GetStatesTimeline(c *gin.Context) {
 	fromStr := c.Query("from")
 	toStr := c.Query("to")
 
-	if fromStr != "" && toStr != "" {
-		s, err1 := time.Parse("2006-01-02", fromStr)
-		e, err2 := time.Parse("2006-01-02", toStr)
-		if err1 == nil && err2 == nil {
-			start = s
-			end = e.Add(24*time.Hour - time.Second)
-		} else {
-			start, _ = time.Parse(time.RFC3339, fromStr)
-			end, _ = time.Parse(time.RFC3339, toStr)
-		}
-	}
-
-	if start.IsZero() || end.IsZero() {
-		hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
-		if hours < 1 {
-			hours = 24
-		}
-		end = time.Now().UTC()
-		start = end.Add(-time.Duration(hours) * time.Hour)
-	}
+	hours, _ := strconv.Atoi(c.DefaultQuery("hours", "24"))
+	start, end = parseTimeRange(fromStr, toStr, hours)
 
 	data, err := h.repo.Stats.GetStatesTimeline(c.Request.Context(), carID, start, end)
 	if err != nil {
@@ -185,4 +147,50 @@ func (h *Handler) GetStatesTimeline(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, SuccessResponse(data))
+}
+
+// parseTimeRange parses time range from query parameters
+// Supports formats: YYYY-MM-DD, YYYY-MM-DDTHH:mm:ss (local Beijing time), RFC3339
+// Returns UTC time for database queries
+func parseTimeRange(fromStr, toStr string, defaultHours int) (start, end time.Time) {
+	if fromStr != "" && toStr != "" {
+		location := beijingLocation()
+
+		// Try parsing as simple date first (YYYY-MM-DD)
+		s, err1 := time.ParseInLocation("2006-01-02", fromStr, location)
+		e, err2 := time.ParseInLocation("2006-01-02", toStr, location)
+		if err1 == nil && err2 == nil {
+			start = s.UTC()
+			end = e.Add(24*time.Hour - time.Second).UTC() // End of the day
+			return
+		}
+
+		// Try RFC3339 (with timezone)
+		s, err1 = time.Parse(time.RFC3339, fromStr)
+		e, err2 = time.Parse(time.RFC3339, toStr)
+		if err1 == nil && err2 == nil {
+			start = s
+			end = e
+			return
+		}
+
+		// Try local datetime format (YYYY-MM-DDTHH:mm:ss) without timezone
+		// Assume Beijing time, convert to UTC
+		const localLayout = "2006-01-02T15:04:05"
+		s, err1 = time.ParseInLocation(localLayout, fromStr, location)
+		e, err2 = time.ParseInLocation(localLayout, toStr, location)
+		if err1 == nil && err2 == nil {
+			start = s.UTC()
+			end = e.UTC()
+			return
+		}
+	}
+
+	// Fallback to hours-based range
+	if defaultHours < 1 {
+		defaultHours = 24
+	}
+	end = time.Now().UTC()
+	start = end.Add(-time.Duration(defaultHours) * time.Hour)
+	return
 }

@@ -98,6 +98,39 @@ const translations = {
     minutes: { zh: '分钟', en: 'min' },
     ago: { zh: '前', en: 'ago' },
     lastUpdated: { zh: '最后更新', en: 'Last Updated' },
+
+    // Charge Detail
+    chargeDetail: { zh: '充电详情', en: 'Charge Detail' },
+    chargeRecordNotFound: { zh: '充电记录不存在', en: 'Charge record not found' },
+    batteryChange: { zh: '电量变化', en: 'Battery Change' },
+    chargeDuration: { zh: '充电时长', en: 'Charge Duration' },
+    energyUsed: { zh: '耗电量', en: 'Energy Used' },
+    chargeEfficiency: { zh: '充电效率', en: 'Charge Efficiency' },
+    avgTemp: { zh: '平均温度', en: 'Avg Temp' },
+    chargeCost: { zh: '充电费用', en: 'Charge Cost' },
+    chargeCurve: { zh: '充电曲线', en: 'Charge Curve' },
+    batteryLevel: { zh: '电量 %', en: 'Battery %' },
+    power: { zh: '功率 kW', en: 'Power kW' },
+    back: { zh: '返回', en: 'Back' },
+
+    // Drive Detail
+    driveDetail: { zh: '驾驶详情', en: 'Drive Detail' },
+    driveRecordNotFound: { zh: '驾驶记录不存在', en: 'Drive record not found' },
+    batteryConsumption: { zh: '电量消耗', en: 'Battery Consumption' },
+    driveDistance: { zh: '行驶距离', en: 'Drive Distance' },
+    driveDuration: { zh: '行驶时长', en: 'Drive Duration' },
+    avgSpeed: { zh: '平均速度', en: 'Avg Speed' },
+    maxSpeed: { zh: '最高速度', en: 'Max Speed' },
+    efficiency: { zh: '能效', en: 'Efficiency' },
+    maxPower: { zh: '最大功率', en: 'Max Power' },
+    maxRegen: { zh: '最大回收', en: 'Max Regen' },
+    outsideTemp: { zh: '室外温度', en: 'Outside Temp' },
+    driveRoute: { zh: '行驶轨迹', en: 'Drive Route' },
+    speedPowerCurve: { zh: '速度/功率曲线', en: 'Speed/Power Curve' },
+    speedKmh: { zh: '速度 km/h', en: 'Speed km/h' },
+    start: { zh: '起', en: 'S' },
+    end: { zh: '终', en: 'E' },
+    endTime: { zh: '结束时间', en: 'End Time' },
 } as const;
 
 type TranslationKey = keyof typeof translations;

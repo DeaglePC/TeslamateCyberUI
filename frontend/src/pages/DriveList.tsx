@@ -19,6 +19,7 @@ export default function DriveListPage() {
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 9, total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [customHours, setCustomHours] = useState<number>(6);
   const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>(() => {
     const now = new Date();
     const start = new Date(now);
@@ -83,7 +84,7 @@ export default function DriveListPage() {
         </div>
 
         {/* 日期筛选 */}
-        <DateFilter onFilter={handleDateFilter} initialPreset="year" />
+        <DateFilter onFilter={handleDateFilter} initialPreset="year" customHours={customHours} onCustomHoursChange={setCustomHours} />
       </div>
 
       {/* 统计概览 */}
