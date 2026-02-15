@@ -126,9 +126,9 @@ export default function DriveDetailPage() {
       rawPowers.push(positions[idx].power);
     }
 
-    // 对速度和功率都使用最大值采样（保留峰值），确保关键数据点不丢失
+    // 速度使用最大值采样（保留峰值速度），功率使用平均值采样（保留正负趋势，包括动能回收）
     const speeds = sampleData(positions.map(p => p.speed), targetPoints, 'max');
-    const powers = sampleData(positions.map(p => p.power), targetPoints, 'max');
+    const powers = sampleData(positions.map(p => p.power), targetPoints, 'avg');
 
     return {
       backgroundColor: 'transparent',
@@ -173,6 +173,7 @@ export default function DriveDetailPage() {
         {
           type: 'value',
           name: t('power'),
+          scale: true, // 自动缩放以包含负值（动能回收）
           axisLine: { lineStyle: { color: secondaryColor } },
           axisLabel: { color: secondaryColor },
           splitLine: { show: false },
