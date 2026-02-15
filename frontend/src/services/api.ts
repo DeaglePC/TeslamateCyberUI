@@ -148,6 +148,11 @@ export const driveApi = {
     });
     return res.data.data || [];
   },
+
+  getDriveSpeedHistogram: async (driveId: number): Promise<SpeedHistogramItem[]> => {
+    const res = await api.get<ApiResponse<SpeedHistogramItem[]>>(`/drives/${driveId}/speed_histogram`);
+    return res.data.data || [];
+  },
 };
 
 // 统计 API

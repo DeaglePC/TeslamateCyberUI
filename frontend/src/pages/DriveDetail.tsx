@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactECharts from 'echarts-for-react';
 import { useSettingsStore } from '@/store/settings';
@@ -7,6 +7,7 @@ import { Card, StatCard } from '@/components/Card';
 import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
 import { UniversalMap } from '@/components/UniversalMap';
+import { SpeedHistogram } from '@/components/DriveStats';
 import { formatDate, formatDuration, formatDistance, formatSpeed, formatTemperature } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import { useTranslation } from '@/utils/i18n';
@@ -24,6 +25,12 @@ export default function DriveDetailPage() {
 
   const colors = getThemeColors(theme);
   const secondaryColor = colors.chart?.[1] || colors.accent;
+  const chartColors = [
+    colors.primary,
+    secondaryColor,
+    colors.chart?.[2] || '#10B981',
+    colors.chart?.[3] || '#F59E0B',
+  ];
 
   const fetchData = async () => {
     if (!id) return;
@@ -47,6 +54,21 @@ export default function DriveDetailPage() {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  // 检查是否有温度数据 - 必须在 early return 之前
+  const hasTempData = useMemo(() => {
+    return positions.some(p => p.outsideTemp !== undefined || p.insideTemp !== undefined);
+  }, [positions]);
+
+  // 检查是否有胎压数据 - 必须在 early return 之前
+  const hasTirePressureData = useMemo(() => {
+    return positions.some(p =>
+      p.tpmsPressureFL !== undefined ||
+      p.tpmsPressureFR !== undefined ||
+      p.tpmsPressureRL !== undefined ||
+      p.tpmsPressureRR !== undefined
+    );
+  }, [positions]);
 
   if (loading) return <Loading />;
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
@@ -216,6 +238,136 @@ export default function DriveDetailPage() {
 
   const chartOption = getChartOption();
 
+  // 温度图表配置
+  const getTempChartOption = () => {
+    if (!hasTempData) return null;
+
+    const tempPositions = positions.filter(p => p.outsideTemp !== undefined || p.insideTemp !== undefined);
+    const sampledTimes = tempPositions.filter((_, i) => i % Math.max(1, Math.floor(tempPositions.length / 100)) === 0).map(p => formatDate(p.date, 'HH:mm'));
+    const outsideTemps = tempPositions.filter((_, i) => i % Math.max(1, Math.floor(tempPositions.length / 100)) === 0).map(p => p.outsideTemp);
+    const insideTemps = tempPositions.filter((_, i) => i % Math.max(1, Math.floor(tempPositions.length / 100)) === 0).map(p => p.insideTemp);
+
+    return {
+      backgroundColor: 'transparent',
+      grid: { top: 50, right: 10, bottom: 25, left: 10, containLabel: true },
+      legend: {
+        data: [t('outsideTemp'), t('insideTemp')],
+        textStyle: { color: colors.muted },
+        top: 10,
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: colors.bg,
+        borderColor: colors.primary,
+        textStyle: { color: colors.muted },
+        formatter: (params: { seriesName: string; value: number; axisValue: string }[]) => {
+          let html = `<div style="font-weight: 600;">${params[0]?.axisValue || ''}</div>`;
+          params.forEach(p => {
+            if (p.value !== undefined && p.value !== null) {
+              const temp = unit === 'imperial' ? (p.value * 9/5 + 32).toFixed(1) : p.value.toFixed(1);
+              const unitStr = unit === 'imperial' ? '°F' : '°C';
+              html += `<div>${p.seriesName}: ${temp}${unitStr}</div>`;
+            }
+          });
+          return html;
+        }
+      },
+      xAxis: {
+        type: 'category',
+        data: sampledTimes,
+        axisLine: { lineStyle: { color: colors.muted } },
+        axisLabel: { color: colors.muted, interval: 'auto' },
+        boundaryGap: false,
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: { lineStyle: { color: colors.muted } },
+        axisLabel: { color: colors.muted, formatter: (val: number) => unit === 'imperial' ? `${(val * 9/5 + 32).toFixed(0)}°F` : `${val.toFixed(0)}°C` },
+        splitLine: { lineStyle: { color: `${colors.muted}15` } },
+      },
+      series: [
+        {
+          name: t('outsideTemp'),
+          type: 'line',
+          data: outsideTemps,
+          smooth: 0.6,
+          symbol: 'none',
+          lineStyle: { color: '#8AB8FF', width: 2 },
+          itemStyle: { color: '#8AB8FF' },
+        },
+        {
+          name: t('insideTemp'),
+          type: 'line',
+          data: insideTemps,
+          smooth: 0.6,
+          symbol: 'none',
+          lineStyle: { color: '#F2CC0C', width: 2 },
+          itemStyle: { color: '#F2CC0C' },
+        },
+      ],
+    };
+  };
+
+  // 胎压图表配置
+  const getTirePressureChartOption = () => {
+    if (!hasTirePressureData) return null;
+
+    const tpPositions = positions.filter(p => p.tpmsPressureFL !== undefined);
+    const sampledTimes = tpPositions.filter((_, i) => i % Math.max(1, Math.floor(tpPositions.length / 100)) === 0).map(p => formatDate(p.date, 'HH:mm'));
+    const flPressures = tpPositions.filter((_, i) => i % Math.max(1, Math.floor(tpPositions.length / 100)) === 0).map(p => p.tpmsPressureFL);
+    const frPressures = tpPositions.filter((_, i) => i % Math.max(1, Math.floor(tpPositions.length / 100)) === 0).map(p => p.tpmsPressureFR);
+    const rlPressures = tpPositions.filter((_, i) => i % Math.max(1, Math.floor(tpPositions.length / 100)) === 0).map(p => p.tpmsPressureRL);
+    const rrPressures = tpPositions.filter((_, i) => i % Math.max(1, Math.floor(tpPositions.length / 100)) === 0).map(p => p.tpmsPressureRR);
+
+    return {
+      backgroundColor: 'transparent',
+      grid: { top: 50, right: 10, bottom: 25, left: 10, containLabel: true },
+      legend: {
+        data: [t('frontLeft'), t('frontRight'), t('rearLeft'), t('rearRight')],
+        textStyle: { color: colors.muted },
+        top: 10,
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: colors.bg,
+        borderColor: colors.primary,
+        textStyle: { color: colors.muted },
+        formatter: (params: { seriesName: string; value: number; axisValue: string }[]) => {
+          let html = `<div style="font-weight: 600;">${params[0]?.axisValue || ''}</div>`;
+          params.forEach(p => {
+            if (p.value !== undefined && p.value !== null) {
+              html += `<div>${p.seriesName}: ${p.value.toFixed(2)} bar</div>`;
+            }
+          });
+          return html;
+        }
+      },
+      xAxis: {
+        type: 'category',
+        data: sampledTimes,
+        axisLine: { lineStyle: { color: colors.muted } },
+        axisLabel: { color: colors.muted, interval: 'auto' },
+        boundaryGap: false,
+      },
+      yAxis: {
+        type: 'value',
+        name: 'bar',
+        axisLine: { lineStyle: { color: colors.muted } },
+        axisLabel: { color: colors.muted },
+        splitLine: { lineStyle: { color: `${colors.muted}15` } },
+      },
+      series: [
+        { name: t('frontLeft'), type: 'line', data: flPressures, smooth: 0.5, symbol: 'none', lineStyle: { color: chartColors[0], width: 1.5 }, itemStyle: { color: chartColors[0] } },
+        { name: t('frontRight'), type: 'line', data: frPressures, smooth: 0.5, symbol: 'none', lineStyle: { color: chartColors[1], width: 1.5 }, itemStyle: { color: chartColors[1] } },
+        { name: t('rearLeft'), type: 'line', data: rlPressures, smooth: 0.5, symbol: 'none', lineStyle: { color: chartColors[2], width: 1.5 }, itemStyle: { color: chartColors[2] } },
+        { name: t('rearRight'), type: 'line', data: rrPressures, smooth: 0.5, symbol: 'none', lineStyle: { color: chartColors[3], width: 1.5 }, itemStyle: { color: chartColors[3] } },
+      ],
+    };
+  };
+
+  const tempChartOption = getTempChartOption();
+  const tirePressureChartOption = getTirePressureChartOption();
+
   return (
     <div className="space-y-6 animate-slideUp">
       {/* 返回按钮 */}
@@ -337,6 +489,35 @@ export default function DriveDetailPage() {
           />
         </Card>
       )}
+
+      {/* 温度曲线 */}
+      {tempChartOption && (
+        <Card>
+          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('temperatures')}</h3>
+          <ReactECharts
+            option={tempChartOption}
+            style={{ height: 'min(300px, 40vh)' }}
+            opts={{ renderer: 'svg' }}
+            className="!min-h-[240px]"
+          />
+        </Card>
+      )}
+
+      {/* 胎压曲线 */}
+      {tirePressureChartOption && (
+        <Card>
+          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('tirePressure')}</h3>
+          <ReactECharts
+            option={tirePressureChartOption}
+            style={{ height: 'min(300px, 40vh)' }}
+            opts={{ renderer: 'svg' }}
+            className="!min-h-[240px]"
+          />
+        </Card>
+      )}
+
+      {/* 速度直方图 */}
+      {id && <SpeedHistogram driveId={parseInt(id)} />}
     </div>
   );
 }

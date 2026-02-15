@@ -171,3 +171,21 @@ func (h *Handler) GetSpeedHistogram(c *gin.Context) {
 
 	c.JSON(http.StatusOK, SuccessResponse(result))
 }
+
+// GetDriveSpeedHistogram 获取单次驾驶的速度直方图数据
+func (h *Handler) GetDriveSpeedHistogram(c *gin.Context) {
+	driveID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse(400, "Invalid drive ID"))
+		return
+	}
+
+	result, err := h.repo.Drive.GetDriveSpeedHistogram(c.Request.Context(), driveID)
+	if err != nil {
+		logger.Errorf("Failed to get drive speed histogram: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get drive speed histogram"))
+		return
+	}
+
+	c.JSON(http.StatusOK, SuccessResponse(result))
+}

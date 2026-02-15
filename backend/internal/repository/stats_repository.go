@@ -33,6 +33,19 @@ func NewStatsRepository(db *sqlx.DB) StatsRepository {
 func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.OverviewStats, error) {
 	stats := &model.OverviewStats{}
 
+	// 获取车型信息以计算能效
+	var carModel, carMarketingName sql.NullString
+	modelQuery := `SELECT model, marketing_name FROM cars WHERE id = $1`
+	r.db.QueryRowxContext(ctx, modelQuery, carID).Scan(&carModel, &carMarketingName)
+	carEfficiency := getEfficiencyByModel("", "")
+	if carModel.Valid {
+		mktName := ""
+		if carMarketingName.Valid {
+			mktName = carMarketingName.String
+		}
+		carEfficiency = getEfficiencyByModel(carModel.String, mktName)
+	}
+
 	// 当前里程（总里程）
 	odometerQuery := `
 		SELECT COALESCE(odometer, 0)
@@ -88,14 +101,12 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 	}
 
 	// 平均能效：使用行程中的续航消耗 * 车辆能效系数 / 行驶距离
-	// 这比使用充入电量更准确，因为充入电量包含充电损耗和静态消耗
-	// 如果 efficiency 为 null，使用默认值 0.151
+	// 能效系数根据车型硬编码
 	efficiencyQuery := `
 		SELECT 
 			COALESCE(SUM(d.distance), 0) as total_distance,
-			COALESCE(SUM((d.start_ideal_range_km - d.end_ideal_range_km) * COALESCE(c.efficiency, 0.151)), 0) as total_energy_used
+			COALESCE(SUM(d.start_ideal_range_km - d.end_ideal_range_km), 0) as total_range_used
 		FROM drives d
-		JOIN cars c ON c.id = d.car_id
 		WHERE d.car_id = $1 
 			AND d.distance > 0 
 			AND d.start_ideal_range_km IS NOT NULL 
@@ -103,12 +114,13 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 			AND d.start_ideal_range_km > d.end_ideal_range_km
 	`
 	var effStats struct {
-		TotalDistance   float64 `db:"total_distance"`
-		TotalEnergyUsed float64 `db:"total_energy_used"`
+		TotalDistance float64 `db:"total_distance"`
+		TotalRangeUsed float64 `db:"total_range_used"`
 	}
 	if err := r.db.GetContext(ctx, &effStats, efficiencyQuery, carID); err == nil {
-		if effStats.TotalDistance > 0 && effStats.TotalEnergyUsed > 0 {
-			stats.AvgEfficiency = effStats.TotalEnergyUsed / effStats.TotalDistance * 1000 // Wh/km
+		if effStats.TotalDistance > 0 && effStats.TotalRangeUsed > 0 {
+			// 能效 = 续航消耗 * 能效系数 / 行驶距离
+			stats.AvgEfficiency = effStats.TotalRangeUsed * carEfficiency / effStats.TotalDistance * 1000 // Wh/km
 		}
 	}
 
@@ -250,12 +262,27 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days int) (*model.EfficiencyStats, error) {
 	stats := &model.EfficiencyStats{}
 
+	// 获取车型信息以计算能效
+	var carModel, carMarketingName sql.NullString
+	modelQuery := `SELECT model, marketing_name FROM cars WHERE id = $1`
+	r.db.QueryRowxContext(ctx, modelQuery, carID).Scan(&carModel, &carMarketingName)
+	carEfficiency := getEfficiencyByModel("", "")
+	if carModel.Valid {
+		mktName := ""
+		if carMarketingName.Valid {
+			mktName = carMarketingName.String
+		}
+		carEfficiency = getEfficiencyByModel(carModel.String, mktName)
+	}
+	// 能效系数 * 1000 = Wh/km系数，用于SQL中计算
+	efficiencyFactor := carEfficiency * 1000
+
 	// 日统计
 	dailyQuery := `
 		SELECT 
 			DATE(start_date) as date,
 			COALESCE(SUM(distance), 0) as distance,
-			COALESCE(SUM(start_ideal_range_km - end_ideal_range_km), 0) * 161 / 1000 as energy_used
+			COALESCE(SUM(start_ideal_range_km - end_ideal_range_km), 0) as range_used
 		FROM drives
 		WHERE car_id = $1 AND start_date >= $2
 		GROUP BY DATE(start_date)
@@ -271,21 +298,21 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 		defer rows.Close()
 		for rows.Next() {
 			var row struct {
-				Date       time.Time `db:"date"`
-				Distance   float64   `db:"distance"`
-				EnergyUsed float64   `db:"energy_used"`
+				Date      time.Time `db:"date"`
+				Distance  float64   `db:"distance"`
+				RangeUsed float64   `db:"range_used"`
 			}
 			if err := rows.StructScan(&row); err != nil {
 				continue
 			}
 
 			point := model.EfficiencyDataPoint{
-				Date:       row.Date.Format("2006-01-02"),
-				Distance:   row.Distance,
-				EnergyUsed: row.EnergyUsed,
+				Date:      row.Date.Format("2006-01-02"),
+				Distance:  row.Distance,
+				EnergyUsed: row.RangeUsed * efficiencyFactor / 1000,
 			}
 			if row.Distance > 0 {
-				point.Efficiency = row.EnergyUsed / row.Distance * 1000
+				point.Efficiency = row.RangeUsed * efficiencyFactor / row.Distance
 			}
 			stats.Daily = append(stats.Daily, point)
 		}
@@ -296,7 +323,7 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 		SELECT 
 			DATE_TRUNC('week', start_date) as date,
 			COALESCE(SUM(distance), 0) as distance,
-			COALESCE(SUM(start_ideal_range_km - end_ideal_range_km), 0) * 161 / 1000 as energy_used
+			COALESCE(SUM(start_ideal_range_km - end_ideal_range_km), 0) as range_used
 		FROM drives
 		WHERE car_id = $1 AND start_date >= $2
 		GROUP BY DATE_TRUNC('week', start_date)
@@ -312,21 +339,21 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 		defer rows.Close()
 		for rows.Next() {
 			var row struct {
-				Date       time.Time `db:"date"`
-				Distance   float64   `db:"distance"`
-				EnergyUsed float64   `db:"energy_used"`
+				Date      time.Time `db:"date"`
+				Distance  float64   `db:"distance"`
+				RangeUsed float64   `db:"range_used"`
 			}
 			if err := rows.StructScan(&row); err != nil {
 				continue
 			}
 
 			point := model.EfficiencyDataPoint{
-				Date:       row.Date.Format("2006-01-02"),
-				Distance:   row.Distance,
-				EnergyUsed: row.EnergyUsed,
+				Date:      row.Date.Format("2006-01-02"),
+				Distance:  row.Distance,
+				EnergyUsed: row.RangeUsed * efficiencyFactor / 1000,
 			}
 			if row.Distance > 0 {
-				point.Efficiency = row.EnergyUsed / row.Distance * 1000
+				point.Efficiency = row.RangeUsed * efficiencyFactor / row.Distance
 			}
 			stats.Weekly = append(stats.Weekly, point)
 		}
@@ -337,7 +364,7 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 		SELECT 
 			DATE_TRUNC('month', start_date) as date,
 			COALESCE(SUM(distance), 0) as distance,
-			COALESCE(SUM(start_ideal_range_km - end_ideal_range_km), 0) * 161 / 1000 as energy_used
+			COALESCE(SUM(start_ideal_range_km - end_ideal_range_km), 0) as range_used
 		FROM drives
 		WHERE car_id = $1 AND start_date >= $2
 		GROUP BY DATE_TRUNC('month', start_date)
@@ -353,21 +380,21 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 		defer rows.Close()
 		for rows.Next() {
 			var row struct {
-				Date       time.Time `db:"date"`
-				Distance   float64   `db:"distance"`
-				EnergyUsed float64   `db:"energy_used"`
+				Date      time.Time `db:"date"`
+				Distance  float64   `db:"distance"`
+				RangeUsed float64   `db:"range_used"`
 			}
 			if err := rows.StructScan(&row); err != nil {
 				continue
 			}
 
 			point := model.EfficiencyDataPoint{
-				Date:       row.Date.Format("2006-01"),
-				Distance:   row.Distance,
-				EnergyUsed: row.EnergyUsed,
+				Date:      row.Date.Format("2006-01"),
+				Distance:  row.Distance,
+				EnergyUsed: row.RangeUsed * efficiencyFactor / 1000,
 			}
 			if row.Distance > 0 {
-				point.Efficiency = row.EnergyUsed / row.Distance * 1000
+				point.Efficiency = row.RangeUsed * efficiencyFactor / row.Distance
 			}
 			stats.Monthly = append(stats.Monthly, point)
 		}
@@ -379,6 +406,21 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 // GetBattery 获取电池统计
 func (r *statsRepository) GetBattery(ctx context.Context, carID int16) (*model.BatteryStats, error) {
 	stats := &model.BatteryStats{}
+
+	// 获取车型信息以计算能效
+	var carModel, carMarketingName sql.NullString
+	modelQuery := `SELECT model, marketing_name FROM cars WHERE id = $1`
+	r.db.QueryRowxContext(ctx, modelQuery, carID).Scan(&carModel, &carMarketingName)
+	carEfficiency := getEfficiencyByModel("", "")
+	if carModel.Valid {
+		mktName := ""
+		if carMarketingName.Valid {
+			mktName = carMarketingName.String
+		}
+		carEfficiency = getEfficiencyByModel(carModel.String, mktName)
+	}
+	// 能效系数 * 1000 = Wh/km系数
+	efficiencyFactor := carEfficiency * 1000
 
 	// 获取电池容量历史（基于100%充电记录）
 	query := `
@@ -425,9 +467,9 @@ func (r *statsRepository) GetBattery(ctx context.Context, carID int16) (*model.B
 		}
 		if row.BatteryLevel.Valid {
 			point.BatteryLevel = int(row.BatteryLevel.Int64)
-			// 估算电池容量 (假设效率为161 Wh/km)
+			// 估算电池容量，根据车型能效系数计算
 			if point.IdealRangeKm > 0 && point.BatteryLevel > 0 {
-				point.EstimatedCapacity = point.IdealRangeKm * 161 / 1000 * 100 / float64(point.BatteryLevel)
+				point.EstimatedCapacity = point.IdealRangeKm * efficiencyFactor / 1000 * 100 / float64(point.BatteryLevel)
 			}
 		}
 

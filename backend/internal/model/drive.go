@@ -86,6 +86,14 @@ type DrivePosition struct {
 	Power        int       `json:"power"`
 	BatteryLevel int       `json:"batteryLevel"`
 	Elevation    *int      `json:"elevation,omitempty"`
+	// 温度数据
+	OutsideTemp *float64 `json:"outsideTemp,omitempty"`
+	InsideTemp  *float64 `json:"insideTemp,omitempty"`
+	// 胎压数据 (bar)
+	TpmsPressureFL *float64 `json:"tpmsPressureFL,omitempty"`
+	TpmsPressureFR *float64 `json:"tpmsPressureFR,omitempty"`
+	TpmsPressureRL *float64 `json:"tpmsPressureRL,omitempty"`
+	TpmsPressureRR *float64 `json:"tpmsPressureRR,omitempty"`
 }
 
 // DriveStatsSummary 驾驶统计摘要

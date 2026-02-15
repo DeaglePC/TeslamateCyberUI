@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"teslamate-cyberui/internal/logger"
@@ -13,6 +14,135 @@ import (
 	"github.com/lib/pq"
 )
 
+// Tesla车型能效系数表 (kWh/km)
+// 参考: Tesla官方能耗数据
+// model + marketing_name 组合映射
+var teslaEfficiencyMap = map[string]float64{
+	// Model 3
+	"Model 3 Standard Range":   0.131, // 131 Wh/km
+	"Model 3 Standard Range Plus": 0.131,
+	"Model 3 SR+":              0.131,
+	"Model 3 RWD":              0.131,
+	"Model 3 Long Range":       0.153, // 153 Wh/km
+	"Model 3 LR":               0.153,
+	"Model 3 Performance":      0.163, // 163 Wh/km
+	"Model 3 P":                0.163,
+	// Model Y
+	"Model Y Long Range":       0.153, // 153 Wh/km
+	"Model Y LR":               0.153,
+	"Model Y Performance":      0.181, // 181 Wh/km
+	"Model Y P":                0.181,
+	"Model Y RWD":              0.143, // 143 Wh/km
+	// Model S
+	"Model S":                  0.181, // 181 Wh/km
+	"Model S Long Range":       0.181,
+	"Model S Performance":      0.196,
+	"Model S Plaid":            0.196,
+	// Model X
+	"Model X":                  0.203, // 203 Wh/km
+	"Model X Long Range":       0.203,
+	"Model X Performance":      0.217,
+	"Model X Plaid":            0.217,
+}
+
+// defaultEfficiency 默认能效系数 (Model 3/Y 的平均值)
+const defaultEfficiency = 0.153
+
+// getEfficiencyByModel 根据车型获取能效系数
+// model: 数据库中的 model 字段 (如 "3", "Y", "S", "X")
+// marketingName: 数据库中的 marketing_name 字段 (如 "SR+", "Long Range", "Performance")
+func getEfficiencyByModel(model string, marketingName string) float64 {
+	model = strings.TrimSpace(model)
+	marketingName = strings.TrimSpace(marketingName)
+
+	// 组合完整车型名称
+	fullName := ""
+	if model != "" {
+		// 处理简写形式: "3" -> "Model 3"
+		if model == "3" || strings.ToLower(model) == "model 3" {
+			fullName = "Model 3"
+		} else if model == "Y" || strings.ToLower(model) == "model y" {
+			fullName = "Model Y"
+		} else if model == "S" || strings.ToLower(model) == "model s" {
+			fullName = "Model S"
+		} else if model == "X" || strings.ToLower(model) == "model x" {
+			fullName = "Model X"
+		} else {
+			fullName = model
+		}
+	}
+
+	// 根据 marketing_name 确定具体配置
+	marketingLower := strings.ToLower(marketingName)
+
+	// 构建完整匹配key
+	var matchKey string
+	switch {
+	case marketingLower == "sr+" || marketingLower == "sr" || marketingLower == "standard range" || marketingLower == "standard range plus" || marketingLower == "rwd":
+		matchKey = fullName + " RWD"
+	case strings.Contains(marketingLower, "long range") || marketingLower == "lr":
+		matchKey = fullName + " Long Range"
+	case strings.Contains(marketingLower, "performance") || marketingLower == "p" || marketingLower == "p3d" || marketingLower == "p3d+":
+		matchKey = fullName + " Performance"
+	case strings.Contains(marketingLower, "plaid"):
+		matchKey = fullName + " Plaid"
+	default:
+		// 尝试直接拼接
+		if marketingName != "" {
+			matchKey = fullName + " " + marketingName
+		} else {
+			matchKey = fullName
+		}
+	}
+
+	// 精确匹配
+	if eff, ok := teslaEfficiencyMap[matchKey]; ok {
+		return eff
+	}
+
+	// 尝试只用 fullName 匹配
+	if eff, ok := teslaEfficiencyMap[fullName]; ok {
+		return eff
+	}
+
+	// 智能判断（基于 marketing_name）
+	if strings.Contains(marketingLower, "sr+") || strings.Contains(marketingLower, "sr") || marketingLower == "rwd" {
+		if strings.Contains(strings.ToLower(fullName), "3") {
+			return 0.131
+		}
+		if strings.Contains(strings.ToLower(fullName), "y") {
+			return 0.143
+		}
+	}
+	if strings.Contains(marketingLower, "long range") || marketingLower == "lr" {
+		if strings.Contains(strings.ToLower(fullName), "3") || strings.Contains(strings.ToLower(fullName), "y") {
+			return 0.153
+		}
+		if strings.Contains(strings.ToLower(fullName), "s") {
+			return 0.181
+		}
+		if strings.Contains(strings.ToLower(fullName), "x") {
+			return 0.203
+		}
+	}
+	if strings.Contains(marketingLower, "performance") || marketingLower == "p" {
+		if strings.Contains(strings.ToLower(fullName), "3") {
+			return 0.163
+		}
+		if strings.Contains(strings.ToLower(fullName), "y") {
+			return 0.181
+		}
+		if strings.Contains(strings.ToLower(fullName), "s") {
+			return 0.196
+		}
+		if strings.Contains(strings.ToLower(fullName), "x") {
+			return 0.217
+		}
+	}
+
+	return defaultEfficiency
+}
+
 // DriveRepository 驾驶数据仓储接口
 type DriveRepository interface {
 	GetList(ctx context.Context, carID int16, page, pageSize int, startDate, endDate *time.Time) (*model.ListResponse[model.DriveListItem], error)
@@ -21,6 +151,7 @@ type DriveRepository interface {
 	GetAllDrivesPositions(ctx context.Context, carID int16, startDate, endDate *time.Time) ([]model.DriveTrack, error)
 	GetStatsSummary(ctx context.Context, carID int16, startDate, endDate *time.Time) (*model.DriveStatsSummary, error)
 	GetSpeedHistogram(ctx context.Context, carID int16, startDate, endDate *time.Time) ([]model.SpeedHistogramItem, error)
+	GetDriveSpeedHistogram(ctx context.Context, driveID int64) ([]model.SpeedHistogramItem, error)
 }
 
 type driveRepository struct {
@@ -73,8 +204,11 @@ func (r *driveRepository) GetList(ctx context.Context, carID int16, page, pageSi
 			COALESCE(ep.battery_level, 0) as end_battery_level,
 			COALESCE(d.speed_max, 0) as speed_max,
 			d.start_ideal_range_km,
-			d.end_ideal_range_km
+			d.end_ideal_range_km,
+			c.model as car_model,
+			c.marketing_name as car_marketing_name
 		FROM drives d
+		LEFT JOIN cars c ON c.id = d.car_id
 		LEFT JOIN addresses sa ON d.start_address_id = sa.id
 		LEFT JOIN addresses ea ON d.end_address_id = ea.id
 		LEFT JOIN geofences sg ON d.start_geofence_id = sg.id
@@ -110,6 +244,8 @@ func (r *driveRepository) GetList(ctx context.Context, carID int16, page, pageSi
 			SpeedMax          int             `db:"speed_max"`
 			StartIdealRangeKm sql.NullFloat64 `db:"start_ideal_range_km"`
 			EndIdealRangeKm   sql.NullFloat64 `db:"end_ideal_range_km"`
+			CarModel          sql.NullString  `db:"car_model"`
+			CarMarketingName  sql.NullString  `db:"car_marketing_name"`
 		}
 
 		if err := rows.StructScan(&row); err != nil {
@@ -137,11 +273,21 @@ func (r *driveRepository) GetList(ctx context.Context, carID int16, page, pageSi
 
 		// 计算能效 (Wh/km)
 		// 公式: (续航消耗 / 行驶距离) * 车辆能效系数 * 1000
-		// 车辆能效系数 0.151 kWh/km = 151 Wh/km
+		// 车辆能效系数单位: kWh/km，乘以1000后转为 Wh/km
+		// 根据车型硬编码能效系数
+		carModel := ""
+		carMarketingName := ""
+		if row.CarModel.Valid {
+			carModel = row.CarModel.String
+		}
+		if row.CarMarketingName.Valid {
+			carMarketingName = row.CarMarketingName.String
+		}
+		carEfficiency := getEfficiencyByModel(carModel, carMarketingName)
 		if row.Distance > 0 && row.StartIdealRangeKm.Valid && row.EndIdealRangeKm.Valid {
 			rangeUsed := row.StartIdealRangeKm.Float64 - row.EndIdealRangeKm.Float64
 			if rangeUsed > 0 {
-				item.Efficiency = rangeUsed / row.Distance * 151.0 // Wh/km
+				item.Efficiency = rangeUsed / row.Distance * carEfficiency * 1000
 			}
 		}
 
@@ -181,8 +327,11 @@ func (r *driveRepository) GetDetail(ctx context.Context, driveID int64) (*model.
 			COALESCE(d.power_max, 0) as power_max,
 			COALESCE(d.power_min, 0) as power_min,
 			d.outside_temp_avg,
-			d.inside_temp_avg
+			d.inside_temp_avg,
+			c.model as car_model,
+			c.marketing_name as car_marketing_name
 		FROM drives d
+		LEFT JOIN cars c ON c.id = d.car_id
 		LEFT JOIN addresses sa ON d.start_address_id = sa.id
 		LEFT JOIN addresses ea ON d.end_address_id = ea.id
 		LEFT JOIN geofences sg ON d.start_geofence_id = sg.id
@@ -213,6 +362,8 @@ func (r *driveRepository) GetDetail(ctx context.Context, driveID int64) (*model.
 		PowerMin          int             `db:"power_min"`
 		OutsideTempAvg    sql.NullFloat64 `db:"outside_temp_avg"`
 		InsideTempAvg     sql.NullFloat64 `db:"inside_temp_avg"`
+		CarModel          sql.NullString  `db:"car_model"`
+		CarMarketingName  sql.NullString  `db:"car_marketing_name"`
 	}
 
 	if err := r.db.GetContext(ctx, &row, query, driveID); err != nil {
@@ -255,15 +406,26 @@ func (r *driveRepository) GetDetail(ctx context.Context, driveID int64) (*model.
 		detail.InsideTempAvg = &row.InsideTempAvg.Float64
 	}
 
-	// 计算平均速度和能效
+	// 计算平均速度
 	if row.DurationMin > 0 {
 		detail.SpeedAvg = row.Distance / (float64(row.DurationMin) / 60.0)
 	}
-	// 计算能效 (Wh/km): (续航消耗 / 行驶距离) * 151
+
+	// 计算能效 (Wh/km)
+	// 根据车型获取能效系数
+	carModel := ""
+	carMarketingName := ""
+	if row.CarModel.Valid {
+		carModel = row.CarModel.String
+	}
+	if row.CarMarketingName.Valid {
+		carMarketingName = row.CarMarketingName.String
+	}
+	carEfficiency := getEfficiencyByModel(carModel, carMarketingName)
 	if row.Distance > 0 {
 		rangeUsed := row.StartIdealRangeKm - row.EndIdealRangeKm
 		if rangeUsed > 0 {
-			detail.Efficiency = rangeUsed / row.Distance * 151.0
+			detail.Efficiency = rangeUsed / row.Distance * carEfficiency * 1000
 		}
 	}
 
@@ -280,7 +442,13 @@ func (r *driveRepository) GetPositions(ctx context.Context, driveID int64) ([]mo
 			COALESCE(speed, 0) as speed,
 			COALESCE(power, 0) as power,
 			COALESCE(battery_level, 0) as battery_level,
-			elevation
+			elevation,
+			outside_temp,
+			inside_temp,
+			tpms_pressure_fl,
+			tpms_pressure_fr,
+			tpms_pressure_rl,
+			tpms_pressure_rr
 		FROM positions
 		WHERE drive_id = $1
 		ORDER BY date ASC
@@ -296,13 +464,19 @@ func (r *driveRepository) GetPositions(ctx context.Context, driveID int64) ([]mo
 	var positions []model.DrivePosition
 	for rows.Next() {
 		var row struct {
-			Date         sql.NullTime  `db:"date"`
-			Latitude     float64       `db:"latitude"`
-			Longitude    float64       `db:"longitude"`
-			Speed        int           `db:"speed"`
-			Power        int           `db:"power"`
-			BatteryLevel int           `db:"battery_level"`
-			Elevation    sql.NullInt64 `db:"elevation"`
+			Date           sql.NullTime    `db:"date"`
+			Latitude       float64         `db:"latitude"`
+			Longitude      float64         `db:"longitude"`
+			Speed          int             `db:"speed"`
+			Power          int             `db:"power"`
+			BatteryLevel   int             `db:"battery_level"`
+			Elevation      sql.NullInt64   `db:"elevation"`
+			OutsideTemp    sql.NullFloat64 `db:"outside_temp"`
+			InsideTemp     sql.NullFloat64 `db:"inside_temp"`
+			TpmsPressureFL sql.NullFloat64 `db:"tpms_pressure_fl"`
+			TpmsPressureFR sql.NullFloat64 `db:"tpms_pressure_fr"`
+			TpmsPressureRL sql.NullFloat64 `db:"tpms_pressure_rl"`
+			TpmsPressureRR sql.NullFloat64 `db:"tpms_pressure_rr"`
 		}
 
 		if err := rows.StructScan(&row); err != nil {
@@ -323,6 +497,24 @@ func (r *driveRepository) GetPositions(ctx context.Context, driveID int64) ([]mo
 		if row.Elevation.Valid {
 			elev := int(row.Elevation.Int64)
 			pos.Elevation = &elev
+		}
+		if row.OutsideTemp.Valid {
+			pos.OutsideTemp = &row.OutsideTemp.Float64
+		}
+		if row.InsideTemp.Valid {
+			pos.InsideTemp = &row.InsideTemp.Float64
+		}
+		if row.TpmsPressureFL.Valid {
+			pos.TpmsPressureFL = &row.TpmsPressureFL.Float64
+		}
+		if row.TpmsPressureFR.Valid {
+			pos.TpmsPressureFR = &row.TpmsPressureFR.Float64
+		}
+		if row.TpmsPressureRL.Valid {
+			pos.TpmsPressureRL = &row.TpmsPressureRL.Float64
+		}
+		if row.TpmsPressureRR.Valid {
+			pos.TpmsPressureRR = &row.TpmsPressureRR.Float64
 		}
 
 		positions = append(positions, pos)
@@ -634,6 +826,60 @@ func (r *driveRepository) GetSpeedHistogram(ctx context.Context, carID int16, st
 	rows, err := r.db.QueryxContext(ctx, query, args...)
 	if err != nil {
 		logger.Errorf("Failed to get speed histogram for car %d: %v", carID, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []model.SpeedHistogramItem
+	for rows.Next() {
+		var item struct {
+			Speed       sql.NullInt64   `db:"speed"`
+			Elapsed     sql.NullFloat64 `db:"elapsed"`
+			TimeSeconds sql.NullFloat64 `db:"time_seconds"`
+		}
+
+		if err := rows.StructScan(&item); err != nil {
+			continue
+		}
+
+		histItem := model.SpeedHistogramItem{
+			Speed:       int(item.Speed.Int64),
+			Elapsed:     item.Elapsed.Float64,
+			TimeSeconds: item.TimeSeconds.Float64,
+		}
+
+		items = append(items, histItem)
+	}
+
+	return items, nil
+}
+
+// GetDriveSpeedHistogram 获取单次驾驶的速度直方图数据
+func (r *driveRepository) GetDriveSpeedHistogram(ctx context.Context, driveID int64) ([]model.SpeedHistogramItem, error) {
+	// 参考 Grafana 的 SQL 查询，针对单次驾驶
+	query := `
+		WITH drivedata AS (
+			SELECT
+				ROUND(p.speed::numeric / 10, 0) * 10 AS speed_section,
+				EXTRACT(EPOCH FROM (LEAD(p.date) OVER (ORDER BY p.date) - p.date)) AS seconds_elapsed,
+				EXTRACT(EPOCH FROM (d.end_date - d.start_date)) AS duration
+			FROM positions p
+			JOIN drives d ON d.id = p.drive_id
+			WHERE p.drive_id = $1
+		)
+		SELECT 
+			speed_section AS speed,
+			SUM(seconds_elapsed) * 100 / NULLIF(MAX(duration), 0) AS elapsed,
+			SUM(seconds_elapsed) AS time_seconds
+		FROM drivedata
+		WHERE speed_section > 0
+		GROUP BY speed_section
+		ORDER BY speed_section
+	`
+
+	rows, err := r.db.QueryxContext(ctx, query, driveID)
+	if err != nil {
+		logger.Errorf("Failed to get drive speed histogram for drive %d: %v", driveID, err)
 		return nil, err
 	}
 	defer rows.Close()

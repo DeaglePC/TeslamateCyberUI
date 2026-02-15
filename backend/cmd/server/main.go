@@ -88,6 +88,7 @@ func main() {
 		api.GET("/cars/:id/drives/positions", h.GetAllDrivesPositions)
 		api.GET("/drives/:id", h.GetDriveDetail)
 		api.GET("/drives/:id/positions", h.GetDrivePositions)
+		api.GET("/drives/:id/speed_histogram", h.GetDriveSpeedHistogram)
 
 		// 统计相关
 		api.GET("/cars/:id/stats/overview", h.GetOverviewStats)

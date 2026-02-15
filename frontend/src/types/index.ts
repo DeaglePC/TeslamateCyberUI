@@ -190,6 +190,14 @@ export interface DrivePosition {
   power: number;
   batteryLevel: number;
   elevation?: number;
+  // 温度数据
+  outsideTemp?: number;
+  insideTemp?: number;
+  // 胎压数据 (bar)
+  tpmsPressureFL?: number;
+  tpmsPressureFR?: number;
+  tpmsPressureRL?: number;
+  tpmsPressureRR?: number;
 }
 
 // 单次行程轨迹

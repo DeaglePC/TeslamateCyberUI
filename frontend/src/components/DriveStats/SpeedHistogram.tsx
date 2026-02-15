@@ -6,11 +6,17 @@ import { Card } from '@/components/Card';
 import { SpeedHistogramItem } from '@/types';
 import { getThemeColors } from '@/utils/theme';
 import { Loading } from '@/components/States';
+import { useTranslation } from '@/utils/i18n';
 
 interface Props {
-    carId: number;
+    // 模式1：通过 carId + 日期范围获取（驾驶记录页面）
+    carId?: number;
     startDate?: string;
     endDate?: string;
+    // 模式2：通过 driveId 获取单次驾驶数据（驾驶详情页面）
+    driveId?: number;
+    // 可选：不包裹 Card
+    noCard?: boolean;
 }
 
 // 格式化时间显示
@@ -30,17 +36,27 @@ const formatTime = (seconds: number): string => {
     return `${hours}h ${remainingMinutes}m`;
 };
 
-export function SpeedHistogram({ carId, startDate, endDate }: Props) {
-    const { theme, language } = useSettingsStore();
+export function SpeedHistogram({ carId, startDate, endDate, driveId, noCard }: Props) {
+    const { theme, unit, language } = useSettingsStore();
+    const { t } = useTranslation(language);
     const [data, setData] = useState<SpeedHistogramItem[]>([]);
     const [loading, setLoading] = useState(true);
     const colors = getThemeColors(theme);
+
+    const isImperial = unit === 'imperial';
+    const speedUnit = isImperial ? 'mph' : 'km/h';
+    const convertSpeed = (speed: number) => isImperial ? Math.round(speed * 0.621371) : speed;
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const result = await driveApi.getSpeedHistogram(carId, startDate, endDate);
+                let result: SpeedHistogramItem[] = [];
+                if (driveId) {
+                    result = await driveApi.getDriveSpeedHistogram(driveId);
+                } else if (carId) {
+                    result = await driveApi.getSpeedHistogram(carId, startDate, endDate);
+                }
                 setData(result || []);
             } catch (err) {
                 console.error('Failed to fetch speed histogram', err);
@@ -50,15 +66,15 @@ export function SpeedHistogram({ carId, startDate, endDate }: Props) {
             }
         };
 
-        if (carId) {
+        if (driveId || carId) {
             fetchData();
         }
-    }, [carId, startDate, endDate]);
+    }, [carId, startDate, endDate, driveId]);
 
     const option = useMemo(() => {
         if (!data || data.length === 0) return {};
 
-        const speeds = data.map(item => `${item.speed}`);
+        const speeds = data.map(item => `${convertSpeed(item.speed)}`);
         const percentages = data.map(item => item.elapsed);
         const timeSeconds = data.map(item => item.timeSeconds);
 
@@ -83,7 +99,7 @@ export function SpeedHistogram({ carId, startDate, endDate }: Props) {
                     const time = timeSeconds[dataIndex];
                     return `
                         <div style="padding: 8px;">
-                            <div style="font-weight: bold; margin-bottom: 4px;">${speed} km/h</div>
+                            <div style="font-weight: bold; margin-bottom: 4px;">${speed} ${speedUnit}</div>
                             <div style="color: ${colors.accent};">${percentage.toFixed(1)}%</div>
                             <div style="color: ${colors.muted}; font-size: 12px;">${formatTime(time)}</div>
                         </div>
@@ -114,7 +130,7 @@ export function SpeedHistogram({ carId, startDate, endDate }: Props) {
                 axisTick: {
                     show: false
                 },
-                name: 'km/h',
+                name: speedUnit,
                 nameLocation: 'end',
                 nameTextStyle: {
                     color: colors.muted,
@@ -178,9 +194,12 @@ export function SpeedHistogram({ carId, startDate, endDate }: Props) {
                 }
             ]
         };
-    }, [data, colors, language]);
+    }, [data, colors, language, isImperial, speedUnit]);
 
     if (loading) {
+        if (noCard) {
+            return <div className="h-64 flex items-center justify-center"><Loading /></div>;
+        }
         return (
             <Card>
                 <div className="h-64 flex items-center justify-center">
@@ -194,23 +213,33 @@ export function SpeedHistogram({ carId, startDate, endDate }: Props) {
         return null;
     }
 
-    return (
-        <Card>
-            <div className="flex flex-col">
+    const content = (
+        <div className="flex flex-col">
+            {!noCard && (
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold" style={{ color: colors.primary }}>
-                        {language === 'zh' ? '速度直方图' : 'Speed Histogram'}
+                        {t('speedHistogram')}
                     </h3>
                     <span className="text-sm" style={{ color: colors.muted }}>
                         {language === 'zh' ? '各速度区间时间占比' : 'Time distribution by speed'}
                     </span>
                 </div>
-                <ReactECharts
-                    option={option}
-                    style={{ height: '280px', width: '100%' }}
-                    opts={{ renderer: 'svg' }}
-                />
-            </div>
+            )}
+            <ReactECharts
+                option={option}
+                style={{ height: '280px', width: '100%' }}
+                opts={{ renderer: 'svg' }}
+            />
+        </div>
+    );
+
+    if (noCard) {
+        return content;
+    }
+
+    return (
+        <Card>
+            {content}
         </Card>
     );
 }
