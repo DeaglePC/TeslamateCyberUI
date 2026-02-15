@@ -490,6 +490,9 @@ export default function DriveDetailPage() {
         </Card>
       )}
 
+      {/* 速度直方图 */}
+      {id && <SpeedHistogram driveId={parseInt(id)} />}
+
       {/* 温度曲线 */}
       {tempChartOption && (
         <Card>
@@ -515,9 +518,6 @@ export default function DriveDetailPage() {
           />
         </Card>
       )}
-
-      {/* 速度直方图 */}
-      {id && <SpeedHistogram driveId={parseInt(id)} />}
     </div>
   );
 }

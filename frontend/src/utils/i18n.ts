@@ -33,7 +33,7 @@ const translations = {
     range: { zh: '续航', en: 'Range' },
     odometer: { zh: '里程', en: 'Odometer' },
     temperature: { zh: '温度', en: 'Temperature' },
-    efficiency: { zh: '能效', en: 'Efficiency' },
+    efficiency: { zh: '能效（估算）', en: 'Efficiency (est.)' },
     softwareVersion: { zh: '软件版本', en: 'Software' },
     totalDistance: { zh: '总里程', en: 'Total Distance' },
     exterior: { zh: '车外', en: 'Exterior' },
