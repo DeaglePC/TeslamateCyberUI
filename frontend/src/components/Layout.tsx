@@ -48,7 +48,7 @@ function SettingsIcon({ className }: { className?: string }) {
 
 // ... existing code ...
 
-const SWIPE_TABS = ['/', '/charges', '/drives', '/settings'];
+const SWIPE_TABS = ['/', '/drives', '/charges', '/settings'];
 
 export default function Layout() {
   const { theme, language, backgroundImage, cardOpacity, cardBlur } = useSettingsStore();
@@ -96,8 +96,8 @@ export default function Layout() {
 
   const navItems = [
     { path: '/', label: t('home'), icon: HomeIcon },
-    { path: '/charges', label: t('charges'), icon: BatteryIcon },
     { path: '/drives', label: t('drives'), icon: CarIcon },
+    { path: '/charges', label: t('charges'), icon: BatteryIcon },
     { path: '/settings', label: t('settings'), icon: SettingsIcon },
   ];
 
