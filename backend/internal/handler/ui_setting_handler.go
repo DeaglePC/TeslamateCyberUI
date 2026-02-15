@@ -11,6 +11,7 @@ import (
 
 // 背景图片存储的 key
 const backgroundImageKey = "backgroundImage"
+const backgroundOriginalImageKey = "backgroundOriginalImage"
 
 // 最大图片大小 5MB（Base64 编码后约为 6.67MB）
 const maxImageSize = 5 * 1024 * 1024
@@ -76,6 +77,8 @@ func (h *Handler) BatchUpdateUISettings(c *gin.Context) {
 type UploadBackgroundImageRequest struct {
 	// Image Base64 编码的图片数据，格式为 data:image/xxx;base64,xxxx
 	Image string `json:"image" binding:"required"`
+	// OriginalImage 原始图片（用于重新裁剪）
+	OriginalImage string `json:"originalImage,omitempty"`
 }
 
 // UploadBackgroundImage 上传背景图片
@@ -118,6 +121,14 @@ func (h *Handler) UploadBackgroundImage(c *gin.Context) {
 		return
 	}
 
+	// 保存原始图片（如果有）
+	if req.OriginalImage != "" {
+		if err := h.repo.UISetting.Set(backgroundOriginalImageKey, req.OriginalImage); err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse(500, err.Error()))
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, SuccessResponse(map[string]any{
 		"message": "background image uploaded successfully",
 		"size":    len(imageData),
@@ -130,13 +141,22 @@ func (h *Handler) GetBackgroundImage(c *gin.Context) {
 	if err != nil {
 		// 没有设置背景图片，返回空
 		c.JSON(http.StatusOK, SuccessResponse(map[string]string{
-			"image": "",
+			"image":          "",
+			"originalImage":  "",
 		}))
 		return
 	}
 
+	// 获取原始图片
+	originalSetting, _ := h.repo.UISetting.Get(backgroundOriginalImageKey)
+	originalImage := ""
+	if originalSetting != nil {
+		originalImage = originalSetting.Value
+	}
+
 	c.JSON(http.StatusOK, SuccessResponse(map[string]string{
-		"image": setting.Value,
+		"image":         setting.Value,
+		"originalImage": originalImage,
 	}))
 }
 
@@ -147,6 +167,9 @@ func (h *Handler) DeleteBackgroundImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, ErrorResponse(500, err.Error()))
 		return
 	}
+
+	// 同时删除原始图片
+	h.repo.UISetting.Set(backgroundOriginalImageKey, "")
 
 	c.JSON(http.StatusOK, SuccessResponse(map[string]string{
 		"message": "background image deleted",

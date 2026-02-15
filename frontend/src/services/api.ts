@@ -214,14 +214,21 @@ export const settingsApi = {
 // 背景图片 API
 export const backgroundApi = {
   // 获取背景图片
-  get: async (): Promise<string> => {
-    const res = await api.get<ApiResponse<{ image: string }>>('/background-image');
-    return res.data.data?.image || '';
+  get: async (): Promise<{ image: string; originalImage: string }> => {
+    const res = await api.get<ApiResponse<{ image: string; originalImage: string }>>('/background-image');
+    return {
+      image: res.data.data?.image || '',
+      originalImage: res.data.data?.originalImage || '',
+    };
   },
 
   // 上传背景图片（Base64 格式）
-  upload: async (imageBase64: string): Promise<void> => {
-    await api.post('/background-image', { image: imageBase64 });
+  upload: async (imageBase64: string, originalImage?: string): Promise<void> => {
+    const payload: { image: string; originalImage?: string } = { image: imageBase64 };
+    if (originalImage) {
+      payload.originalImage = originalImage;
+    }
+    await api.post('/background-image', payload);
   },
 
   // 删除背景图片

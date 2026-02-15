@@ -17,6 +17,7 @@ interface SettingsState {
   apiKey: string;
   mapType: MapType;
   backgroundImage: string;  // Base64 格式的背景图片
+  backgroundOriginalImage: string; // 原始背景图片（用于重新裁剪）
   backgroundLoaded: boolean; // 标记背景图片是否已加载
   cardOpacity: number;  // 卡片透明度 (0-100)
   cardBlur: number;     // 卡片模糊度 (0-30px)
@@ -31,11 +32,12 @@ interface SettingsState {
   setApiKey: (key: string) => void;
   setMapType: (mapType: MapType) => void;
   setBackgroundImage: (image: string) => void;
+  setBackgroundOriginalImage: (image: string) => void;
   setCardOpacity: (opacity: number) => void;
   setCardBlur: (blur: number) => void;
   setAutoThemeFromBg: (enabled: boolean) => void;
   setAutoThemePrimaryColor: (color: string) => void;
-  uploadBackgroundImage: (image: string) => Promise<void>;
+  uploadBackgroundImage: (image: string, originalImage?: string) => Promise<void>;
   deleteBackgroundImage: () => Promise<void>;
   fetchRemoteSettings: () => Promise<void>;
   fetchBackgroundImage: () => Promise<void>;
@@ -53,6 +55,7 @@ export const useSettingsStore = create<SettingsState>()(
       apiKey: '',
       mapType: 'openstreet',  // 默认使用开源地图，无需配置
       backgroundImage: '',
+      backgroundOriginalImage: '',
       backgroundLoaded: false,
       cardOpacity: 70,  // 默认透明度 70%
       cardBlur: 16,     // 默认模糊度 16px
@@ -82,6 +85,7 @@ export const useSettingsStore = create<SettingsState>()(
         settingsApi.update('mapType', mapType).catch(() => { });
       },
       setBackgroundImage: (image) => set({ backgroundImage: image }),
+      setBackgroundOriginalImage: (image) => set({ backgroundOriginalImage: image }),
       setCardOpacity: (opacity) => {
         set({ cardOpacity: opacity });
         settingsApi.update('cardOpacity', String(opacity)).catch(() => { });
@@ -101,21 +105,21 @@ export const useSettingsStore = create<SettingsState>()(
       setAutoThemePrimaryColor: (color) => {
         set({ autoThemePrimaryColor: color });
       },
-      uploadBackgroundImage: async (image) => {
-        await backgroundApi.upload(image);
-        set({ backgroundImage: image });
+      uploadBackgroundImage: async (image, originalImage) => {
+        await backgroundApi.upload(image, originalImage);
+        set({ backgroundImage: image, backgroundOriginalImage: originalImage || '' });
       },
       deleteBackgroundImage: async () => {
         await backgroundApi.delete();
-        set({ backgroundImage: '' });
+        set({ backgroundImage: '', backgroundOriginalImage: '' });
       },
       fetchBackgroundImage: async () => {
         try {
           const state = get();
           if (!state.baseUrl) return;
-          
-          const image = await backgroundApi.get();
-          set({ backgroundImage: image, backgroundLoaded: true });
+
+          const { image, originalImage } = await backgroundApi.get();
+          set({ backgroundImage: image, backgroundOriginalImage: originalImage, backgroundLoaded: true });
         } catch (e) {
           console.error("Failed to fetch background image", e);
           set({ backgroundLoaded: true });

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSettingsStore, type ThemeType, type UnitType, type LanguageType } from '@/store/settings';
 import { Card } from '@/components/Card';
+import { ImageCropper } from '@/components/ImageCropper';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors, themeConfigs, setAutoThemeColor } from '@/utils/theme';
 import { extractDominantColor, generateThemeFromColor } from '@/utils/colorExtractor';
@@ -186,7 +187,7 @@ export default function SettingsPage() {
     theme, setTheme, unit, setUnit, language, setLanguage, 
     amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey, 
     mapType, setMapType,
-    backgroundImage, uploadBackgroundImage, deleteBackgroundImage,
+    backgroundImage, backgroundOriginalImage, uploadBackgroundImage, deleteBackgroundImage,
     cardOpacity, setCardOpacity,
     autoThemeFromBg, setAutoThemeFromBg, autoThemePrimaryColor, setAutoThemePrimaryColor
   } = useSettingsStore();
@@ -196,9 +197,25 @@ export default function SettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [extractingColor, setExtractingColor] = useState(false);
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [isReCropping, setIsReCropping] = useState(false); // 是否正在重新调整
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [bgImageRatio, setBgImageRatio] = useState<number | null>(null); // 背景图片宽高比
 
   const colors = getThemeColors(theme);
+
+  // 检测背景图片尺寸
+  useEffect(() => {
+    if (backgroundImage) {
+      const img = new Image();
+      img.onload = () => {
+        setBgImageRatio(img.width / img.height);
+      };
+      img.src = backgroundImage;
+    } else {
+      setBgImageRatio(null);
+    }
+  }, [backgroundImage]);
 
   // 当背景图片变化且开启了自动主题时，重新提取颜色
   useEffect(() => {
@@ -285,7 +302,7 @@ export default function SettingsPage() {
     { id: 'en', name: t('english') },
   ];
 
-  // 处理背景图片上传
+  // 处理背景图片上传 - 显示裁剪器
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -302,37 +319,65 @@ export default function SettingsPage() {
       return;
     }
 
-    setUploading(true);
     setUploadError(null);
 
     try {
-      // 读取文件为 Base64
+      // 读取文件为 Base64，显示裁剪器
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         const base64 = e.target?.result as string;
-        try {
-          await uploadBackgroundImage(base64);
-          setUploadError(null);
-        } catch (err) {
-          setUploadError(language === 'zh' ? '上传失败，请重试' : 'Upload failed, please try again');
-          console.error('Upload error:', err);
-        } finally {
-          setUploading(false);
-        }
+        setCropperImage(base64);
       };
       reader.onerror = () => {
         setUploadError(language === 'zh' ? '读取文件失败' : 'Failed to read file');
-        setUploading(false);
       };
       reader.readAsDataURL(file);
     } catch {
       setUploadError(language === 'zh' ? '处理图片失败' : 'Failed to process image');
-      setUploading(false);
     }
 
     // 清空 input 以便再次选择同一文件
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  // 处理裁剪完成
+  const handleCropComplete = async (croppedImage: string) => {
+    // 如果是重新调整，使用已保存的原始图片；否则使用当前裁剪器的源图片作为原始图片
+    const originalImage = isReCropping ? backgroundOriginalImage : cropperImage;
+    setCropperImage(null);
+    setIsReCropping(false);
+    setUploading(true);
+    try {
+      await uploadBackgroundImage(croppedImage, originalImage);
+      setUploadError(null);
+    } catch (err) {
+      setUploadError(language === 'zh' ? '上传失败，请重试' : 'Upload failed, please try again');
+      console.error('Upload error:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // 取消裁剪
+  const handleCropCancel = () => {
+    setCropperImage(null);
+    setIsReCropping(false);
+  };
+
+  // 重新调整已上传的图片
+  const handleReCrop = () => {
+    if (backgroundOriginalImage) {
+      setCropperImage(backgroundOriginalImage);
+      setIsReCropping(true);
+    } else {
+      // 没有原始图片，提示用户重新上传
+      setUploadError(language === 'zh' 
+        ? '请重新上传图片以启用调整功能' 
+        : 'Please re-upload image to enable cropping');
+      // 触发文件选择
+      fileInputRef.current?.click();
     }
   };
 
@@ -550,40 +595,8 @@ export default function SettingsPage() {
           </h3>
         </div>
 
-        {/* 当前背景预览 */}
-        {backgroundImage && (
-          <div className="mb-4 relative">
-            <div 
-              className="w-full h-32 rounded-lg bg-cover bg-center border"
-              style={{ 
-                backgroundImage: `url(${backgroundImage})`,
-                borderColor: colors.border 
-              }}
-            />
-            <button
-              onClick={handleDeleteBackground}
-              className="absolute top-2 right-2 p-2 rounded-full bg-black/50 hover:bg-red-500/80 transition-colors"
-              title={language === 'zh' ? '删除背景' : 'Delete background'}
-            >
-              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                <line x1="10" y1="11" x2="10" y2="17" />
-                <line x1="14" y1="11" x2="14" y2="17" />
-              </svg>
-            </button>
-          </div>
-        )}
-
-        {/* 上传区域 */}
-        <div 
-          className={clsx(
-            'border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer',
-            uploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-opacity-100'
-          )}
-          style={{ borderColor: `${colors.primary}50` }}
-          onClick={() => !uploading && fileInputRef.current?.click()}
-        >
+        {/* 背景图片预览和上传区域 */}
+        <div className="relative">
           <input
             ref={fileInputRef}
             type="file"
@@ -592,32 +605,124 @@ export default function SettingsPage() {
             className="hidden"
             disabled={uploading}
           />
-          
-          {uploading ? (
-            <div className="flex flex-col items-center gap-2">
-              <svg className="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
-                <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
-                <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
-              </svg>
-              <span style={{ color: colors.muted }}>
-                {language === 'zh' ? '上传中...' : 'Uploading...'}
-              </span>
+
+          {backgroundImage ? (
+            // 有背景图片时：显示真实比例预览 + 叠加操作按钮
+            <div
+              className="relative w-full rounded-lg border overflow-hidden cursor-pointer group"
+              style={{
+                borderColor: colors.border,
+                // 根据图片比例动态设置高度，限制最大高度
+                aspectRatio: bgImageRatio ? `${bgImageRatio}` : undefined,
+                maxHeight: '400px',
+                backgroundColor: 'transparent',
+              }}
+              onClick={() => !uploading && fileInputRef.current?.click()}
+            >
+              {/* 使用 img 标签，object-contain 完整显示图片 */}
+              <img
+                src={backgroundImage}
+                alt="Background preview"
+                className="w-full h-full object-contain"
+                style={{ backgroundColor: 'transparent' }}
+              />
+              {/* 半透明遮罩层 - hover 时显示 */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                {/* 更换图片提示 - hover 时显示 */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center gap-1">
+                  <svg className="w-10 h-10 text-white drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span className="text-white text-sm font-medium drop-shadow-lg">
+                    {uploading 
+                      ? (language === 'zh' ? '上传中...' : 'Uploading...')
+                      : (language === 'zh' ? '点击更换背景图片' : 'Click to change background')}
+                  </span>
+                </div>
+              </div>
+
+              {/* 操作按钮组 - 始终显示在右上角 */}
+              <div className="absolute top-2 right-2 flex gap-2 z-10">
+                {/* 上传中指示器 */}
+                {uploading && (
+                  <div className="p-2 rounded-full bg-black/50">
+                    <svg className="w-4 h-4 text-white animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                )}
+                {/* 重新调整按钮 */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReCrop();
+                  }}
+                  className="p-2 rounded-full bg-black/50 hover:bg-blue-500/80 transition-colors"
+                  title={backgroundOriginalImage 
+                    ? (language === 'zh' ? '重新调整区域' : 'Re-crop image')
+                    : (language === 'zh' ? '重新上传以启用调整功能' : 'Re-upload to enable cropping')}
+                >
+                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <path d="M10 7v6m3-3H7" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {/* 删除按钮 */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteBackground();
+                  }}
+                  className="p-2 rounded-full bg-black/50 hover:bg-red-500/80 transition-colors"
+                  title={language === 'zh' ? '删除背景' : 'Delete background'}
+                >
+                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2">
-              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <span style={{ color: colors.muted }}>
-                {language === 'zh' 
-                  ? (backgroundImage ? '点击更换背景图片' : '点击上传背景图片')
-                  : (backgroundImage ? 'Click to change background' : 'Click to upload background')}
-              </span>
-              <span className="text-xs" style={{ color: colors.muted }}>
-                {language === 'zh' ? '支持 JPG、PNG、WebP，最大 5MB' : 'Supports JPG, PNG, WebP, max 5MB'}
-              </span>
+            // 无背景图片时：显示上传区域
+            <div
+              className={clsx(
+                'border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer',
+                uploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-opacity-100'
+              )}
+              style={{ borderColor: `${colors.primary}50` }}
+              onClick={() => !uploading && fileInputRef.current?.click()}
+            >
+              {uploading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <svg className="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                  </svg>
+                  <span style={{ color: colors.muted }}>
+                    {language === 'zh' ? '上传中...' : 'Uploading...'}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span className="font-medium" style={{ color: colors.primary }}>
+                    {language === 'zh' ? '点击上传背景图片' : 'Click to upload background'}
+                  </span>
+                  <span className="text-xs" style={{ color: colors.muted }}>
+                    {language === 'zh' ? '支持 JPG、PNG、WebP，最大 5MB' : 'Supports JPG, PNG, WebP, max 5MB'}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -983,6 +1088,17 @@ export default function SettingsPage() {
           )}
         </div>
       </Card>
+
+      {/* Image Cropper Modal */}
+      {cropperImage && (
+        <ImageCropper
+          imageSrc={cropperImage}
+          onCrop={handleCropComplete}
+          onCancel={handleCropCancel}
+          language={language}
+          theme={theme}
+        />
+      )}
     </div>
   );
 }
