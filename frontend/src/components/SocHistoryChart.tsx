@@ -42,19 +42,15 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
     };
 
     const option = useMemo(() => {
-        // Sample data every N points for performance
-        const sampledData = data.length > 200
-            ? data.filter((_, i) => i % Math.ceil(data.length / 200) === 0)
-            : data;
-
+        // 使用 ECharts 内置的 LTTB 采样算法，保持曲线平滑同时保留关键特征
         const formatStr = days > 1 ? 'MM-DD HH:mm' : 'HH:mm';
-        const xData = sampledData.map(d => dayjs(d.date).format(formatStr));
-        const socData = sampledData.map(d => d.soc);
+        const xData = data.map(d => dayjs(d.date).format(formatStr));
+        const socData = data.map(d => d.soc);
 
         // 计算满电续航里程（100% SOC对应的续航）
         // 从数据中找到 rangeKm 和 soc 的比例关系
         let maxRangeKm = 0;
-        for (const d of sampledData) {
+        for (const d of data) {
             if (d.rangeKm && d.soc > 0) {
                 const estimatedFullRange = (d.rangeKm / d.soc) * 100;
                 if (estimatedFullRange > maxRangeKm) {
@@ -155,8 +151,9 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                     name: 'SOC',
                     type: 'line',
                     data: socData,
-                    smooth: true,
+                    smooth: 0.4,
                     symbol: 'none',
+                    sampling: 'lttb',
                     lineStyle: {
                         color: colors.primary,
                         width: 2,
