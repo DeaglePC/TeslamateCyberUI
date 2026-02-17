@@ -63,9 +63,13 @@ export default function DriveDetailPage() {
     if (!contentRef.current || sharing) return;
     setSharing(true);
     try {
-      const dataUrl = await domToPng(contentRef.current, {
-        scale: 2,
-        backgroundColor: colors.bg,
+      const { backgroundImage } = useSettingsStore.getState();
+      const padding = 24;
+      const scaleFactor = 2;
+
+      // Step 1: 原样截取内容（不修改任何样式）
+      const contentDataUrl = await domToPng(contentRef.current, {
+        scale: scaleFactor,
         filter: (node: Node) => {
           if (node instanceof HTMLElement) {
             return !node.hasAttribute('data-hide-on-share');
@@ -73,13 +77,64 @@ export default function DriveDetailPage() {
           return true;
         },
       });
-      const link = document.createElement('a');
-      const dateStr = detail ? formatDate(detail.startDate, 'YYYY-MM-DD') : '';
-      link.download = `drive_detail_${id}_${dateStr}.png`;
-      link.href = dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+
+      // Step 2: 后期合成 — 在 canvas 上绘制背景 + 内容
+      const contentImg = new Image();
+      contentImg.src = contentDataUrl;
+      await new Promise<void>((resolve, reject) => {
+        contentImg.onload = () => resolve();
+        contentImg.onerror = reject;
+      });
+
+      const canvasW = contentImg.width + padding * 2 * scaleFactor;
+      const canvasH = contentImg.height + padding * 2 * scaleFactor;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasW;
+      canvas.height = canvasH;
+      const ctx = canvas.getContext('2d')!;
+
+      // 绘制背景
+      if (backgroundImage) {
+        const bgImg = new Image();
+        bgImg.src = backgroundImage;
+        await new Promise<void>((resolve) => {
+          bgImg.onload = () => resolve();
+          bgImg.onerror = () => resolve(); // 背景加载失败则用纯色
+        });
+        if (bgImg.complete && bgImg.naturalWidth > 0) {
+          // cover 模式绘制背景
+          const scale = Math.max(canvasW / bgImg.width, canvasH / bgImg.height);
+          const w = bgImg.width * scale;
+          const h = bgImg.height * scale;
+          ctx.drawImage(bgImg, (canvasW - w) / 2, (canvasH - h) / 2, w, h);
+          // 暗色遮罩
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.fillRect(0, 0, canvasW, canvasH);
+        } else {
+          ctx.fillStyle = colors.bg;
+          ctx.fillRect(0, 0, canvasW, canvasH);
+        }
+      } else {
+        ctx.fillStyle = colors.bg;
+        ctx.fillRect(0, 0, canvasW, canvasH);
+      }
+
+      // 绘制内容（居中，四周留白）
+      ctx.drawImage(contentImg, padding * scaleFactor, padding * scaleFactor);
+
+      // Step 3: 下载
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const dateStr = detail ? formatDate(detail.startDate, 'YYYY-MM-DD') : '';
+        link.download = `drive_detail_${id}_${dateStr}.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 'image/png');
     } catch (err) {
       console.error('Screenshot failed:', err);
     } finally {
@@ -430,7 +485,7 @@ export default function DriveDetailPage() {
           data-hide-on-share
           onClick={handleShare}
           disabled={sharing}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all origin-right hover:scale-105 active:scale-95 disabled:opacity-50"
           style={{
             background: `${colors.primary}20`,
             color: colors.primary,
