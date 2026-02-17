@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactECharts from 'echarts-for-react';
 import { useSettingsStore } from '@/store/settings';
@@ -11,6 +11,7 @@ import { SpeedHistogram } from '@/components/DriveStats';
 import { formatDate, formatDuration, formatDistance, formatSpeed, formatTemperature } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import { useTranslation } from '@/utils/i18n';
+import { domToPng } from 'modern-screenshot';
 import type { DriveDetail, DrivePosition } from '@/types';
 
 export default function DriveDetailPage() {
@@ -22,6 +23,8 @@ export default function DriveDetailPage() {
   const [positions, setPositions] = useState<DrivePosition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const colors = getThemeColors(theme);
   const secondaryColor = colors.chart?.[1] || colors.accent;
@@ -54,6 +57,35 @@ export default function DriveDetailPage() {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  // 分享截图
+  const handleShare = useCallback(async () => {
+    if (!contentRef.current || sharing) return;
+    setSharing(true);
+    try {
+      const dataUrl = await domToPng(contentRef.current, {
+        scale: 2,
+        backgroundColor: colors.bg,
+        filter: (node: Node) => {
+          if (node instanceof HTMLElement) {
+            return !node.hasAttribute('data-hide-on-share');
+          }
+          return true;
+        },
+      });
+      const link = document.createElement('a');
+      const dateStr = detail ? formatDate(detail.startDate, 'YYYY-MM-DD') : '';
+      link.download = `drive_detail_${id}_${dateStr}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Screenshot failed:', err);
+    } finally {
+      setSharing(false);
+    }
+  }, [sharing, colors.bg, detail, id]);
 
   // 检查是否有温度数据 - 必须在 early return 之前
   const hasTempData = useMemo(() => {
@@ -265,7 +297,7 @@ export default function DriveDetailPage() {
           let html = `<div style="font-weight: 600;">${params[0]?.axisValue || ''}</div>`;
           params.forEach(p => {
             if (p.value !== undefined && p.value !== null) {
-              const temp = unit === 'imperial' ? (p.value * 9/5 + 32).toFixed(1) : p.value.toFixed(1);
+              const temp = unit === 'imperial' ? (p.value * 9 / 5 + 32).toFixed(1) : p.value.toFixed(1);
               const unitStr = unit === 'imperial' ? '°F' : '°C';
               html += `<div>${p.seriesName}: ${temp}${unitStr}</div>`;
             }
@@ -283,7 +315,7 @@ export default function DriveDetailPage() {
       yAxis: {
         type: 'value',
         axisLine: { lineStyle: { color: colors.muted } },
-        axisLabel: { color: colors.muted, formatter: (val: number) => unit === 'imperial' ? `${(val * 9/5 + 32).toFixed(0)}°F` : `${val.toFixed(0)}°C` },
+        axisLabel: { color: colors.muted, formatter: (val: number) => unit === 'imperial' ? `${(val * 9 / 5 + 32).toFixed(0)}°F` : `${val.toFixed(0)}°C` },
         splitLine: { lineStyle: { color: `${colors.muted}15` } },
       },
       series: [
@@ -370,9 +402,10 @@ export default function DriveDetailPage() {
   const tirePressureChartOption = getTirePressureChartOption();
 
   return (
-    <div className="space-y-6 animate-slideUp">
+    <div className="space-y-6 animate-slideUp" ref={contentRef}>
       {/* 返回按钮 */}
       <button
+        data-hide-on-share
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 transition-opacity hover:opacity-80"
         style={{ color: colors.muted }}
@@ -383,14 +416,41 @@ export default function DriveDetailPage() {
         {t('back')}
       </button>
 
-      {/* 标题 */}
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: colors.primary }}>
-          {t('driveDetail')}
-        </h1>
-        <p style={{ color: colors.muted }}>
-          {formatDate(detail.startDate)}
-        </p>
+      {/* 标题 + 分享按钮 */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: colors.primary }}>
+            {t('driveDetail')}
+          </h1>
+          <p style={{ color: colors.muted }}>
+            {formatDate(detail.startDate)}
+          </p>
+        </div>
+        <button
+          data-hide-on-share
+          onClick={handleShare}
+          disabled={sharing}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+          style={{
+            background: `${colors.primary}20`,
+            color: colors.primary,
+            border: `1px solid ${colors.primary}40`,
+          }}
+          title={t('share')}
+        >
+          {sharing ? (
+            <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" strokeDasharray="60" strokeDashoffset="20" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
+          )}
+          <span className="text-sm font-medium hidden sm:inline">{sharing ? t('generatingImage') : t('share')}</span>
+        </button>
       </div>
 
       {/* 路线信息 */}
@@ -473,7 +533,11 @@ export default function DriveDetailPage() {
         <Card>
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('driveRoute')}</h3>
           <div className="h-64 md:h-96 w-full relative z-0">
-            <UniversalMap positions={positions} />
+            <UniversalMap
+              positions={positions}
+              startMarker={{ latitude: detail.startLatitude, longitude: detail.startLongitude }}
+              endMarker={{ latitude: detail.endLatitude, longitude: detail.endLongitude }}
+            />
           </div>
         </Card>
       )}

@@ -137,6 +137,11 @@ const translations = {
     endTime: { zh: '结束时间', en: 'End Time' },
     time: { zh: '时间', en: 'Time' },
     percentage: { zh: '占比', en: 'Percentage' },
+
+    // Share
+    share: { zh: '分享', en: 'Share' },
+    generatingImage: { zh: '正在生成图片...', en: 'Generating image...' },
+    imageSaved: { zh: '图片已保存', en: 'Image saved' },
 } as const;
 
 type TranslationKey = keyof typeof translations;

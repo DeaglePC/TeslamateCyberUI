@@ -64,6 +64,15 @@ interface UniversalMapProps {
         latitude: number;
         longitude: number;
     };
+    // Explicit start/end markers (use drive detail's start/end coords for accuracy)
+    startMarker?: {
+        latitude: number;
+        longitude: number;
+    };
+    endMarker?: {
+        latitude: number;
+        longitude: number;
+    };
     // For Heatmap mode
     heatmapData?: HeatmapPoint[];
     className?: string;
@@ -73,7 +82,7 @@ interface UniversalMapProps {
 function getTrackColor(index: number, totalTracks: number, baseColor: string): string {
     // For single track, use the base color
     if (totalTracks === 1) return baseColor;
-    
+
     // Generate colors with varying hue based on index
     const hue = (index * 360 / totalTracks) % 360;
     return `hsl(${hue}, 70%, 50%)`;
@@ -94,7 +103,7 @@ function BoundsFitter({ positions, marker, heatmapData }: { positions?: [number,
     return null;
 }
 
-export function UniversalMap({ positions = [], tracks = [], marker, heatmapData = [], className = '' }: UniversalMapProps) {
+export function UniversalMap({ positions = [], tracks = [], marker, startMarker, endMarker, heatmapData = [], className = '' }: UniversalMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<unknown>(null);
     const { theme, amapKey, mapType } = useSettingsStore();
@@ -131,7 +140,7 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
     else if (isHeatmapMode && stableHeatmapData.length > 0) { checkLat = stableHeatmapData[0].latitude; checkLon = stableHeatmapData[0].longitude; }
 
     const isChina = hasData && !isOutOfChina(checkLat, checkLon);
-    
+
     // 使用高德地图的条件：
     // 1. 用户选择了高德地图 (mapType === 'amap')
     // 2. 并且配置了高德地图 API Key
@@ -165,6 +174,14 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
     const leafletMarkerPosition = marker ? [marker.latitude, marker.longitude] as [number, number] : undefined;
     const leafletHeatmapPositions = heatmapData.map(p => [p.latitude, p.longitude] as [number, number]);
 
+    // Use explicit start/end markers if provided, otherwise fall back to first/last positions
+    const leafletStartMarker: [number, number] | undefined = startMarker
+        ? [startMarker.latitude, startMarker.longitude]
+        : leafletPathPositions.length > 0 ? leafletPathPositions[0] : undefined;
+    const leafletEndMarker: [number, number] | undefined = endMarker
+        ? [endMarker.latitude, endMarker.longitude]
+        : leafletPathPositions.length > 0 ? leafletPathPositions[leafletPathPositions.length - 1] : undefined;
+
     // Multi-track data prep
     const leafletTracks = tracks.map(track => ({
         driveId: track.driveId,
@@ -197,6 +214,9 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                 const map = new AMap.Map(mapRef.current, {
                     zoom: 14,
                     mapStyle: 'amap://styles/dark',
+                    WebGLParams: {
+                        preserveDrawingBuffer: true,
+                    },
                 });
 
                 // Path Mode
@@ -214,21 +234,29 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                     });
                     map.add(polyline);
 
-                    const startMarker = new AMap.Marker({
-                        position: path[0],
+                    // Use explicit start/end markers if provided, otherwise use path endpoints
+                    const startPos = startMarker
+                        ? (() => { const [gLat, gLon] = wgsToGcj(startMarker.latitude, startMarker.longitude); return [gLon, gLat]; })()
+                        : path[0];
+                    const endPos = endMarker
+                        ? (() => { const [gLat, gLon] = wgsToGcj(endMarker.latitude, endMarker.longitude); return [gLon, gLat]; })()
+                        : path[path.length - 1];
+
+                    const startMk = new AMap.Marker({
+                        position: startPos,
                         content: `<div style="background:${colors.primary};width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`,
                         anchor: 'center',
                         offset: new AMap.Pixel(0, 0),
                     });
 
-                    const endMarker = new AMap.Marker({
-                        position: path[path.length - 1],
+                    const endMk = new AMap.Marker({
+                        position: endPos,
                         content: `<div style="background:${colors.secondary};width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`,
                         anchor: 'center',
                         offset: new AMap.Pixel(0, 0),
                     });
 
-                    map.add([startMarker, endMarker]);
+                    map.add([startMk, endMk]);
                     map.setFitView();
                 }
                 // Multi-track Mode
@@ -236,7 +264,7 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                     const polylines: unknown[] = [];
                     stableTracks.forEach((track, idx) => {
                         if (track.positions.length < 2) return;
-                        
+
                         const path = track.positions.map(p => {
                             const [gLat, gLon] = wgsToGcj(p.latitude, p.longitude);
                             return [gLon, gLat];
@@ -312,18 +340,20 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
 
     if (useAmap) {
         return (
-            <div 
-                ref={mapRef} 
+            <div
+                ref={mapRef}
                 className={`w-full h-full rounded-lg overflow-hidden ${className}`}
                 data-no-swipe
+                data-map-container
             />
         );
     }
 
     return (
-        <div 
+        <div
             className={`w-full h-full ${className}`}
             data-no-swipe
+            data-map-container
         >
             <MapContainer
                 center={center}
@@ -333,75 +363,79 @@ export function UniversalMap({ positions = [], tracks = [], marker, heatmapData 
                 zoomControl={false}
                 attributionControl={false}
             >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                />
 
-            {isPathMode && (
-                <>
-                    <Polyline
-                        positions={leafletPathPositions}
-                        pathOptions={{ color: colors.primary, weight: 4, opacity: 0.8 }}
-                    />
-                    <Marker position={leafletPathPositions[0]} icon={startIcon}>
-                        <Tooltip>起点</Tooltip>
-                    </Marker>
-                    <Marker position={leafletPathPositions[leafletPathPositions.length - 1]} icon={endIcon}>
-                        <Tooltip>终点</Tooltip>
-                    </Marker>
-                    <BoundsFitter positions={leafletPathPositions} />
-                </>
-            )}
+                {isPathMode && (
+                    <>
+                        <Polyline
+                            positions={leafletPathPositions}
+                            pathOptions={{ color: colors.primary, weight: 4, opacity: 0.8 }}
+                        />
+                        {leafletStartMarker && (
+                            <Marker position={leafletStartMarker} icon={startIcon}>
+                                <Tooltip>起点</Tooltip>
+                            </Marker>
+                        )}
+                        {leafletEndMarker && (
+                            <Marker position={leafletEndMarker} icon={endIcon}>
+                                <Tooltip>终点</Tooltip>
+                            </Marker>
+                        )}
+                        <BoundsFitter positions={leafletPathPositions} />
+                    </>
+                )}
 
-            {isMultiTrackMode && !isPathMode && (
-                <>
-                    {leafletTracks.map((track, idx) => {
-                        if (track.positions.length < 2) return null;
-                        const trackColor = getTrackColor(idx, leafletTracks.length, colors.primary);
-                        return (
-                            <Polyline
-                                key={track.driveId}
-                                positions={track.positions}
-                                pathOptions={{ color: trackColor, weight: 3, opacity: 0.7 }}
-                            />
-                        );
-                    })}
-                    <BoundsFitter positions={allTrackPositions} />
-                </>
-            )}
+                {isMultiTrackMode && !isPathMode && (
+                    <>
+                        {leafletTracks.map((track, idx) => {
+                            if (track.positions.length < 2) return null;
+                            const trackColor = getTrackColor(idx, leafletTracks.length, colors.primary);
+                            return (
+                                <Polyline
+                                    key={track.driveId}
+                                    positions={track.positions}
+                                    pathOptions={{ color: trackColor, weight: 3, opacity: 0.7 }}
+                                />
+                            );
+                        })}
+                        <BoundsFitter positions={allTrackPositions} />
+                    </>
+                )}
 
-            {isMarkerMode && !isPathMode && !isMultiTrackMode && leafletMarkerPosition && (
-                <>
-                    <Marker position={leafletMarkerPosition} icon={singleIcon} />
-                    <BoundsFitter marker={leafletMarkerPosition} />
-                </>
-            )}
+                {isMarkerMode && !isPathMode && !isMultiTrackMode && leafletMarkerPosition && (
+                    <>
+                        <Marker position={leafletMarkerPosition} icon={singleIcon} />
+                        <BoundsFitter marker={leafletMarkerPosition} />
+                    </>
+                )}
 
-            {isHeatmapMode && !isPathMode && !isMultiTrackMode && heatmapData.map((p, i) => (
-                <CircleMarker
-                    key={i}
-                    center={[p.latitude, p.longitude]}
-                    pathOptions={{
-                        color: colors.primary,
-                        fillColor: colors.primary,
-                        fillOpacity: 0.4,
-                        weight: 1
-                    }}
-                    radius={Math.max(5, Math.min(30, Math.sqrt(p.value)))}
-                >
-                    <Tooltip>
-                        <div className="text-sm">
-                            <div className="font-bold">{p.label}</div>
-                            <div>{p.count} charges</div>
-                            <div>{p.value.toFixed(1)} kWh</div>
-                        </div>
-                    </Tooltip>
-                </CircleMarker>
-            ))}
-            {isHeatmapMode && <BoundsFitter heatmapData={leafletHeatmapPositions} />}
+                {isHeatmapMode && !isPathMode && !isMultiTrackMode && heatmapData.map((p, i) => (
+                    <CircleMarker
+                        key={i}
+                        center={[p.latitude, p.longitude]}
+                        pathOptions={{
+                            color: colors.primary,
+                            fillColor: colors.primary,
+                            fillOpacity: 0.4,
+                            weight: 1
+                        }}
+                        radius={Math.max(5, Math.min(30, Math.sqrt(p.value)))}
+                    >
+                        <Tooltip>
+                            <div className="text-sm">
+                                <div className="font-bold">{p.label}</div>
+                                <div>{p.count} charges</div>
+                                <div>{p.value.toFixed(1)} kWh</div>
+                            </div>
+                        </Tooltip>
+                    </CircleMarker>
+                ))}
+                {isHeatmapMode && <BoundsFitter heatmapData={leafletHeatmapPositions} />}
 
-        </MapContainer>
+            </MapContainer>
         </div>
     );
 }
