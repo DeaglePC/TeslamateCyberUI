@@ -1,16 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { useSettingsStore } from '@/store/settings';
 import { getThemeColors, setAutoThemeColor } from '@/utils/theme';
 import { extractDominantColor } from '@/utils/colorExtractor';
 import Layout from '@/components/Layout';
 import SetupModal from '@/components/SetupModal';
-import HomePage from '@/pages/Home';
-import ChargeListPage from '@/pages/ChargeList';
-import ChargeDetailPage from '@/pages/ChargeDetail';
-import DriveListPage from '@/pages/DriveList';
-import DriveDetailPage from '@/pages/DriveDetail';
-import SettingsPage from '@/pages/Settings';
+
+// 懒加载页面组件 - Lazy load page components to split heavy dependencies
+const HomePage = lazy(() => import('@/pages/Home'));
+const ChargeListPage = lazy(() => import('@/pages/ChargeList'));
+const ChargeDetailPage = lazy(() => import('@/pages/ChargeDetail'));
+const DriveListPage = lazy(() => import('@/pages/DriveList'));
+const DriveDetailPage = lazy(() => import('@/pages/DriveDetail'));
+const SettingsPage = lazy(() => import('@/pages/Settings'));
 
 function App() {
   const { theme, baseUrl, backgroundImage, fetchBackgroundImage, autoThemeFromBg, setAutoThemePrimaryColor, autoThemePrimaryColor } = useSettingsStore();
@@ -112,17 +114,26 @@ function App() {
       <div className="relative z-10">
         {showSetup && <SetupModal onComplete={handleSetupComplete} />}
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout hideNav={showSetup} />}>
-              <Route index element={<HomePage />} />
-              <Route path="charges" element={<ChargeListPage />} />
-              <Route path="charges/:id" element={<ChargeDetailPage />} />
-              <Route path="drives" element={<DriveListPage />} />
-              <Route path="drives/:id" element={<DriveDetailPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
+          <Suspense fallback={
+            <div className="flex h-screen items-center justify-center">
+              <div className="flex flex-col items-center">
+                {/* 简单的无依赖加载动画 */}
+                <div className="w-12 h-12 rounded-full border-4 border-t-transparent border-opacity-50 animate-spin" style={{ borderColor: 'var(--theme-primary, #00f0ff)', borderTopColor: 'transparent' }}></div>
+              </div>
+            </div>
+          }>
+            <Routes>
+              <Route path="/" element={<Layout hideNav={showSetup} />}>
+                <Route index element={<HomePage />} />
+                <Route path="charges" element={<ChargeListPage />} />
+                <Route path="charges/:id" element={<ChargeDetailPage />} />
+                <Route path="drives" element={<DriveListPage />} />
+                <Route path="drives/:id" element={<DriveDetailPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </div>
     </div>

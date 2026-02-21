@@ -22,5 +22,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom', 'zustand'],
+          'echarts-vendor': ['echarts', 'echarts-for-react'],
+          'map-vendor': ['leaflet', 'react-leaflet'],
+          'amap-vendor': ['@amap/amap-jsapi-loader']
+        }
+      }
+    }
   },
 });
