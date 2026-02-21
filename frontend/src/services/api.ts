@@ -45,12 +45,17 @@ const api = axios.create({
 // Request interceptor to set baseURL and API key
 api.interceptors.request.use((config) => {
   const { baseUrl, apiKey } = getApiConfig();
-  // Set baseURL dynamically - fallback to relative path if not configured
-  config.baseURL = baseUrl ? `${baseUrl}/api/v1` : '/api/v1';
-  // Add API key header if configured
-  if (apiKey) {
-    config.headers['X-API-Key'] = apiKey;
+
+  // If API is not configured, reject the physical request to prevent proxy errors
+  if (!baseUrl || !apiKey) {
+    return Promise.reject(new Error('no_api_config'));
   }
+
+  // Set baseURL dynamically
+  config.baseURL = `${baseUrl}/api/v1`;
+  // Add API key header
+  config.headers['X-API-Key'] = apiKey;
+
   return config;
 });
 

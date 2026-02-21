@@ -118,13 +118,13 @@ export default function HomePage() {
     // Load image and cache it
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    
+
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
-        
+
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0);
@@ -139,11 +139,11 @@ export default function HomePage() {
         setCachedCarImageUrl(url);
       }
     };
-    
+
     img.onerror = () => {
       setCachedCarImageUrl(url);
     };
-    
+
     img.src = url;
   }, []);
 
@@ -175,7 +175,11 @@ export default function HomePage() {
         setStats(overviewStats);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('error'));
+      if (err instanceof Error && err.message !== 'no_api_config') {
+        setError(err.message);
+      } else if (!(err instanceof Error) || err.message !== 'no_api_config') {
+        setError(t('error'));
+      }
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,7 @@
-<h1 align="center">TeslaMate CyberUI</h1>
+<h1 align="center">
+  <img src="./frontend/public/logo.png" alt="TeslaMate CyberUI Logo" width="56" style="vertical-align: middle; margin-right: 10px; margin-bottom: 8px;">
+  TeslaMate CyberUI
+</h1>
 
 <p align="center">
   <a href="./README_EN.md">English</a> | <a href="./README.md">中文</a>

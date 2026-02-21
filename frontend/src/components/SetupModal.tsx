@@ -7,7 +7,7 @@ interface SetupModalProps {
 }
 
 export default function SetupModal({ onComplete: _onComplete }: SetupModalProps) {
-    const { language, setBaseUrl, setApiKey } = useSettingsStore();
+    const { language, setBaseUrl, setApiKey, setLanguage } = useSettingsStore();
 
     const [baseUrlInput, setBaseUrlInput] = useState('');
     const [apiKeyInput, setApiKeyInput] = useState('');
@@ -66,13 +66,26 @@ export default function SetupModal({ onComplete: _onComplete }: SetupModalProps)
             style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}
         >
             <div
-                className="w-full max-w-md rounded-2xl p-6 border"
+                className="relative w-full max-w-md rounded-2xl p-6 border"
                 style={{
                     backgroundColor: themeColors.cardBg,
                     borderColor: themeColors.border,
                     boxShadow: `0 0 40px ${themeColors.primary}20`,
                 }}
             >
+                {/* Language Toggle */}
+                <button
+                    type="button"
+                    onClick={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
+                    className="absolute top-4 right-4 px-3 py-1 text-xs font-medium rounded-full transition-colors hover:bg-white/5 border"
+                    style={{
+                        borderColor: themeColors.border,
+                        color: themeColors.primary,
+                    }}
+                >
+                    {language === 'zh' ? 'EN' : '中文'}
+                </button>
+
                 {/* Header */}
                 <div className="text-center mb-6">
                     <h1
@@ -162,6 +175,24 @@ export default function SetupModal({ onComplete: _onComplete }: SetupModalProps)
                             ? (language === 'zh' ? '测试连接中...' : 'Testing connection...')
                             : (language === 'zh' ? '连接' : 'Connect')}
                     </button>
+                    {/* View documentation link */}
+                    <div className="pt-2 text-center">
+                        <a
+                            href="https://github.com/DeaglePC/TeslamateCyberUI"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm transition-colors hover:underline inline-flex items-center gap-1"
+                            style={{ color: themeColors.primary }}
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                <polyline points="15 3 21 3 21 9" />
+                                <line x1="10" y1="14" x2="21" y2="3" />
+                            </svg>
+                            {language === 'zh' ? '阅读后端配置文档（GitHub）' : 'Read Setup Documentation (GitHub)'}
+                        </a>
+                    </div>
+
                 </form>
 
                 {/* Footer note */}

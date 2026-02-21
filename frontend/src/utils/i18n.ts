@@ -60,6 +60,8 @@ const translations = {
     noLocation: { zh: '无位置信息', en: 'No location data' },
 
     // Settings page
+    setupDocsLink: { zh: '阅读后端配置文档（GitHub）', en: 'Read Setup Documentation (GitHub)' },
+    configureApi: { zh: '请在设置中配置 API 地址和 API Key', en: 'Please configure API Address and API Key in settings' },
     themeSettings: { zh: '主题设置', en: 'Theme Settings' },
     unitSettings: { zh: '单位设置', en: 'Unit Settings' },
     languageSettings: { zh: '语言设置', en: 'Language Settings' },

@@ -20,13 +20,13 @@ function App() {
   // 更新主题颜色：影响浏览器地址栏、iOS 安全区域等
   useEffect(() => {
     const colors = getThemeColors(theme);
-    
+
     // 更新 <meta name="theme-color"> 标签
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (themeColorMeta) {
       themeColorMeta.setAttribute('content', colors.bg);
     }
-    
+
     // 更新 CSS 变量，让 body 背景色与主题一致
     document.documentElement.style.setProperty('--theme-bg', colors.bg);
     document.body.style.backgroundColor = colors.bg;
@@ -113,7 +113,7 @@ function App() {
         {showSetup && <SetupModal onComplete={handleSetupComplete} />}
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Layout />}>
+            <Route path="/" element={<Layout hideNav={showSetup} />}>
               <Route index element={<HomePage />} />
               <Route path="charges" element={<ChargeListPage />} />
               <Route path="charges/:id" element={<ChargeDetailPage />} />

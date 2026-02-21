@@ -48,7 +48,11 @@ export default function DriveDetailPage() {
       setDetail(driveDetail);
       setPositions(drivePositions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('error'));
+      if (err instanceof Error && err.message !== 'no_api_config') {
+        setError(err.message);
+      } else if (!(err instanceof Error) || err.message !== 'no_api_config') {
+        setError(t('error'));
+      }
     } finally {
       setLoading(false);
     }

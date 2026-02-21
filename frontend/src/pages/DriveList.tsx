@@ -52,7 +52,11 @@ export default function DriveListPage() {
       setDrives(result.items || []);
       setPagination(result.pagination);
     } catch (err) {
-      setError(err instanceof Error ? err.message : (language === 'zh' ? '加载失败' : 'Load failed'));
+      if (err instanceof Error && err.message !== 'no_api_config') {
+        setError(err.message);
+      } else if (!(err instanceof Error) || err.message !== 'no_api_config') {
+        setError(language === 'zh' ? '加载失败' : 'Load failed');
+      }
     } finally {
       setLoading(false);
     }

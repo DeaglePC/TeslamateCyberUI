@@ -67,3 +67,5 @@ Thumbs.db
 
 # Docker
 *.tar
+
+.agent/

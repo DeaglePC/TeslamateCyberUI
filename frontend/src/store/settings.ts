@@ -7,6 +7,13 @@ export type UnitType = 'metric' | 'imperial';
 export type LanguageType = 'zh' | 'en';
 export type MapType = 'amap' | 'openstreet';
 
+const getInitialLanguage = (): LanguageType => {
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  }
+  return 'zh';
+};
+
 interface SettingsState {
   theme: ThemeType;
   unit: UnitType;
@@ -48,7 +55,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       theme: 'cyber',
       unit: 'metric',
-      language: 'zh',
+      language: getInitialLanguage(),
       selectedCarId: null,
       amapKey: '',
       baseUrl: '',
@@ -142,7 +149,7 @@ export const useSettingsStore = create<SettingsState>()(
             cardBlur: settings.cardBlur ? parseInt(settings.cardBlur) : prev.cardBlur,
             autoThemeFromBg: settings.autoThemeFromBg === 'true' ? true : settings.autoThemeFromBg === 'false' ? false : prev.autoThemeFromBg,
           }));
-          
+
           // 同时获取背景图片
           get().fetchBackgroundImage();
         } catch (e) {

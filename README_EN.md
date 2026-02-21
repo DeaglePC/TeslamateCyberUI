@@ -1,4 +1,7 @@
-<h1 align="center">TeslaMate CyberUI</h1>
+<h1 align="center">
+  <img src="./frontend/public/logo.png" alt="TeslaMate CyberUI Logo" width="56" style="vertical-align: middle; margin-right: 10px; margin-bottom: 8px;">
+  TeslaMate CyberUI
+</h1>
 
 <p align="center">A modern Tesla data visualization dashboard that connects to TeslaMate database with cyberpunk-style design.</p>
 

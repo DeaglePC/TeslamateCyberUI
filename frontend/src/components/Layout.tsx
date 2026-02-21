@@ -50,7 +50,11 @@ function SettingsIcon({ className }: { className?: string }) {
 
 const SWIPE_TABS = ['/', '/drives', '/charges', '/settings'];
 
-export default function Layout() {
+interface LayoutProps {
+  hideNav?: boolean;
+}
+
+export default function Layout({ hideNav = false }: LayoutProps) {
   const { theme, language, backgroundImage, cardOpacity, cardBlur } = useSettingsStore();
   const { t } = useTranslation(language);
   const location = useLocation();
@@ -58,7 +62,7 @@ export default function Layout() {
 
   const colors = getThemeColors(theme);
   const isDarkTheme = ['dark', 'cyber', 'tesla', 'aurora', 'tech', 'auto'].includes(theme);
-  
+
   // 如果有背景图片，Layout 使用透明背景
   const hasBackground = !!backgroundImage;
 
@@ -68,16 +72,16 @@ export default function Layout() {
     const alpha = cardOpacity / 100;
     // 当开启模糊时，保留少量透明度确保毛玻璃可见
     const blurVisibleAlpha = cardBlur > 0 ? Math.min(alpha, 0.92) : alpha;
-    
+
     document.documentElement.style.setProperty('--card-opacity', String(alpha));
     document.documentElement.style.setProperty('--card-blur', `${cardBlur}px`);
-    
+
     // 背景色：使用 blurVisibleAlpha 直接控制透明度
     // 使用统一的颜色基础 (30, 30, 50) 确保视觉一致性
     document.documentElement.style.setProperty('--card-bg-start', `rgba(30, 30, 50, ${blurVisibleAlpha})`);
     document.documentElement.style.setProperty('--card-bg-mid', `rgba(20, 20, 35, ${blurVisibleAlpha * 0.85})`);
     document.documentElement.style.setProperty('--card-bg-end', `rgba(25, 25, 45, ${blurVisibleAlpha * 0.93})`);
-    
+
     // glass-strong 使用相同的颜色基础，只是透明度稍高
     const strongAlpha = Math.min(blurVisibleAlpha * 1.15, 0.98);
     document.documentElement.style.setProperty('--card-strong-bg-start', `rgba(30, 30, 50, ${strongAlpha})`);
@@ -140,7 +144,7 @@ export default function Layout() {
       touchStartRef.current = null;
       return;
     }
-    
+
     const touch = e.touches[0];
     touchStartRef.current = {
       x: touch.clientX,
@@ -244,52 +248,54 @@ export default function Layout() {
       </main>
 
       {/* 居中悬浮导航栏 (Apple Style Dock) */}
-      {/* 居中悬浮导航栏 (Apple Style Dock) */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[90vw]">
-        <nav
-          className="flex items-center justify-between gap-8 px-8 py-1.5 rounded-full border shadow-2xl transition-all duration-300 animate-slideUp"
-          style={{
-            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.45)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
-            boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.5)',
-          }}
-        >
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path ||
-              (item.path !== '/' && location.pathname.startsWith(item.path));
+      {!hideNav && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[90vw]">
+          <nav
+            className="flex items-center justify-between gap-8 px-8 py-1.5 rounded-full border shadow-2xl transition-all duration-300 animate-slideUp"
+            style={{
+              backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.45)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+              boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path ||
+                (item.path !== '/' && location.pathname.startsWith(item.path));
 
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={clsx(
-                  'relative group flex flex-col items-center justify-center rounded-full transition-all duration-300 ease-out',
-                  'w-10 h-10 md:w-12 md:h-12',
-                  isActive ? '' : 'hover:bg-white/10'
-                )}
-                style={{
-                  color: isActive ? '#fff' : colors.muted,
-                  background: isActive ? colors.primary : 'transparent',
-                  boxShadow: isActive ? `0 0 25px ${colors.primary}60` : 'none',
-                }}
-              >
-                <item.icon className={clsx("transition-transform duration-300",
-                  "w-5 h-5 md:w-6 md:h-6"
-                )} />
-
-                {/* Tooltip for Desktop */}
-                <span
-                  className="absolute -top-14 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/80 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none backdrop-blur-sm hidden md:block"
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={clsx(
+                    'relative group flex flex-col items-center justify-center rounded-full transition-all duration-300 ease-out',
+                    'w-10 h-10 md:w-12 md:h-12',
+                    isActive ? '' : 'hover:bg-white/10'
+                  )}
+                  style={{
+                    color: isActive ? '#fff' : colors.muted,
+                    background: isActive ? colors.primary : 'transparent',
+                    boxShadow: isActive ? `0 0 25px ${colors.primary}60` : 'none',
+                  }}
                 >
-                  {item.label}
-                </span>
-              </NavLink>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
+                  <item.icon className={clsx("transition-transform duration-300",
+                    "w-5 h-5 md:w-6 md:h-6"
+                  )} />
+
+                  {/* Tooltip for Desktop */}
+                  <span
+                    className="absolute -top-14 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/80 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none backdrop-blur-sm hidden md:block"
+                  >
+                    {item.label}
+                  </span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        </div>
+      )
+      }
+    </div >
   );
 }
