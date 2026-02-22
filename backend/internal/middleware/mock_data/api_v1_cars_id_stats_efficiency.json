@@ -1,0 +1,180 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "daily": [
+      {
+        "date": "2026-02-15",
+        "distance": 152.45,
+        "energyUsed": 18.65,
+        "efficiency": 139.73
+      },
+      {
+        "date": "2026-02-14",
+        "distance": 133.38,
+        "energyUsed": 17.68,
+        "efficiency": 137.66
+      },
+      {
+        "date": "2026-02-13",
+        "distance": 0.08,
+        "energyUsed": 0.04,
+        "efficiency": 470.49
+      },
+      {
+        "date": "2026-02-06",
+        "distance": 13.85,
+        "energyUsed": 2.06,
+        "efficiency": 134.79
+      },
+      {
+        "date": "2026-02-05",
+        "distance": 12.63,
+        "energyUsed": 1.75,
+        "efficiency": 147.15
+      },
+      {
+        "date": "2026-02-04",
+        "distance": 23.72,
+        "energyUsed": 4.12,
+        "efficiency": 157.63
+      },
+      {
+        "date": "2026-02-03",
+        "distance": 13.96,
+        "energyUsed": 1.92,
+        "efficiency": 115.08
+      },
+      {
+        "date": "2026-02-02",
+        "distance": 14.35,
+        "energyUsed": 2.01,
+        "efficiency": 149.28
+      },
+      {
+        "date": "2026-01-30",
+        "distance": 12.69,
+        "energyUsed": 2.19,
+        "efficiency": 145.06
+      },
+      {
+        "date": "2026-01-29",
+        "distance": 13.94,
+        "energyUsed": 1.72,
+        "efficiency": 139.85
+      },
+      {
+        "date": "2026-01-28",
+        "distance": 14.32,
+        "energyUsed": 1.56,
+        "efficiency": 128.23
+      },
+      {
+        "date": "2026-01-27",
+        "distance": 15.12,
+        "energyUsed": 1.54,
+        "efficiency": 117.92
+      },
+      {
+        "date": "2026-01-26",
+        "distance": 14.07,
+        "energyUsed": 1.94,
+        "efficiency": 122.36
+      }
+    ],
+    "weekly": [
+      {
+        "date": "2026-02-09",
+        "distance": 243.25,
+        "energyUsed": 37.47,
+        "efficiency": 139.38
+      },
+      {
+        "date": "2026-02-02",
+        "distance": 73.02,
+        "energyUsed": 12.39,
+        "efficiency": 139.47
+      },
+      {
+        "date": "2026-01-26",
+        "distance": 74.99,
+        "energyUsed": 8.21,
+        "efficiency": 133.59
+      },
+      {
+        "date": "2026-01-19",
+        "distance": 146.11,
+        "energyUsed": 21.83,
+        "efficiency": 139.38
+      },
+      {
+        "date": "2026-01-12",
+        "distance": 227.79,
+        "energyUsed": 26.7,
+        "efficiency": 127.24
+      },
+      {
+        "date": "2026-01-05",
+        "distance": 83.07,
+        "energyUsed": 12.84,
+        "efficiency": 153.71
+      },
+      {
+        "date": "2025-12-22",
+        "distance": 77.5,
+        "energyUsed": 10.75,
+        "efficiency": 145.78
+      },
+      {
+        "date": "2025-12-15",
+        "distance": 88.36,
+        "energyUsed": 12.35,
+        "efficiency": 126.54
+      },
+      {
+        "date": "2025-12-08",
+        "distance": 94.57,
+        "energyUsed": 13.59,
+        "efficiency": 130.26
+      },
+      {
+        "date": "2025-12-01",
+        "distance": 107.8,
+        "energyUsed": 15.6,
+        "efficiency": 124.39
+      },
+      {
+        "date": "2025-11-24",
+        "distance": 134.01,
+        "energyUsed": 16.44,
+        "efficiency": 121.27
+      }
+    ],
+    "monthly": [
+      {
+        "date": "2026-02",
+        "distance": 334.09,
+        "energyUsed": 48.64,
+        "efficiency": 130.26
+      },
+      {
+        "date": "2026-01",
+        "distance": 607.07,
+        "energyUsed": 76.23,
+        "efficiency": 122.31
+      },
+      {
+        "date": "2025-12",
+        "distance": 396.51,
+        "energyUsed": 47.41,
+        "efficiency": 146.22
+      },
+      {
+        "date": "2025-11",
+        "distance": 420.71,
+        "energyUsed": 53.31,
+        "efficiency": 138.72
+      }
+    ]
+  }
+}

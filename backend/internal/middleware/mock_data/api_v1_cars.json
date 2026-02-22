@@ -1,0 +1,19 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": [
+    {
+      "displayPriority": 1,
+      "exteriorColor": "SolidBlack",
+      "id": 1,
+      "insertedAt": "2025-11-04T15:57:56Z",
+      "marketingName": "SR+",
+      "model": "3",
+      "name": "Mocked Tesla Model",
+      "trimBadging": "50",
+      "updatedAt": "2025-11-04T16:02:38Z",
+      "vin": "MOCKVINXD12345678",
+      "wheelType": "Glider18"
+    }
+  ]
+}

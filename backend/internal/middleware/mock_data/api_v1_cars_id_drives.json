@@ -1,0 +1,78 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "items": [
+      {
+        "id": 199,
+        "startDate": "2026-02-15T07:35:37.953Z",
+        "endDate": "2026-02-15T09:09:54.102Z",
+        "durationMin": 101,
+        "distance": 129.88,
+        "startLocation": "Beijing, China",
+        "endLocation": "Tianjin, China",
+        "startBatteryLevel": 56,
+        "endBatteryLevel": 30,
+        "efficiency": 122.01,
+        "speedMax": 144
+      },
+      {
+        "id": 192,
+        "startDate": "2026-02-14T07:01:25.925Z",
+        "endDate": "2026-02-14T07:20:16.082Z",
+        "durationMin": 17,
+        "distance": 3.37,
+        "startLocation": "Beijing, China",
+        "endLocation": "Beijing, China",
+        "startBatteryLevel": 60,
+        "endBatteryLevel": 56,
+        "efficiency": 197.43,
+        "speedMax": 54
+      },
+      {
+        "id": 188,
+        "startDate": "2026-02-10T06:57:53.018Z",
+        "endDate": "2026-02-10T07:00:34.13Z",
+        "durationMin": 4,
+        "distance": 0.27,
+        "startLocation": "Shanghai, China",
+        "endLocation": "Shanghai, China",
+        "startBatteryLevel": 60,
+        "endBatteryLevel": 60,
+        "efficiency": 436.07,
+        "speedMax": 12
+      },
+      {
+        "id": 182,
+        "startDate": "2026-02-04T12:23:13.273Z",
+        "endDate": "2026-02-04T12:51:14.703Z",
+        "durationMin": 31,
+        "distance": 6.39,
+        "startLocation": "Shenzhen, China",
+        "endLocation": "Shenzhen, China",
+        "startBatteryLevel": 52,
+        "endBatteryLevel": 49,
+        "efficiency": 180.26,
+        "speedMax": 68
+      },
+      {
+        "id": 181,
+        "startDate": "2026-02-04T09:54:05.264Z",
+        "endDate": "2026-02-04T10:43:51.466Z",
+        "durationMin": 55,
+        "distance": 8.97,
+        "startLocation": "Shenzhen, China",
+        "endLocation": "Shenzhen, China",
+        "startBatteryLevel": 57,
+        "endBatteryLevel": 50,
+        "efficiency": 223.6,
+        "speedMax": 102
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "pageSize": 20,
+      "total": 5
+    }
+  }
+}

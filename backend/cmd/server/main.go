@@ -23,17 +23,22 @@ func main() {
 	logger.Init(cfg.Log.Level)
 	applog := logger.GetLogger()
 
-	// 连接数据库
-	db, err := repository.NewPostgresDB(cfg.Database)
-	if err != nil {
-		applog.Fatalf("Failed to connect database: %v", err)
+	var repo *repository.Repository
+	if !cfg.Server.EnableMock {
+		// 连接数据库
+		db, err := repository.NewPostgresDB(cfg.Database)
+		if err != nil {
+			applog.Fatalf("Failed to connect database: %v", err)
+		}
+		defer db.Close()
+
+		applog.Info("Database connected successfully")
+
+		// 初始化仓储层
+		repo = repository.NewRepository(db)
+	} else {
+		applog.Info("Mock data is ENABLED. Skipping database connection.")
 	}
-	defer db.Close()
-
-	applog.Info("Database connected successfully")
-
-	// 初始化仓储层
-	repo := repository.NewRepository(db)
 
 	// 初始化处理器
 	h := handler.NewHandler(repo)
@@ -70,6 +75,10 @@ func main() {
 	// Note: the original code had /api/v1, keeping it for now.
 	api := r.Group("/api/v1")
 	api.Use(middleware.APIKeyAuth(cfg.Server.APIKey))
+	if cfg.Server.EnableMock {
+		applog.Info("Mock data is ENABLED")
+	}
+	api.Use(middleware.MockData(cfg.Server.EnableMock))
 	{
 		// 车辆相关
 		api.GET("/cars", h.GetCars)

@@ -1,0 +1,21 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "totalDistance": 15382.84,
+    "totalDrives": 199,
+    "totalCharges": 9,
+    "totalEnergyAdded": 309.08,
+    "totalDriveDuration": 5273,
+    "totalChargeDuration": 2695,
+    "avgEfficiency": 142.24,
+    "currentOdometer": 16704.72,
+    "insideTemp": 21.5,
+    "outsideTemp": 24.5,
+    "lastLatitude": 39.9042,
+    "lastLongitude": 116.4074,
+    "lastAddress": "北京市朝阳区建国路87号",
+    "lastLocationTime": "2026-02-23T01:00:00Z",
+    "isCharging": false
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "id": 9,
+    "startDate": "2026-02-13T15:59:20.623Z",
+    "endDate": "2026-02-13T21:53:59.234Z",
+    "durationMin": 327,
+    "chargeEnergyAdded": 38.51,
+    "chargeEnergyUsed": 39.1,
+    "startBatteryLevel": 36,
+    "endBatteryLevel": 107,
+    "startIdealRangeKm": 140.32,
+    "endIdealRangeKm": 437.11,
+    "startRatedRangeKm": 144.69,
+    "endRatedRangeKm": 435.04,
+    "outsideTempAvg": 24.9,
+    "location": "特斯拉超级充电站(北京华贸中心)",
+    "latitude": 39.9096,
+    "longitude": 116.4783,
+    "efficiency": 86.73,
+    "chargeType": "AC"
+  }
+}

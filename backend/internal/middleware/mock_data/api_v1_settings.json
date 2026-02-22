@@ -1,0 +1,16 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "amapKey": "",
+    "autoThemeFromBg": "false",
+    "backgroundImage": "",
+    "backgroundOriginalImage": "",
+    "cardBlur": "14",
+    "cardOpacity": "92",
+    "language": "zh",
+    "mapType": "openstreet",
+    "theme": "cyber",
+    "unit": "metric"
+  }
+}

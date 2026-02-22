@@ -1,0 +1,28 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "id": 212,
+    "startDate": "2026-02-15T07:35:37.953Z",
+    "endDate": "2026-02-15T09:09:54.102Z",
+    "durationMin": 91,
+    "distance": 116.85,
+    "startLocation": "北京市",
+    "endLocation": "天津市",
+    "startLatitude": 39.9042,
+    "startLongitude": 116.4074,
+    "endLatitude": 39.0842,
+    "endLongitude": 117.2009,
+    "startBatteryLevel": 56,
+    "endBatteryLevel": 30,
+    "startIdealRangeKm": 263.48,
+    "endIdealRangeKm": 124.28,
+    "efficiency": 119.7,
+    "speedMax": 144,
+    "speedAvg": 76.22,
+    "powerMax": 145,
+    "powerMin": -89,
+    "outsideTempAvg": 25,
+    "insideTempAvg": 20.95
+  }
+}

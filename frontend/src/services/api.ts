@@ -46,8 +46,8 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const { baseUrl, apiKey } = getApiConfig();
 
-  // If API is not configured, reject the physical request to prevent proxy errors
-  if (!baseUrl || !apiKey) {
+  // If API base URL is not configured, reject the physical request
+  if (!baseUrl) {
     return Promise.reject(new Error('no_api_config'));
   }
 

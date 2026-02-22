@@ -1,0 +1,72 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "totalEnergy": 178.68,
+    "totalCost": 0,
+    "totalCount": 5,
+    "totalDuration": 1629,
+    "dailyStats": [
+      {
+        "date": "2025-12-18",
+        "energyAdded": 38.99,
+        "cost": 0,
+        "count": 1
+      },
+      {
+        "date": "2026-01-06",
+        "energyAdded": 36.75,
+        "cost": 0,
+        "count": 1
+      },
+      {
+        "date": "2026-01-16",
+        "energyAdded": 24.09,
+        "cost": 0,
+        "count": 1
+      },
+      {
+        "date": "2026-01-22",
+        "energyAdded": 40.74,
+        "cost": 0,
+        "count": 1
+      },
+      {
+        "date": "2026-02-13",
+        "energyAdded": 38.51,
+        "cost": 0,
+        "count": 1
+      }
+    ],
+    "locationStats": [
+      {
+        "location": "Home Garage",
+        "latitude": 39.9042,
+        "longitude": 116.4074,
+        "count": 2,
+        "totalEnergy": 78.24
+      },
+      {
+        "location": "特斯拉超级充电站(北京华贸中心)",
+        "latitude": 39.9096,
+        "longitude": 116.4783,
+        "count": 1,
+        "totalEnergy": 38.51
+      },
+      {
+        "location": "Supercharger Station",
+        "latitude": 39.9542,
+        "longitude": 116.4574,
+        "count": 1,
+        "totalEnergy": 24.09
+      },
+      {
+        "location": "Workplace Parking",
+        "latitude": 39.9242,
+        "longitude": 116.4274,
+        "count": 1,
+        "totalEnergy": 40.74
+      }
+    ]
+  }
+}

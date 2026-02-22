@@ -1,0 +1,23 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "carId": 1,
+    "name": "Mocked Tesla Model",
+    "model": "3 50",
+    "state": "offline",
+    "since": "2026-02-21T17:20:00.322727Z",
+    "healthy": true,
+    "batteryLevel": 28,
+    "usableBatteryLevel": 0,
+    "idealRange": 128.83,
+    "estRange": 0,
+    "ratedRange": 0,
+    "odometer": 0,
+    "insideTemp": 21.5,
+    "outsideTemp": 24.5,
+    "isClimateOn": false,
+    "isPreconditioning": false,
+    "softwareVersion": "2025.45.32.1"
+  }
+}

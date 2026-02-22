@@ -1,0 +1,81 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": [
+    {
+      "speed": 11,
+      "elapsed": 4.52,
+      "timeSeconds": 250.43
+    },
+    {
+      "speed": 19,
+      "elapsed": 2.83,
+      "timeSeconds": 136.01
+    },
+    {
+      "speed": 27,
+      "elapsed": 1.69,
+      "timeSeconds": 97.61
+    },
+    {
+      "speed": 39,
+      "elapsed": 2.61,
+      "timeSeconds": 133.38
+    },
+    {
+      "speed": 52,
+      "elapsed": 3.62,
+      "timeSeconds": 192.59
+    },
+    {
+      "speed": 65,
+      "elapsed": 4.03,
+      "timeSeconds": 205.78
+    },
+    {
+      "speed": 77,
+      "elapsed": 2.76,
+      "timeSeconds": 154.36
+    },
+    {
+      "speed": 72,
+      "elapsed": 4.39,
+      "timeSeconds": 269.76
+    },
+    {
+      "speed": 84,
+      "elapsed": 10.95,
+      "timeSeconds": 654.08
+    },
+    {
+      "speed": 96,
+      "elapsed": 14.13,
+      "timeSeconds": 745.57
+    },
+    {
+      "speed": 118,
+      "elapsed": 19.49,
+      "timeSeconds": 991.21
+    },
+    {
+      "speed": 118,
+      "elapsed": 11.78,
+      "timeSeconds": 633.83
+    },
+    {
+      "speed": 140,
+      "elapsed": 5.18,
+      "timeSeconds": 304.97
+    },
+    {
+      "speed": 132,
+      "elapsed": 2.5,
+      "timeSeconds": 166.37
+    },
+    {
+      "speed": 153,
+      "elapsed": 0.41,
+      "timeSeconds": 27.1
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "totalDistance": 1762.58,
+    "medianDistance": 7.42,
+    "avgDailyDistance": 17.68,
+    "maxSpeed": 172,
+    "driveCount": 223,
+    "daysInPeriod": 106,
+    "extrapolatedMonthlyKm": 531.69,
+    "extrapolatedAnnualKm": 6269.96
+  }
+}

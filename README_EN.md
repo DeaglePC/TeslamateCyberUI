@@ -213,16 +213,34 @@ docker compose logs -f
 # http://localhost:8080
 ```
 
-### Local Development
+### Local Development (Mock Data Mode)
+
+If you don't have a TeslaMate database locally, you can enable Mock data mode for frontend development and UI preview:
 
 ```bash
 # Backend
 cd backend
 go mod download
-# Modify configs/config.yaml to configure database
+# Temporarily enable the mock data environment variable
+export CYBERUI_MOCK_DATA=true
 go run cmd/server/main.go
 
-# Frontend
+# Frontend (in a new terminal window)
+cd frontend
+npm install
+npm run dev
+```
+
+### Local Development (Real Database Mode)
+
+```bash
+# Backend
+cd backend
+go mod download
+# Configure real database connection via .env / environment variables / configs/config.yaml
+go run cmd/server/main.go
+
+# Frontend (in a new terminal window)
 cd frontend
 npm install
 npm run dev

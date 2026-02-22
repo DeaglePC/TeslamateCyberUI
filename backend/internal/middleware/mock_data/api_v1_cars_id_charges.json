@@ -1,0 +1,78 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "items": [
+      {
+        "id": 9,
+        "startDate": "2026-02-13T15:59:20.623Z",
+        "endDate": "2026-02-13T21:53:59.234Z",
+        "durationMin": 382,
+        "chargeEnergyAdded": 41.49,
+        "startBatteryLevel": 36,
+        "endBatteryLevel": 100,
+        "location": "Home Garage",
+        "latitude": 39.9042,
+        "longitude": 116.4074,
+        "chargeType": "AC"
+      },
+      {
+        "id": 8,
+        "startDate": "2026-01-22T15:59:58.336Z",
+        "endDate": "2026-01-22T22:18:36.117Z",
+        "durationMin": 377,
+        "chargeEnergyAdded": 40.74,
+        "startBatteryLevel": 27,
+        "endBatteryLevel": 94,
+        "location": "Workplace Parking",
+        "latitude": 39.9242,
+        "longitude": 116.4274,
+        "chargeType": "AC"
+      },
+      {
+        "id": 7,
+        "startDate": "2026-01-16T15:59:59.031Z",
+        "endDate": "2026-01-16T19:57:41.727Z",
+        "durationMin": 229,
+        "chargeEnergyAdded": 24.09,
+        "startBatteryLevel": 53,
+        "endBatteryLevel": 93,
+        "location": "Supercharger Station",
+        "latitude": 39.9542,
+        "longitude": 116.4574,
+        "chargeType": "DC"
+      },
+      {
+        "id": 6,
+        "startDate": "2026-01-06T16:00:07.663Z",
+        "endDate": "2026-01-06T20:56:31.959Z",
+        "durationMin": 314,
+        "chargeEnergyAdded": 36.75,
+        "startBatteryLevel": 46,
+        "endBatteryLevel": 102,
+        "location": "Home Garage",
+        "latitude": 39.9042,
+        "longitude": 116.4074,
+        "chargeType": "AC"
+      },
+      {
+        "id": 5,
+        "startDate": "2025-12-18T15:59:33.811Z",
+        "endDate": "2025-12-18T22:13:24.292Z",
+        "durationMin": 383,
+        "chargeEnergyAdded": 38.99,
+        "startBatteryLevel": 28,
+        "endBatteryLevel": 99,
+        "location": "Shopping Mall",
+        "latitude": 39.9842,
+        "longitude": 116.4874,
+        "chargeType": "AC"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "pageSize": 20,
+      "total": 5
+    }
+  }
+}

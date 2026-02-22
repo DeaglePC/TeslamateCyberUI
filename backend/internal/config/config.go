@@ -19,6 +19,7 @@ type ServerConfig struct {
 	Mode        string
 	CORSOrigins []string
 	APIKey      string
+	EnableMock  bool
 }
 
 // DatabaseConfig 数据库配置
@@ -72,6 +73,7 @@ func Load() (*Config, error) {
 			Mode:        getEnv("CYBERUI_SERVER_MODE", "debug"),
 			CORSOrigins: getEnvSlice("CYBERUI_CORS_ORIGINS", []string{"*"}),
 			APIKey:      getEnv("CYBERUI_API_KEY", ""),
+			EnableMock:  getEnv("CYBERUI_MOCK_DATA", "false") == "true",
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("TESLAMATE_DB_HOST", "localhost"),

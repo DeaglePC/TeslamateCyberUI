@@ -1,0 +1,67 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "degradationHistory": [
+      {
+        "date": "2026-02-13",
+        "idealRangeKm": 404.44,
+        "ratedRangeKm": 455.88,
+        "batteryLevel": 106,
+        "estimatedCapacity": 52.4
+      },
+      {
+        "date": "2026-01-22",
+        "idealRangeKm": 467.52,
+        "ratedRangeKm": 395.81,
+        "batteryLevel": 106,
+        "estimatedCapacity": 55.31
+      },
+      {
+        "date": "2026-01-16",
+        "idealRangeKm": 433.97,
+        "ratedRangeKm": 431.53,
+        "batteryLevel": 107,
+        "estimatedCapacity": 57.39
+      },
+      {
+        "date": "2026-01-06",
+        "idealRangeKm": 450.76,
+        "ratedRangeKm": 457.33,
+        "batteryLevel": 93,
+        "estimatedCapacity": 56.71
+      },
+      {
+        "date": "2025-12-18",
+        "idealRangeKm": 416.61,
+        "ratedRangeKm": 435.92,
+        "batteryLevel": 106,
+        "estimatedCapacity": 60.29
+      },
+      {
+        "date": "2025-12-04",
+        "idealRangeKm": 467.14,
+        "ratedRangeKm": 468.42,
+        "batteryLevel": 92,
+        "estimatedCapacity": 59.94
+      },
+      {
+        "date": "2025-11-21",
+        "idealRangeKm": 383.46,
+        "ratedRangeKm": 408.35,
+        "batteryLevel": 92,
+        "estimatedCapacity": 53.28
+      },
+      {
+        "date": "2025-11-10",
+        "idealRangeKm": 387.12,
+        "ratedRangeKm": 397.88,
+        "batteryLevel": 93,
+        "estimatedCapacity": 60.56
+      }
+    ],
+    "currentCapacity": 53.45,
+    "originalCapacity": 56.76,
+    "degradationPercent": -0.22
+  }
+}

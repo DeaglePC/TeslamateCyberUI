@@ -214,16 +214,34 @@ docker compose logs -f
 # http://localhost:8080
 ```
 
-### 本地开发
+### 本地开发 (Mock 数据模式)
+
+如果本地没有 TeslaMate 数据库，可以开启 Mock 数据模式进行前端开发和 UI 预览：
 
 ```bash
 # 后端
 cd backend
 go mod download
-# 修改 configs/config.yaml 配置数据库
+# 临时启用 Mock 数据环境变量
+export CYBERUI_MOCK_DATA=true
 go run cmd/server/main.go
 
-# 前端
+# 前端 (新终端窗口)
+cd frontend
+npm install
+npm run dev
+```
+
+### 本地开发 (真实数据库模式)
+
+```bash
+# 后端
+cd backend
+go mod download
+# 通过 .env / 环境变量 / configs/config.yaml 配置好真实数据库连接
+go run cmd/server/main.go
+
+# 前端 (新终端窗口)
 cd frontend
 npm install
 npm run dev
