@@ -113,7 +113,12 @@ function App() {
       {/* 内容层 */}
       <div className="relative z-10">
         {showSetup && <SetupModal onComplete={handleSetupComplete} />}
-        <BrowserRouter>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <Suspense fallback={
             <div className="flex h-screen items-center justify-center">
               <div className="flex flex-col items-center">
