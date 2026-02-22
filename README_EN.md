@@ -62,6 +62,14 @@
 - **Amap Key** - Configure Amap API Key
 - **Background Image Management** - Upload, crop, delete background images
 
+### 📱 PWA (Progressive Web App) Support
+This dashboard fully supports PWA, providing an immersive experience comparable to native apps:
+- **Instant Loading** - Supports local offline caching of core resources
+- **Install to Desktop/Home Screen** - One-click "Install to device" on desktop (Chrome/Edge) or mobile (iOS/Android)
+- **Native Immersion** - Hides browser status bar and navigation bar, presenting a full-screen borderless cyberpunk experience on iOS
+
+> **💡 Best Practices**: We recommend not using it directly within a browser frequently. Please click "Share" -> "Add to Home Screen" at the bottom of your mobile browser (like Safari), or click the "Install App" icon on the right side of the address bar in your desktop browser. Run it as a standalone App for the perfect experience.
+
 ## Tech Stack
 
 ### Backend
@@ -188,8 +196,8 @@ TESLAMATE_DB_SSLMODE=disable
 CYBERUI_PORT=8080
 CYBERUI_API_PORT=8899
 
-# Optional: API Key authentication
-CYBERUI_API_KEY=
+# CyberUI API authentication key (Required)
+CYBERUI_API_KEY=your-secure-api-key
 
 # Timezone
 TZ=Asia/Shanghai
@@ -234,7 +242,7 @@ npm run dev
 | `TESLAMATE_DB_SSLMODE` | SSL mode | disable | |
 | `CYBERUI_PORT` | Frontend service port | 8080 | |
 | `CYBERUI_API_PORT` | Backend API port | 8899 | |
-| `CYBERUI_API_KEY` | API authentication key | - | |
+| `CYBERUI_API_KEY` | API authentication key | - | ✅ |
 | `TZ` | Timezone | Asia/Shanghai | |
 
 ### Amap Configuration

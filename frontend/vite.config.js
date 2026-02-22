@@ -8,34 +8,12 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             includeAssets: ['logo.png'],
-            manifest: {
-                name: 'TeslaMate CyberUI',
-                short_name: 'TeslaMate',
-                description: 'Responsive Cyberpunk Dashboard for TeslaMate',
-                theme_color: '#050505',
-                background_color: '#050505',
-                display: 'standalone',
-                icons: [
-                    {
-                        src: 'logo.png',
-                        sizes: '192x192',
-                        type: 'image/png'
-                    },
-                    {
-                        src: 'logo.png',
-                        sizes: '512x512',
-                        type: 'image/png'
-                    },
-                    {
-                        src: 'logo.png',
-                        sizes: '512x512',
-                        type: 'image/png',
-                        purpose: 'any maskable'
-                    }
-                ]
-            },
+            manifest: false,
             workbox: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
+            },
+            devOptions: {
+                enabled: true
             }
         })
     ],

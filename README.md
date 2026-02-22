@@ -63,6 +63,14 @@
 - **高德地图 Key** - 配置高德地图 API Key
 - **背景图片管理** - 上传、裁剪、删除背景图片
 
+### 📱 PWA（渐进式 Web 应用）支持
+本面板已完整支持 PWA，提供媲美原生 App 的沉浸式体验：
+- **秒开体验** - 支持核心资源的本地离线缓存
+- **桌面/主屏幕安装** - 在桌面系统（Chrome/Edge）或移动端（iOS/Android 主屏幕）可一键“安装到设备”
+- **原生沉浸感** - 隐藏浏览器状态栏与导航条，在 iOS 下呈现全屏无边框的赛博朋克深邃体验
+
+> **💡 最佳实践**：建议不要在浏览器内直接高频使用。请在你的手机浏览器（如 Safari）底部点击“分享” -> “添加到主屏幕”，或在电脑端浏览器的地址栏右侧点击“安装应用”图标，将其以独立 App 的形式运行以获得完美体验。
+
 ## 技术栈
 
 ### 后端
@@ -189,8 +197,8 @@ TESLAMATE_DB_SSLMODE=disable
 CYBERUI_PORT=8080
 CYBERUI_API_PORT=8899
 
-# 可选：API Key 认证
-CYBERUI_API_KEY=
+# CyberUI API 认证密钥 (必填)
+CYBERUI_API_KEY=your-secure-api-key
 
 # 时区
 TZ=Asia/Shanghai
@@ -235,7 +243,7 @@ npm run dev
 | `TESLAMATE_DB_SSLMODE` | SSL 模式 | disable | |
 | `CYBERUI_PORT` | 前端服务端口 | 8080 | |
 | `CYBERUI_API_PORT` | 后端 API 端口 | 8899 | |
-| `CYBERUI_API_KEY` | API 认证密钥 | - | |
+| `CYBERUI_API_KEY` | API 认证密钥 | - | ✅ |
 | `TZ` | 时区 | Asia/Shanghai | |
 
 ### 高德地图配置
