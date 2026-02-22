@@ -23,6 +23,18 @@ func MockData(enableMock bool) gin.HandlerFunc {
 			return
 		}
 
+		// 拦截所有非 GET 请求，在 Mock 模式下直接返回成功，不进行任何实际的修改或保存操作
+		if c.Request.Method != http.MethodGet {
+			logger.Infof("Mock enabled, intercepting %s request to %s, returning success", c.Request.Method, c.Request.URL.Path)
+			c.JSON(http.StatusOK, gin.H{
+				"code":    0,
+				"message": "success (mock mode)",
+				"data":    nil,
+			})
+			c.Abort()
+			return
+		}
+
 		// 根据请求路径构建Mock文件路径
 		// 例如：/api/v1/cars -> mock_data/api_v1_cars.json
 		// /api/v1/cars/123/status -> mock_data/api_v1_cars_id_status.json
