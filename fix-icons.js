@@ -2,7 +2,7 @@ const sharp = require('sharp');
 
 async function processIcons() {
     const input = 'frontend/public/logo.png';
-    const bgColor = '#050505';
+    const bgColor = '#FFFFFF';
 
     // 192x192: 144x144 logo + 24px padding = 192
     await sharp(input)
