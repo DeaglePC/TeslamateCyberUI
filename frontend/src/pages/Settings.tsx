@@ -183,9 +183,9 @@ function AutoThemeColorPreview({
 }
 
 export default function SettingsPage() {
-  const { 
-    theme, setTheme, unit, setUnit, language, setLanguage, 
-    amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey, 
+  const {
+    theme, setTheme, unit, setUnit, language, setLanguage,
+    amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey,
     mapType, setMapType,
     backgroundImage, backgroundOriginalImage, uploadBackgroundImage, deleteBackgroundImage,
     cardOpacity, setCardOpacity,
@@ -373,8 +373,8 @@ export default function SettingsPage() {
       setIsReCropping(true);
     } else {
       // 没有原始图片，提示用户重新上传
-      setUploadError(language === 'zh' 
-        ? '请重新上传图片以启用调整功能' 
+      setUploadError(language === 'zh'
+        ? '请重新上传图片以启用调整功能'
         : 'Please re-upload image to enable cropping');
       // 触发文件选择
       fileInputRef.current?.click();
@@ -412,7 +412,7 @@ export default function SettingsPage() {
           style={{ color: colors.muted }}
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
           </svg>
           <span className="text-sm font-medium">GitHub</span>
         </a>
@@ -651,7 +651,7 @@ export default function SettingsPage() {
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
                   <span className="text-white text-sm font-medium drop-shadow-lg">
-                    {uploading 
+                    {uploading
                       ? (language === 'zh' ? '上传中...' : 'Uploading...')
                       : (language === 'zh' ? '点击更换背景图片' : 'Click to change background')}
                   </span>
@@ -676,7 +676,7 @@ export default function SettingsPage() {
                     handleReCrop();
                   }}
                   className="p-2 rounded-full bg-black/50 hover:bg-blue-500/80 transition-colors"
-                  title={backgroundOriginalImage 
+                  title={backgroundOriginalImage
                     ? (language === 'zh' ? '重新调整区域' : 'Re-crop image')
                     : (language === 'zh' ? '重新上传以启用调整功能' : 'Re-upload to enable cropping')}
                 >
@@ -744,7 +744,7 @@ export default function SettingsPage() {
 
         {/* 错误提示 */}
         {uploadError && (
-          <div 
+          <div
             className="mt-3 p-2 rounded-lg text-sm"
             style={{ backgroundColor: 'rgba(255,0,0,0.1)', color: '#ff6b6b' }}
           >
@@ -754,7 +754,7 @@ export default function SettingsPage() {
 
         {/* 说明 */}
         <p className="text-xs mt-3" style={{ color: colors.muted }}>
-          {language === 'zh' 
+          {language === 'zh'
             ? '背景图片会保存到服务端，所有设备同步显示。建议使用深色图片以获得更好的视觉效果。'
             : 'Background image is saved on server and synced across devices. Dark images work best.'}
         </p>
@@ -802,7 +802,7 @@ export default function SettingsPage() {
 
         {/* 说明 */}
         <p className="text-xs mt-4" style={{ color: colors.muted }}>
-          {language === 'zh' 
+          {language === 'zh'
             ? '调整卡片的透明度，设置会自动保存。'
             : 'Adjust card opacity. Settings are saved automatically.'}
         </p>
@@ -866,7 +866,7 @@ export default function SettingsPage() {
             {language === 'zh' ? '地图设置' : 'Map Settings'}
           </h3>
         </div>
-        
+
         <div className="flex gap-3">
           {/* OpenStreetMap */}
           <button
@@ -919,7 +919,7 @@ export default function SettingsPage() {
                 {language === 'zh' ? '高德地图' : 'AMap'}
               </span>
               <span className="text-xs opacity-70">
-                {isAmapAvailable 
+                {isAmapAvailable
                   ? (language === 'zh' ? '中国地区推荐' : 'Best for China')
                   : (language === 'zh' ? '需配置 API Key' : 'API Key required')
                 }
@@ -939,7 +939,7 @@ export default function SettingsPage() {
 
         {/* 提示信息 */}
         <p className="text-xs mt-3" style={{ color: colors.muted }}>
-          {language === 'zh' 
+          {language === 'zh'
             ? '高德地图在中国地区有更精确的坐标纠偏，国外地区请使用开源地图。'
             : 'AMap provides better accuracy in China. Use OpenStreetMap for other regions.'}
         </p>
@@ -959,7 +959,7 @@ export default function SettingsPage() {
               type="url"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder="http://localhost:8080"
+              placeholder={import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}
               className="w-full p-3 rounded-lg border bg-transparent outline-none transition-all focus:ring-2"
               style={{
                 borderColor: colors.border,

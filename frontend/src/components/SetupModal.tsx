@@ -113,7 +113,7 @@ export default function SetupModal({ onComplete: _onComplete }: SetupModalProps)
                             type="url"
                             value={baseUrlInput}
                             onChange={(e) => setBaseUrlInput(e.target.value)}
-                            placeholder="http://localhost:8080"
+                            placeholder={import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}
                             className="w-full p-3 rounded-lg border bg-transparent outline-none transition-all focus:ring-2"
                             style={{
                                 borderColor: themeColors.border,
