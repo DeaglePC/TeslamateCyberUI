@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"teslamate-cyberui/internal/logger"
 
@@ -56,6 +57,17 @@ func MockData(enableMock bool) gin.HandlerFunc {
 
 		logger.Debugf("Mock enabled, looking for mock data file: %s", mockFilePath)
 
+		// 动态生成 states-timeline 的数据
+		if fileName == "api_v1_cars_id_stats_states-timeline.json" {
+			c.JSON(http.StatusOK, gin.H{
+				"code":    0,
+				"message": "success",
+				"data":    generateMockStatesTimeline(),
+			})
+			c.Abort()
+			return
+		}
+
 		// 尝试从嵌入的文件系统中读取Mock数据
 		data, err := mockDataFS.ReadFile(mockFilePath)
 		if err != nil {
@@ -88,4 +100,28 @@ func isNumeric(s string) bool {
 	}
 	// 空字符串不算数字
 	return len(s) > 0
+}
+
+// generateMockStatesTimeline 动态生成过去 24 小时内的车辆状态时间线
+func generateMockStatesTimeline() []map[string]interface{} {
+	now := time.Now().UTC()
+	timeline := make([]map[string]interface{}, 0)
+
+	// 从 24 小时前开始
+	startTime := now.Add(-24 * time.Hour)
+
+	// 定义状态枚举 (根据 frontend/src/types/index.ts 的 StateTimelineItem.state: 0: parked, 1: driving, 2: charging, 3: asleep, 4: offline, 5: suspended, 6: updating)
+	states := []int{4, 3, 0, 1, 0, 4, 0, 1, 0, 2, 0, 6, 0, 3, 4}
+
+	// 平均分配 24 小时给上边的 15 个状态 (约 1.6 小时一个状态)
+	durationPerState := (24 * time.Hour) / time.Duration(len(states))
+
+	for i, state := range states {
+		timeline = append(timeline, map[string]interface{}{
+			"time":  startTime.Add(time.Duration(i) * durationPerState).Format(time.RFC3339),
+			"state": state,
+		})
+	}
+
+	return timeline
 }
