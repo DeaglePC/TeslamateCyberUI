@@ -9,6 +9,19 @@
 
 <p align="center">一个现代化的 Tesla 数据可视化面板，连接 TeslaMate 数据库，采用赛博朋克风格设计。</p>
 
+<p align="center">
+  <a href="https://github.com/DeaglePC/TeslamateCyberUI/stargazers">
+    <img src="https://img.shields.io/github/stars/DeaglePC/TeslamateCyberUI?style=for-the-badge&color=00f0ff&labelColor=222222&logo=github" alt="GitHub Stars" />
+  </a>
+  <a href="https://tsl.deaglepc.cn/">
+    <img src="https://img.shields.io/website?url=https%3A%2F%2Ftsl.deaglepc.cn%2F&style=for-the-badge&color=00f0ff&labelColor=222222&logo=vercel" alt="Website Status" />
+  </a>
+</p>
+
+> **🌟 在线体验 (Demo)**
+>
+> - **前端访问**：[https://tsl.deaglepc.cn/](https://tsl.deaglepc.cn/)
+> - **后端 API**：[https://tsldemo.deaglepc.cn](https://tsldemo.deaglepc.cn) *(用于演示的自动填充后端假数据)*
 
 ![TeslaMate CyberUI](https://via.placeholder.com/800x400?text=TeslaMate+CyberUI)
 

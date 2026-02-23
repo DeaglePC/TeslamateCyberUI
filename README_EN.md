@@ -9,6 +9,20 @@
   <a href="./README_EN.md">English</a> | <a href="./README.md">中文</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/DeaglePC/TeslamateCyberUI/stargazers">
+    <img src="https://img.shields.io/github/stars/DeaglePC/TeslamateCyberUI?style=for-the-badge&color=00f0ff&labelColor=222222&logo=github" alt="GitHub Stars" />
+  </a>
+  <a href="https://tsl.deaglepc.cn/">
+    <img src="https://img.shields.io/website?url=https%3A%2F%2Ftsl.deaglepc.cn%2F&style=for-the-badge&color=00f0ff&labelColor=222222&logo=vercel" alt="Website Status" />
+  </a>
+</p>
+
+> **🌟 Online Demo**
+>
+> - **Frontend Access**: [https://tsl.deaglepc.cn/](https://tsl.deaglepc.cn/)
+> - **Backend API**: [https://tsldemo.deaglepc.cn](https://tsldemo.deaglepc.cn) *(Auto-filled backend with mock data for demonstration purposes)*
+
 ![TeslaMate CyberUI](https://via.placeholder.com/800x400?text=TeslaMate+CyberUI)
 
 ## Table of Contents
