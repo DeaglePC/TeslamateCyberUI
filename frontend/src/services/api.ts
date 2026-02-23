@@ -23,20 +23,19 @@ import type {
 
 // Helper function to get settings from localStorage
 const getApiConfig = () => {
-  const defaultBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
   try {
     const stored = localStorage.getItem('cyberui-settings');
     if (stored) {
       const settings = JSON.parse(stored);
       return {
-        baseUrl: settings.state?.baseUrl || defaultBaseUrl,
+        baseUrl: settings.state?.baseUrl || '',
         apiKey: settings.state?.apiKey || ''
       };
     }
   } catch {
     // ignore parse errors
   }
-  return { baseUrl: defaultBaseUrl, apiKey: '' };
+  return { baseUrl: '', apiKey: '' };
 };
 
 const api = axios.create({

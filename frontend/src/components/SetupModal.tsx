@@ -9,7 +9,7 @@ interface SetupModalProps {
 export default function SetupModal({ onComplete: _onComplete }: SetupModalProps) {
     const { language, setBaseUrl, setApiKey, setLanguage } = useSettingsStore();
 
-    const [baseUrlInput, setBaseUrlInput] = useState('');
+    const [baseUrlInput, setBaseUrlInput] = useState(import.meta.env.VITE_API_BASE_URL || '');
     const [apiKeyInput, setApiKeyInput] = useState('');
     const [testing, setTesting] = useState(false);
     const [error, setError] = useState('');
