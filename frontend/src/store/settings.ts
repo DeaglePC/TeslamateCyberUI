@@ -175,12 +175,6 @@ export const useSettingsStore = create<SettingsState>()(
         // backgroundImage 不保存到 localStorage
         // autoThemePrimaryColor 不保存到 localStorage（从图片动态计算）
       }),
-      onRehydrateStorage: () => (state) => {
-        // Fetch remote settings on hydration if possible
-        if (state?.baseUrl) {
-          state.fetchRemoteSettings();
-        }
-      }
     }
   )
 );

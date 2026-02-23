@@ -15,7 +15,7 @@ const DriveDetailPage = lazy(() => import('@/pages/DriveDetail'));
 const SettingsPage = lazy(() => import('@/pages/Settings'));
 
 function App() {
-  const { theme, baseUrl, backgroundImage, fetchBackgroundImage, autoThemeFromBg, setAutoThemePrimaryColor, autoThemePrimaryColor } = useSettingsStore();
+  const { theme, baseUrl, backgroundImage, fetchRemoteSettings, autoThemeFromBg, setAutoThemePrimaryColor, autoThemePrimaryColor } = useSettingsStore();
   const [showSetup, setShowSetup] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
@@ -34,12 +34,12 @@ function App() {
     document.body.style.backgroundColor = colors.bg;
   }, [theme, autoThemePrimaryColor]);
 
-  // 初始化时加载背景图片
+  // 初始化或 BaseURL 设置完成后，加载远程设置和背景图
   useEffect(() => {
     if (baseUrl) {
-      fetchBackgroundImage();
+      fetchRemoteSettings();
     }
-  }, [baseUrl, fetchBackgroundImage]);
+  }, [baseUrl, fetchRemoteSettings]);
 
   // 自动主题色：当背景图加载完成且开启了自动主题时，提取颜色
   useEffect(() => {
