@@ -21,7 +21,7 @@
 > **🌟 在线体验 (Demo)**
 >
 > - **前端访问**：[https://tsl.deaglepc.cn/](https://tsl.deaglepc.cn/)
-> - **后端 API**：[https://tsldemo.deaglepc.cn](https://tsldemo.deaglepc.cn) *(用于演示的自动填充后端假数据)*
+> - **后端 API**：[https://tsldemo.deaglepc.cn](https://tsldemo.deaglepc.cn) *(自动在前端填充。用于演示的假数据)*
 
 ![TeslaMate CyberUI](https://via.placeholder.com/800x400?text=TeslaMate+CyberUI)
 
