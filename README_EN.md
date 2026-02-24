@@ -23,7 +23,30 @@
 > - **Frontend Access**: [https://tsl.deaglepc.cn/](https://tsl.deaglepc.cn/)
 > - **Backend API**: [https://tsldemo.deaglepc.cn](https://tsldemo.deaglepc.cn) *(Auto-filled，backend with mock data for demonstration purposes)*
 
-![TeslaMate CyberUI](https://via.placeholder.com/800x400?text=TeslaMate+CyberUI)
+<p align="center">
+<table align="center">
+  <tr>
+    <th align="center">🏠 Home</th>
+    <th align="center">🛣️ Drives</th>
+    <th align="center">⚡ Charges</th>
+  </tr>
+  <tr>
+    <td><img src="./screenshots/home.webp" width="250" /></td>
+    <td><img src="./screenshots/drive-list.webp" width="250" /></td>
+    <td><img src="./screenshots/charge-list.webp" width="250" /></td>
+  </tr>
+  <tr>
+    <th align="center">🛣️ Drive Detail</th>
+    <th align="center">⚡ Charge Detail</th>
+    <th align="center">⚙️ Settings</th>
+  </tr>
+  <tr>
+    <td><img src="./screenshots/drive-detail.webp" width="250" /></td>
+    <td><img src="./screenshots/charge-detail.webp" width="250" /></td>
+    <td><img src="./screenshots/setting.webp" width="250" /></td>
+  </tr>
+</table>
+</p>
 
 ## Table of Contents
 

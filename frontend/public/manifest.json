@@ -27,17 +27,40 @@
     ],
     "screenshots": [
         {
-            "src": "/screenshot-wide.png",
-            "sizes": "1280x720",
-            "type": "image/png",
-            "form_factor": "wide",
-            "label": "TeslaMate CyberUI Desktop Dashboard"
+            "src": "/screenshot-home.webp",
+            "sizes": "800x2686",
+            "type": "image/webp",
+            "label": "Home Dashboard"
         },
         {
-            "src": "/screenshot-mobile.png",
-            "sizes": "750x1334",
-            "type": "image/png",
-            "label": "TeslaMate CyberUI Mobile View"
+            "src": "/screenshot-setting.webp",
+            "sizes": "800x5372",
+            "type": "image/webp",
+            "label": "Settings"
+        },
+        {
+            "src": "/screenshot-charge-list.webp",
+            "sizes": "792x2317",
+            "type": "image/webp",
+            "label": "Charge List"
+        },
+        {
+            "src": "/screenshot-charge-detail.webp",
+            "sizes": "800x2788",
+            "type": "image/webp",
+            "label": "Charge Detail"
+        },
+        {
+            "src": "/screenshot-drive-list.webp",
+            "sizes": "793x2816",
+            "type": "image/webp",
+            "label": "Drive List"
+        },
+        {
+            "src": "/screenshot-drive-detail.webp",
+            "sizes": "800x5140",
+            "type": "image/webp",
+            "label": "Drive Detail"
         }
     ]
 }

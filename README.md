@@ -23,7 +23,30 @@
 > - **前端访问**：[https://tsl.deaglepc.cn/](https://tsl.deaglepc.cn/)
 > - **后端 API**：[https://tsldemo.deaglepc.cn](https://tsldemo.deaglepc.cn) *(自动在前端填充。用于演示的假数据)*
 
-![TeslaMate CyberUI](https://via.placeholder.com/800x400?text=TeslaMate+CyberUI)
+<p align="center">
+<table align="center">
+  <tr>
+    <th align="center">🏠 主页</th>
+    <th align="center">🛣️ 驾驶记录</th>
+    <th align="center">⚡ 充电记录</th>
+  </tr>
+  <tr>
+    <td><img src="./screenshots/home.webp" width="250" /></td>
+    <td><img src="./screenshots/drive-list.webp" width="250" /></td>
+    <td><img src="./screenshots/charge-list.webp" width="250" /></td>
+  </tr>
+  <tr>
+    <th align="center">🛣️ 驾驶详情</th>
+    <th align="center">⚡ 充电详情</th>
+    <th align="center">⚙️ 设置</th>
+  </tr>
+  <tr>
+    <td><img src="./screenshots/drive-detail.webp" width="250" /></td>
+    <td><img src="./screenshots/charge-detail.webp" width="250" /></td>
+    <td><img src="./screenshots/setting.webp" width="250" /></td>
+  </tr>
+</table>
+</p>
 
 ## 目录
 
