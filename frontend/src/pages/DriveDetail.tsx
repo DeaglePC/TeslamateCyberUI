@@ -542,11 +542,11 @@ export default function DriveDetailPage() {
     return {
       backgroundColor: 'transparent',
       grid: {
-        top: 30,
+        top: 10,
         right: 10,
         bottom: 25,
-        left: 50,
-        containLabel: true
+        left: 35,
+        containLabel: false
       },
       tooltip: {
         trigger: 'axis',
@@ -575,8 +575,6 @@ export default function DriveDetailPage() {
       },
       yAxis: {
         type: 'value',
-        name: `${language === 'zh' ? '海拔' : 'Elevation'} ${eleUnitLabel}`,
-        nameTextStyle: { color: colors.muted, padding: [0, 20, 0, 0] },
         splitLine: { lineStyle: { color: colors.border, type: 'dashed', opacity: 0.5 } },
         axisLabel: { color: colors.muted },
         min: Math.floor(minEle - padding),
