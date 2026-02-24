@@ -236,26 +236,10 @@ TESLAMATE_DB_NAME=teslamate
 git clone https://github.com/DeaglePC/TeslamateCyberUI.git
 cd TeslamateCyberUI
 
-# 2. Create configuration file
-cat > .env << EOF
-# TeslaMate database configuration
-TESLAMATE_DB_HOST=your-teslamate-db-host
-TESLAMATE_DB_PORT=5432
-TESLAMATE_DB_USER=teslamate
-TESLAMATE_DB_PASSWORD=your-password
-TESLAMATE_DB_NAME=teslamate
-TESLAMATE_DB_SSLMODE=disable
-
-# CyberUI service ports
-CYBERUI_PORT=8080
-CYBERUI_API_PORT=8899
-
-# CyberUI API authentication key (Required)
-CYBERUI_API_KEY=your-secure-api-key
-
-# Timezone
-TZ=Asia/Shanghai
-EOF
+# 2. Create configuration file (edit as needed)
+cp .env.example .env
+# Edit .env with your TeslaMate database connection info
+# vi .env
 
 # 3. Start services
 docker compose up -d
