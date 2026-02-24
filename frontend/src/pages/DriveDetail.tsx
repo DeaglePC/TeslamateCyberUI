@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { Loader2, ArrowLeft, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactECharts from 'echarts-for-react';
 import { useSettingsStore } from '@/store/settings';
@@ -161,15 +162,11 @@ export default function DriveDetailPage() {
     );
   }, [positions]);
 
-  if (loading) return <Loading />;
-  if (error) return <ErrorState message={error} onRetry={fetchData} />;
-  if (!detail) return <ErrorState message={t('driveRecordNotFound')} />;
-
   // 数据采样函数 - 对密集数据进行降采样
   // mode: 'max' 保留区间最大值（适用于速度，确保峰值显示）
   // mode: 'maxAbs' 保留区间绝对值最大者（适用于功率，确保加速峰值和动能回收峰值显示）
   // mode: 'avg' 取区间平均值（适用于平滑曲线）
-  const sampleData = (data: number[], targetPoints: number = 150, mode: 'max' | 'avg' | 'maxAbs' = 'avg'): number[] => {
+  const sampleData = useCallback((data: number[], targetPoints: number = 150, mode: 'max' | 'avg' | 'maxAbs' = 'avg'): number[] => {
     if (data.length <= targetPoints) return data;
 
     const step = data.length / targetPoints;
@@ -180,21 +177,18 @@ export default function DriveDetailPage() {
       const endIdx = Math.min(Math.floor((i + 1) * step), data.length);
 
       if (mode === 'max') {
-        // 保留区间最大值，确保峰值速度能够显示
         let maxVal = data[startIdx];
         for (let j = startIdx + 1; j < endIdx; j++) {
           if (data[j] > maxVal) maxVal = data[j];
         }
         sampled.push(maxVal);
       } else if (mode === 'maxAbs') {
-        // 保留区间绝对值最大值，用于功率（保留最大输出和最大动能回收）
         let maxAbsVal = data[startIdx];
         for (let j = startIdx + 1; j < endIdx; j++) {
           if (Math.abs(data[j]) > Math.abs(maxAbsVal)) maxAbsVal = data[j];
         }
         sampled.push(maxAbsVal);
       } else {
-        // 计算窗口内的平均值（简单移动平均）
         let sum = 0;
         for (let j = startIdx; j < endIdx; j++) {
           sum += data[j];
@@ -204,7 +198,43 @@ export default function DriveDetailPage() {
     }
 
     return sampled;
-  };
+  }, []);
+
+  // 海拔状态统计: 计算累计爬升和累计下降 (参考 Grafana SQL)
+  const elevationStats = useMemo(() => {
+    if (positions.length < 2) return null;
+    let up = 0;
+    let down = 0;
+    let hasValidElevation = false;
+
+    // We calculate diff between current and previous point.
+    for (let i = 1; i < positions.length; i++) {
+      const curr = positions[i].elevation;
+      const prev = positions[i - 1].elevation;
+      if (curr !== undefined && prev !== undefined && curr !== null && prev !== null) {
+        hasValidElevation = true;
+        const diff = curr - prev;
+        if (diff > 0) {
+          up += diff;
+        } else if (diff < 0) {
+          down += diff; // diff is negative
+        }
+      }
+    }
+
+    if (!hasValidElevation) return null;
+
+    return {
+      up: Math.round(up),
+      down: Math.round(down)
+    };
+  }, [positions]);
+
+  if (loading) return <Loading />;
+  if (error) return <ErrorState message={error} onRetry={fetchData} />;
+  if (!detail) return <ErrorState message={t('driveRecordNotFound')} />;
+
+
 
   // 速度/功率图表配置
   const getChartOption = () => {
@@ -336,8 +366,6 @@ export default function DriveDetailPage() {
     };
   };
 
-  const chartOption = getChartOption();
-
   // 温度图表配置
   const getTempChartOption = () => {
     if (!hasTempData) return null;
@@ -465,8 +493,122 @@ export default function DriveDetailPage() {
     };
   };
 
+
+
+  // 海拔图表配置
+  const getElevationChartOption = () => {
+    const hasElevation = positions.some(p => p.elevation !== undefined && p.elevation !== null);
+    if (!hasElevation || positions.length === 0) return null;
+
+    const targetPoints = Math.min(positions.length, 150);
+    const step = positions.length / targetPoints;
+
+    const sampledTimes: string[] = [];
+    const rawElevations: number[] = [];
+
+    // Extract raw elevation array, filling gaps with previous value if any
+    let lastValid = 0;
+    for (let i = 0; i < positions.length; i++) {
+      if (positions[i].elevation !== undefined && positions[i].elevation !== null) {
+        lastValid = positions[i].elevation as number;
+      }
+      rawElevations.push(lastValid);
+    }
+
+    for (let i = 0; i < targetPoints; i++) {
+      const idx = Math.floor(i * step);
+      sampledTimes.push(formatDate(positions[idx].date, 'HH:mm'));
+    }
+
+    // Use avg sampling for elevation to smooth out GPS jitter
+    const elevationsStr = sampleData(rawElevations, targetPoints, 'avg');
+    // Convert to target unit
+    const elevations = unit === 'imperial'
+      ? elevationsStr.map(e => Math.round(e * 3.28084)) // meters to feet
+      : elevationsStr;
+
+    // 动态调整 Y 轴范围以突出变化
+    let minEle = elevations.length > 0 ? Math.min(...elevations) : 0;
+    let maxEle = elevations.length > 0 ? Math.max(...elevations) : 100;
+
+    // Prevent Infinity and NaN crash
+    if (!isFinite(minEle)) minEle = 0;
+    if (!isFinite(maxEle)) maxEle = 100;
+
+    const padding = Math.max(10, (maxEle - minEle) * 0.1);
+
+    const eleUnitLabel = unit === 'imperial' ? 'ft' : 'm';
+
+    return {
+      backgroundColor: 'transparent',
+      grid: {
+        top: 30,
+        right: 10,
+        bottom: 25,
+        left: 50,
+        containLabel: true
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: colors.cardBg,
+        borderColor: colors.border,
+        textStyle: { color: colors.primary },
+        formatter: (params: any) => {
+          let html = `<div class="mb-1 font-medium">${params[0].axisValue}</div>`;
+          params.forEach((param: any) => {
+            html += `<div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" style="background: ${param.color}"></span>
+              <span class="text-gray-400">${param.seriesName}:</span>
+              <span class="font-medium">${param.value} ${eleUnitLabel}</span>
+            </div>`;
+          });
+          return html;
+        }
+      },
+      xAxis: {
+        type: 'category',
+        data: sampledTimes,
+        boundaryGap: false,
+        axisLine: { lineStyle: { color: colors.border } },
+        axisLabel: { color: colors.muted, margin: 12 },
+        axisTick: { show: false }
+      },
+      yAxis: {
+        type: 'value',
+        name: `${language === 'zh' ? '海拔' : 'Elevation'} ${eleUnitLabel}`,
+        nameTextStyle: { color: colors.muted, padding: [0, 20, 0, 0] },
+        splitLine: { lineStyle: { color: colors.border, type: 'dashed', opacity: 0.5 } },
+        axisLabel: { color: colors.muted },
+        min: Math.floor(minEle - padding),
+        max: Math.ceil(maxEle + padding)
+      },
+      series: [
+        {
+          name: language === 'zh' ? '海拔' : 'Elevation',
+          type: 'line',
+          data: elevations,
+          smooth: 0.3,
+          symbol: 'none',
+          lineStyle: { width: 2, color: colors.accent },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: `${colors.accent}40` },
+                { offset: 1, color: `${colors.accent}05` }
+              ]
+            }
+          }
+        }
+      ]
+    };
+  };
+
+  const chartOption = getChartOption();
   const tempChartOption = getTempChartOption();
   const tirePressureChartOption = getTirePressureChartOption();
+  const elevationChartOption = getElevationChartOption();
 
   return (
     <div className="space-y-6 animate-slideUp" ref={contentRef}>
@@ -612,7 +754,9 @@ export default function DriveDetailPage() {
       {/* 速度/功率曲线 */}
       {chartOption && (
         <Card>
-          <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('speedPowerCurve')}</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold" style={{ color: colors.primary }}>{t('speedPowerCurve')}</h3>
+          </div>
           <ReactECharts
             option={chartOption}
             style={{ height: 'min(400px, 50vh)' }}
@@ -644,6 +788,40 @@ export default function DriveDetailPage() {
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('tirePressure')}</h3>
           <ReactECharts
             option={tirePressureChartOption}
+            style={{ height: 'min(300px, 40vh)' }}
+            opts={{ renderer: 'svg' }}
+            className="!min-h-[240px]"
+          />
+        </Card>
+      )}
+      {/* 海拔曲线与统计 */}
+      {elevationChartOption && (
+        <Card>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <h3 className="font-semibold" style={{ color: colors.primary }}>
+              {language === 'zh' ? '海拔曲线' : 'Elevation Profile'}
+            </h3>
+
+            {elevationStats && (
+              <div className="flex items-center gap-4 text-sm bg-black/20 rounded-lg px-3 py-1.5 border border-white/5 w-fit">
+                <div className="flex items-center gap-1.5" style={{ color: colors.success }}>
+                  <ArrowUpRight className="w-4 h-4" />
+                  <span className="font-medium">
+                    {language === 'zh' ? '爬升' : 'UP'}: {unit === 'imperial' ? Math.round(elevationStats.up * 3.28084) : elevationStats.up} {unit === 'imperial' ? 'ft' : 'm'}
+                  </span>
+                </div>
+                <div className="w-px h-3 bg-white/20"></div>
+                <div className="flex items-center gap-1.5" style={{ color: colors.danger }}>
+                  <ArrowDownRight className="w-4 h-4" />
+                  <span className="font-medium">
+                    {language === 'zh' ? '下降' : 'DOWN'}: {unit === 'imperial' ? Math.round(elevationStats.down * 3.28084) : elevationStats.down} {unit === 'imperial' ? 'ft' : 'm'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          <ReactECharts
+            option={elevationChartOption}
             style={{ height: 'min(300px, 40vh)' }}
             opts={{ renderer: 'svg' }}
             className="!min-h-[240px]"
