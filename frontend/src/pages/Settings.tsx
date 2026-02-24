@@ -202,6 +202,10 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [bgImageRatio, setBgImageRatio] = useState<number | null>(null); // 背景图片宽高比
 
+  // Local state for API connection inputs to avoid triggering App.tsx fetchRemoteSettings on every keystroke
+  const [localBaseUrl, setLocalBaseUrl] = useState(baseUrl);
+  const [localApiKey, setLocalApiKey] = useState(apiKey);
+
   const colors = getThemeColors(theme);
 
   // 检测背景图片尺寸
@@ -250,7 +254,7 @@ export default function SettingsPage() {
 
   // Test API connection
   const testConnection = async () => {
-    if (!baseUrl) {
+    if (!localBaseUrl) {
       setTestResult({ success: false, message: language === 'zh' ? '请输入后端地址' : 'Please enter backend URL' });
       return;
     }
@@ -258,11 +262,15 @@ export default function SettingsPage() {
     setTesting(true);
     setTestResult(null);
 
+    // Sync to store
+    setBaseUrl(localBaseUrl);
+    setApiKey(localApiKey);
+
     try {
-      const url = baseUrl.replace(/\/$/, '');
-      const response = await fetch(`${url}/health`, {
+      const url = localBaseUrl.replace(/\/$/, '');
+      const response = await fetch(`${url}/api/v1/auth/test`, {
         method: 'GET',
-        headers: apiKey ? { 'X-API-Key': apiKey } : {},
+        headers: localApiKey ? { 'X-API-Key': localApiKey } : {},
       });
 
       if (response.ok) {
@@ -957,8 +965,8 @@ export default function SettingsPage() {
             </label>
             <input
               type="url"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
+              value={localBaseUrl}
+              onChange={(e) => setLocalBaseUrl(e.target.value)}
               placeholder={import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}
               className="w-full p-3 rounded-lg border bg-transparent outline-none transition-all focus:ring-2"
               style={{
@@ -973,8 +981,8 @@ export default function SettingsPage() {
             </label>
             <input
               type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              value={localApiKey}
+              onChange={(e) => setLocalApiKey(e.target.value)}
               placeholder={language === 'zh' ? '如果后端启用了鉴权' : 'If backend auth is enabled'}
               className="w-full p-3 rounded-lg border bg-transparent outline-none transition-all focus:ring-2"
               style={{
@@ -985,8 +993,8 @@ export default function SettingsPage() {
           </div>
           <p className="text-xs" style={{ color: colors.muted }}>
             {language === 'zh'
-              ? '修改后点击测试连接'
-              : 'Click Test Connection after changes'}
+              ? '修改后点击测试连接生效'
+              : 'Click Test Connection to apply changes'}
           </p>
 
           {/* Test result message */}

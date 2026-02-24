@@ -115,9 +115,13 @@ func main() {
 		api.GET("/background-image", h.GetBackgroundImage)
 		api.POST("/background-image", h.UploadBackgroundImage)
 		api.DELETE("/background-image", h.DeleteBackgroundImage)
+		// 认证测试相关
+		api.GET("/auth/test", func(c *gin.Context) {
+			c.JSON(200, gin.H{"status": "ok", "message": "API key is valid"})
+		})
 	}
 
-	// 健康检查
+	// 健康检查 (不受认证保护，供外部监控使用)
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})

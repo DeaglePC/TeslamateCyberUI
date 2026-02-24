@@ -1,3 +1,7 @@
+param (
+    [switch]$Mock
+)
+
 # This script is for local development and testing.
 # It starts the frontend development server.
 
@@ -10,9 +14,13 @@ if (-not (Test-Path "node_modules")) {
     npm install
 }
 
+if ($Mock) {
+    Write-Host "Starting frontend server in Mock Data context (ensure backend was also started with -Mock)..." -ForegroundColor Yellow
+}
+
 # Start the frontend development server.
 Write-Host "Starting frontend development server..."
-npm run dev --host
+npm run dev -- --host
 
 # Return to the original directory.
 Pop-Location

@@ -167,8 +167,9 @@ export default function DriveDetailPage() {
 
   // 数据采样函数 - 对密集数据进行降采样
   // mode: 'max' 保留区间最大值（适用于速度，确保峰值显示）
+  // mode: 'maxAbs' 保留区间绝对值最大者（适用于功率，确保加速峰值和动能回收峰值显示）
   // mode: 'avg' 取区间平均值（适用于平滑曲线）
-  const sampleData = (data: number[], targetPoints: number = 150, mode: 'max' | 'avg' = 'avg'): number[] => {
+  const sampleData = (data: number[], targetPoints: number = 150, mode: 'max' | 'avg' | 'maxAbs' = 'avg'): number[] => {
     if (data.length <= targetPoints) return data;
 
     const step = data.length / targetPoints;
@@ -185,6 +186,13 @@ export default function DriveDetailPage() {
           if (data[j] > maxVal) maxVal = data[j];
         }
         sampled.push(maxVal);
+      } else if (mode === 'maxAbs') {
+        // 保留区间绝对值最大值，用于功率（保留最大输出和最大动能回收）
+        let maxAbsVal = data[startIdx];
+        for (let j = startIdx + 1; j < endIdx; j++) {
+          if (Math.abs(data[j]) > Math.abs(maxAbsVal)) maxAbsVal = data[j];
+        }
+        sampled.push(maxAbsVal);
       } else {
         // 计算窗口内的平均值（简单移动平均）
         let sum = 0;
@@ -217,9 +225,9 @@ export default function DriveDetailPage() {
       rawPowers.push(positions[idx].power);
     }
 
-    // 速度使用最大值采样（保留峰值速度），功率使用平均值采样（保留正负趋势，包括动能回收）
+    // 速度使用最大值采样（保留峰值速度），功率使用绝对最大值采样（保留加速和动能回收峰值）
     const speeds = sampleData(positions.map(p => p.speed), targetPoints, 'max');
-    const powers = sampleData(positions.map(p => p.power), targetPoints, 'avg');
+    const powers = sampleData(positions.map(p => p.power), targetPoints, 'maxAbs');
 
     return {
       backgroundColor: 'transparent',

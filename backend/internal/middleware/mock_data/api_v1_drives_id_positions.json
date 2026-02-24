@@ -3,139 +3,918 @@
   "message": "success",
   "data": [
     {
-      "date": "2026-02-15T07:35:38Z",
-      "latitude": 39.9042,
-      "longitude": 116.4074,
+      "date": "2026-02-15T07:35:37.953Z",
+      "latitude": 23.130619,
+      "longitude": 113.245152,
+      "speed": 0,
+      "power": 1,
+      "batteryLevel": 59,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T07:37:22.149Z",
+      "latitude": 23.130667,
+      "longitude": 113.2447,
+      "speed": 10,
+      "power": 4,
+      "batteryLevel": 59,
+      "elevation": 16
+    },
+    {
+      "date": "2026-02-15T07:38:19.777Z",
+      "latitude": 23.130573,
+      "longitude": 113.242826,
+      "speed": 16,
+      "power": 2,
+      "batteryLevel": 59,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T07:39:20.421Z",
+      "latitude": 23.132566,
+      "longitude": 113.242355,
       "speed": 0,
       "power": 0,
-      "batteryLevel": 56,
-      "elevation": 45,
-      "outsideTemp": 24.5,
-      "insideTemp": 21.0,
-      "tpmsPressureFL": 2.8,
-      "tpmsPressureFR": 2.8,
-      "tpmsPressureRL": 2.9,
-      "tpmsPressureRR": 2.9
+      "batteryLevel": 59,
+      "elevation": 9
     },
     {
-      "date": "2026-02-15T07:40:00Z",
-      "latitude": 39.9142,
-      "longitude": 116.4174,
-      "speed": 45,
-      "power": 12,
-      "batteryLevel": 55,
-      "elevation": 44,
-      "outsideTemp": 24.5,
-      "insideTemp": 21.0,
-      "tpmsPressureFL": 2.85,
-      "tpmsPressureFR": 2.85,
-      "tpmsPressureRL": 2.95,
-      "tpmsPressureRR": 2.95
+      "date": "2026-02-15T07:41:22.891Z",
+      "latitude": 23.133561,
+      "longitude": 113.242566,
+      "speed": 0,
+      "power": 0,
+      "batteryLevel": 59,
+      "elevation": 8
     },
     {
-      "date": "2026-02-15T07:45:00Z",
-      "latitude": 39.9242,
-      "longitude": 116.4274,
-      "speed": 80,
+      "date": "2026-02-15T07:42:59.814Z",
+      "latitude": 23.135144,
+      "longitude": 113.243119,
+      "speed": 5,
+      "power": 2,
+      "batteryLevel": 59,
+      "elevation": 7
+    },
+    {
+      "date": "2026-02-15T07:46:55.501Z",
+      "latitude": 23.135955,
+      "longitude": 113.243398,
+      "speed": 10,
+      "power": 9,
+      "batteryLevel": 58,
+      "elevation": 8
+    },
+    {
+      "date": "2026-02-15T07:47:45.374Z",
+      "latitude": 23.13783,
+      "longitude": 113.239106,
+      "speed": 56,
+      "power": 35,
+      "batteryLevel": 58,
+      "elevation": 7
+    },
+    {
+      "date": "2026-02-15T07:48:33.989Z",
+      "latitude": 23.140362,
+      "longitude": 113.231832,
+      "speed": 51,
+      "power": 21,
+      "batteryLevel": 58,
+      "elevation": 8
+    },
+    {
+      "date": "2026-02-15T07:49:23.361Z",
+      "latitude": 23.142908,
+      "longitude": 113.23339,
+      "speed": 53,
+      "power": -20,
+      "batteryLevel": 58,
+      "elevation": 18
+    },
+    {
+      "date": "2026-02-15T07:50:12.232Z",
+      "latitude": 23.146098,
+      "longitude": 113.238876,
+      "speed": 50,
       "power": 25,
+      "batteryLevel": 58,
+      "elevation": 25
+    },
+    {
+      "date": "2026-02-15T07:51:03.128Z",
+      "latitude": 23.149049,
+      "longitude": 113.244493,
+      "speed": 43,
+      "power": -31,
+      "batteryLevel": 58,
+      "elevation": 25
+    },
+    {
+      "date": "2026-02-15T07:51:51.745Z",
+      "latitude": 23.154586,
+      "longitude": 113.2449,
+      "speed": 93,
+      "power": 45,
+      "batteryLevel": 58,
+      "elevation": 26
+    },
+    {
+      "date": "2026-02-15T07:52:40.115Z",
+      "latitude": 23.1607,
+      "longitude": 113.250596,
+      "speed": 35,
+      "power": 4,
+      "batteryLevel": 57,
+      "elevation": 20
+    },
+    {
+      "date": "2026-02-15T07:53:29.483Z",
+      "latitude": 23.164041,
+      "longitude": 113.253898,
+      "speed": 50,
+      "power": 69,
+      "batteryLevel": 57,
+      "elevation": 16
+    },
+    {
+      "date": "2026-02-15T07:54:17.856Z",
+      "latitude": 23.161073,
+      "longitude": 113.263775,
+      "speed": 85,
+      "power": 34,
+      "batteryLevel": 57,
+      "elevation": 21
+    },
+    {
+      "date": "2026-02-15T07:55:07.221Z",
+      "latitude": 23.162117,
+      "longitude": 113.275519,
+      "speed": 89,
+      "power": 1,
+      "batteryLevel": 57,
+      "elevation": 36
+    },
+    {
+      "date": "2026-02-15T07:55:58.217Z",
+      "latitude": 23.161975,
+      "longitude": 113.284946,
+      "speed": 68,
+      "power": 1,
+      "batteryLevel": 56,
+      "elevation": 70
+    },
+    {
+      "date": "2026-02-15T07:56:47.829Z",
+      "latitude": 23.161351,
+      "longitude": 113.29516,
+      "speed": 100,
+      "power": 16,
+      "batteryLevel": 56,
+      "elevation": 51
+    },
+    {
+      "date": "2026-02-15T07:57:36.943Z",
+      "latitude": 23.164229,
+      "longitude": 113.30642,
+      "speed": 89,
+      "power": 16,
+      "batteryLevel": 56,
+      "elevation": 40
+    },
+    {
+      "date": "2026-02-15T07:58:25.052Z",
+      "latitude": 23.167098,
+      "longitude": 113.317054,
+      "speed": 85,
+      "power": 8,
+      "batteryLevel": 56,
+      "elevation": 28
+    },
+    {
+      "date": "2026-02-15T07:59:13.92Z",
+      "latitude": 23.171749,
+      "longitude": 113.327331,
+      "speed": 93,
+      "power": 16,
+      "batteryLevel": 56,
+      "elevation": 24
+    },
+    {
+      "date": "2026-02-15T08:00:03.785Z",
+      "latitude": 23.17222,
+      "longitude": 113.338266,
+      "speed": 92,
+      "power": 17,
+      "batteryLevel": 55,
+      "elevation": 28
+    },
+    {
+      "date": "2026-02-15T08:00:53.298Z",
+      "latitude": 23.166903,
+      "longitude": 113.350239,
+      "speed": 95,
+      "power": -14,
+      "batteryLevel": 55,
+      "elevation": 30
+    },
+    {
+      "date": "2026-02-15T08:01:42.415Z",
+      "latitude": 23.164549,
+      "longitude": 113.361659,
+      "speed": 85,
+      "power": 38,
+      "batteryLevel": 55,
+      "elevation": 23
+    },
+    {
+      "date": "2026-02-15T08:02:31.529Z",
+      "latitude": 23.157644,
+      "longitude": 113.370476,
+      "speed": 80,
+      "power": -7,
+      "batteryLevel": 55,
+      "elevation": 19
+    },
+    {
+      "date": "2026-02-15T08:03:21.901Z",
+      "latitude": 23.153572,
+      "longitude": 113.379244,
+      "speed": 72,
+      "power": -26,
+      "batteryLevel": 55,
+      "elevation": 19
+    },
+    {
+      "date": "2026-02-15T08:04:11.009Z",
+      "latitude": 23.154068,
+      "longitude": 113.388889,
+      "speed": 82,
+      "power": -31,
       "batteryLevel": 54,
-      "elevation": 46,
-      "outsideTemp": 24.6,
-      "insideTemp": 21.0,
-      "tpmsPressureFL": 2.9,
-      "tpmsPressureFR": 2.9,
-      "tpmsPressureRL": 3.0,
-      "tpmsPressureRR": 3.0
+      "elevation": 14
     },
     {
-      "date": "2026-02-15T08:00:00Z",
-      "latitude": 39.9542,
-      "longitude": 116.4574,
-      "speed": 110,
-      "power": 40,
-      "batteryLevel": 50,
-      "elevation": 50,
-      "outsideTemp": 24.8,
-      "insideTemp": 21.0,
-      "tpmsPressureFL": 3.0,
-      "tpmsPressureFR": 3.0,
-      "tpmsPressureRL": 3.05,
-      "tpmsPressureRR": 3.05
+      "date": "2026-02-15T08:04:59.877Z",
+      "latitude": 23.15488,
+      "longitude": 113.395416,
+      "speed": 63,
+      "power": 9,
+      "batteryLevel": 54,
+      "elevation": 16
     },
     {
-      "date": "2026-02-15T08:15:00Z",
-      "latitude": 39.9842,
-      "longitude": 116.4874,
-      "speed": 144,
-      "power": 85,
-      "batteryLevel": 45,
-      "elevation": 55,
-      "outsideTemp": 25.0,
-      "insideTemp": 20.5,
-      "tpmsPressureFL": 3.1,
-      "tpmsPressureFR": 3.1,
-      "tpmsPressureRL": 3.1,
-      "tpmsPressureRR": 3.1
+      "date": "2026-02-15T08:05:52.506Z",
+      "latitude": 23.158144,
+      "longitude": 113.406408,
+      "speed": 92,
+      "power": 18,
+      "batteryLevel": 54,
+      "elevation": 20
     },
     {
-      "date": "2026-02-15T08:30:00Z",
-      "latitude": 40.0142,
-      "longitude": 116.5174,
-      "speed": 90,
+      "date": "2026-02-15T08:06:42.372Z",
+      "latitude": 23.161358,
+      "longitude": 113.42186,
+      "speed": 113,
+      "power": -65,
+      "batteryLevel": 53,
+      "elevation": 19
+    },
+    {
+      "date": "2026-02-15T08:07:31.487Z",
+      "latitude": 23.161416,
+      "longitude": 113.436228,
+      "speed": 132,
+      "power": 136,
+      "batteryLevel": 53,
+      "elevation": 19
+    },
+    {
+      "date": "2026-02-15T08:08:21.1Z",
+      "latitude": 23.159656,
+      "longitude": 113.453738,
+      "speed": 113,
       "power": 28,
+      "batteryLevel": 52,
+      "elevation": 22
+    },
+    {
+      "date": "2026-02-15T08:09:11.208Z",
+      "latitude": 23.157079,
+      "longitude": 113.46821,
+      "speed": 92,
+      "power": 27,
+      "batteryLevel": 52,
+      "elevation": 20
+    },
+    {
+      "date": "2026-02-15T08:10:00.574Z",
+      "latitude": 23.151915,
+      "longitude": 113.483145,
+      "speed": 117,
+      "power": 14,
+      "batteryLevel": 51,
+      "elevation": 21
+    },
+    {
+      "date": "2026-02-15T08:10:50.35Z",
+      "latitude": 23.147376,
+      "longitude": 113.497274,
+      "speed": 109,
+      "power": 14,
+      "batteryLevel": 51,
+      "elevation": 16
+    },
+    {
+      "date": "2026-02-15T08:11:39.714Z",
+      "latitude": 23.147169,
+      "longitude": 113.510749,
+      "speed": 101,
+      "power": 48,
+      "batteryLevel": 51,
+      "elevation": 17
+    },
+    {
+      "date": "2026-02-15T08:12:29.574Z",
+      "latitude": 23.147497,
+      "longitude": 113.524869,
+      "speed": 106,
+      "power": 20,
+      "batteryLevel": 51,
+      "elevation": 20
+    },
+    {
+      "date": "2026-02-15T08:13:18.442Z",
+      "latitude": 23.141867,
+      "longitude": 113.538138,
+      "speed": 101,
+      "power": 2,
+      "batteryLevel": 50,
+      "elevation": 15
+    },
+    {
+      "date": "2026-02-15T08:14:07.827Z",
+      "latitude": 23.134294,
+      "longitude": 113.548512,
+      "speed": 103,
+      "power": 7,
+      "batteryLevel": 50
+    },
+    {
+      "date": "2026-02-15T08:14:56.917Z",
+      "latitude": 23.126918,
+      "longitude": 113.559865,
+      "speed": 106,
+      "power": -12,
+      "batteryLevel": 50,
+      "elevation": 19
+    },
+    {
+      "date": "2026-02-15T08:15:48.974Z",
+      "latitude": 23.116819,
+      "longitude": 113.567183,
+      "speed": 101,
+      "power": 48,
+      "batteryLevel": 49,
+      "elevation": 22
+    },
+    {
+      "date": "2026-02-15T08:16:39.091Z",
+      "latitude": 23.106505,
+      "longitude": 113.577315,
+      "speed": 117,
+      "power": 38,
+      "batteryLevel": 49,
+      "elevation": 15
+    },
+    {
+      "date": "2026-02-15T08:17:28.952Z",
+      "latitude": 23.09487,
+      "longitude": 113.586305,
+      "speed": 108,
+      "power": 12,
+      "batteryLevel": 49,
+      "elevation": 18
+    },
+    {
+      "date": "2026-02-15T08:18:17.81Z",
+      "latitude": 23.084967,
+      "longitude": 113.592846,
+      "speed": 97,
+      "power": 29,
+      "batteryLevel": 48,
+      "elevation": 16
+    },
+    {
+      "date": "2026-02-15T08:19:06.926Z",
+      "latitude": 23.074983,
+      "longitude": 113.60025,
+      "speed": 106,
+      "power": 33,
+      "batteryLevel": 48,
+      "elevation": 15
+    },
+    {
+      "date": "2026-02-15T08:19:56.037Z",
+      "latitude": 23.065165,
+      "longitude": 113.609854,
+      "speed": 117,
+      "power": 24,
+      "batteryLevel": 48,
+      "elevation": 16
+    },
+    {
+      "date": "2026-02-15T08:20:46.181Z",
+      "latitude": 23.056199,
+      "longitude": 113.621765,
+      "speed": 97,
+      "power": 6,
+      "batteryLevel": 47,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T08:21:34.788Z",
+      "latitude": 23.049637,
+      "longitude": 113.633682,
+      "speed": 117,
+      "power": 39,
+      "batteryLevel": 47,
+      "elevation": 14
+    },
+    {
+      "date": "2026-02-15T08:22:26.663Z",
+      "latitude": 23.041397,
+      "longitude": 113.649308,
+      "speed": 137,
+      "power": 1,
+      "batteryLevel": 46,
+      "elevation": 17
+    },
+    {
+      "date": "2026-02-15T08:23:16.775Z",
+      "latitude": 23.032188,
+      "longitude": 113.660761,
+      "speed": 106,
+      "power": -20,
+      "batteryLevel": 46,
+      "elevation": 12
+    },
+    {
+      "date": "2026-02-15T08:24:05.14Z",
+      "latitude": 23.023358,
+      "longitude": 113.669944,
+      "speed": 89,
+      "power": 11,
+      "batteryLevel": 46,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T08:24:55.748Z",
+      "latitude": 23.014533,
+      "longitude": 113.679009,
+      "speed": 100,
+      "power": 9,
+      "batteryLevel": 46,
+      "elevation": 18
+    },
+    {
+      "date": "2026-02-15T08:25:44.734Z",
+      "latitude": 23.003912,
+      "longitude": 113.689724,
+      "speed": 140,
+      "power": 32,
+      "batteryLevel": 45,
+      "elevation": 14
+    },
+    {
+      "date": "2026-02-15T08:26:34.6Z",
+      "latitude": 22.988573,
+      "longitude": 113.697817,
+      "speed": 124,
+      "power": 1,
+      "batteryLevel": 44,
+      "elevation": 12
+    },
+    {
+      "date": "2026-02-15T08:27:22.711Z",
+      "latitude": 22.972921,
+      "longitude": 113.699042,
+      "speed": 132,
+      "power": 19,
+      "batteryLevel": 44,
+      "elevation": 21
+    },
+    {
+      "date": "2026-02-15T08:28:11.323Z",
+      "latitude": 22.958943,
+      "longitude": 113.695766,
+      "speed": 105,
+      "power": 21,
+      "batteryLevel": 44,
+      "elevation": 21
+    },
+    {
+      "date": "2026-02-15T08:29:00.936Z",
+      "latitude": 22.946989,
+      "longitude": 113.692409,
+      "speed": 90,
+      "power": -10,
+      "batteryLevel": 43,
+      "elevation": 31
+    },
+    {
+      "date": "2026-02-15T08:29:50.308Z",
+      "latitude": 22.936736,
+      "longitude": 113.688615,
+      "speed": 82,
+      "power": 1,
+      "batteryLevel": 43,
+      "elevation": 14
+    },
+    {
+      "date": "2026-02-15T08:30:40.04Z",
+      "latitude": 22.928757,
+      "longitude": 113.68146,
+      "speed": 89,
+      "power": 2,
+      "batteryLevel": 43,
+      "elevation": 28
+    },
+    {
+      "date": "2026-02-15T08:31:28.654Z",
+      "latitude": 22.921776,
+      "longitude": 113.67466,
+      "speed": 93,
+      "power": 2,
+      "batteryLevel": 43,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T08:32:17.764Z",
+      "latitude": 22.91121,
+      "longitude": 113.669741,
+      "speed": 100,
+      "power": -4,
+      "batteryLevel": 43,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T08:33:06.629Z",
+      "latitude": 22.899351,
+      "longitude": 113.669011,
+      "speed": 98,
+      "power": 37,
+      "batteryLevel": 42,
+      "elevation": 19
+    },
+    {
+      "date": "2026-02-15T08:33:56.994Z",
+      "latitude": 22.88714,
+      "longitude": 113.669455,
+      "speed": 101,
+      "power": 18,
+      "batteryLevel": 42,
+      "elevation": 23
+    },
+    {
+      "date": "2026-02-15T08:34:46.615Z",
+      "latitude": 22.874441,
+      "longitude": 113.672529,
+      "speed": 105,
+      "power": 29,
       "batteryLevel": 41,
-      "elevation": 48,
-      "outsideTemp": 25.2,
-      "insideTemp": 20.0,
-      "tpmsPressureFL": 3.05,
-      "tpmsPressureFR": 3.05,
-      "tpmsPressureRL": 3.1,
-      "tpmsPressureRR": 3.1
+      "elevation": 25
     },
     {
-      "date": "2026-02-15T08:45:00Z",
-      "latitude": 40.0442,
-      "longitude": 116.5474,
-      "speed": 40,
-      "power": 10,
+      "date": "2026-02-15T08:35:35.058Z",
+      "latitude": 22.861217,
+      "longitude": 113.677025,
+      "speed": 117,
+      "power": 65,
+      "batteryLevel": 41,
+      "elevation": 22
+    },
+    {
+      "date": "2026-02-15T08:36:25.454Z",
+      "latitude": 22.847535,
+      "longitude": 113.684379,
+      "speed": 132,
+      "power": -15,
+      "batteryLevel": 40,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T08:37:16.077Z",
+      "latitude": 22.834938,
+      "longitude": 113.692947,
+      "speed": 119,
+      "power": 30,
+      "batteryLevel": 40,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T08:38:04.441Z",
+      "latitude": 22.827533,
+      "longitude": 113.704766,
+      "speed": 137,
+      "power": 57,
+      "batteryLevel": 40,
+      "elevation": 11
+    },
+    {
+      "date": "2026-02-15T08:38:53.303Z",
+      "latitude": 22.822909,
+      "longitude": 113.716779,
+      "speed": 109,
+      "power": 125,
+      "batteryLevel": 40,
+      "elevation": 14
+    },
+    {
+      "date": "2026-02-15T08:39:41.166Z",
+      "latitude": 22.817244,
+      "longitude": 113.731922,
+      "speed": 113,
+      "power": -61,
+      "batteryLevel": 39,
+      "elevation": 15
+    },
+    {
+      "date": "2026-02-15T08:40:31.536Z",
+      "latitude": 22.813105,
+      "longitude": 113.74622,
+      "speed": 101,
+      "power": 1,
       "batteryLevel": 38,
-      "elevation": 40,
-      "outsideTemp": 25.2,
-      "insideTemp": 20.0,
-      "tpmsPressureFL": 3.0,
-      "tpmsPressureFR": 3.0,
-      "tpmsPressureRL": 3.0,
-      "tpmsPressureRR": 3.0
+      "elevation": 24
     },
     {
-      "date": "2026-02-15T09:00:00Z",
-      "latitude": 40.0742,
-      "longitude": 116.5774,
-      "speed": 15,
-      "power": 3,
+      "date": "2026-02-15T08:41:23.518Z",
+      "latitude": 22.811023,
+      "longitude": 113.760981,
+      "speed": 117,
+      "power": 9,
+      "batteryLevel": 38,
+      "elevation": 18
+    },
+    {
+      "date": "2026-02-15T08:42:12.631Z",
+      "latitude": 22.810838,
+      "longitude": 113.774934,
+      "speed": 106,
+      "power": 8,
+      "batteryLevel": 38,
+      "elevation": 13
+    },
+    {
+      "date": "2026-02-15T08:43:00.989Z",
+      "latitude": 22.803034,
+      "longitude": 113.786923,
+      "speed": 122,
+      "power": -27,
+      "batteryLevel": 37,
+      "elevation": 15
+    },
+    {
+      "date": "2026-02-15T08:43:54.368Z",
+      "latitude": 22.790424,
+      "longitude": 113.795418,
+      "speed": 106,
+      "power": 8,
+      "batteryLevel": 37,
+      "elevation": 20
+    },
+    {
+      "date": "2026-02-15T08:47:12.338Z",
+      "latitude": 22.754644,
+      "longitude": 113.835967,
+      "speed": 106,
+      "power": 18,
+      "batteryLevel": 36,
+      "elevation": 16
+    },
+    {
+      "date": "2026-02-15T08:48:14.469Z",
+      "latitude": 22.739354,
+      "longitude": 113.844936,
+      "speed": 121,
+      "power": 32,
       "batteryLevel": 35,
-      "elevation": 38,
-      "outsideTemp": 25.4,
-      "insideTemp": 20.5,
-      "tpmsPressureFL": 2.95,
-      "tpmsPressureFR": 2.95,
-      "tpmsPressureRL": 3.0,
-      "tpmsPressureRR": 3.0
+      "elevation": 18
     },
     {
-      "date": "2026-02-15T09:09:54Z",
-      "latitude": 40.0942,
-      "longitude": 116.5974,
+      "date": "2026-02-15T08:49:04.582Z",
+      "latitude": 22.723851,
+      "longitude": 113.84799,
+      "speed": 135,
+      "power": 41,
+      "batteryLevel": 35,
+      "elevation": 17
+    },
+    {
+      "date": "2026-02-15T08:49:57.705Z",
+      "latitude": 22.708051,
+      "longitude": 113.845936,
+      "speed": 117,
+      "power": 13,
+      "batteryLevel": 34,
+      "elevation": 18
+    },
+    {
+      "date": "2026-02-15T08:50:54.079Z",
+      "latitude": 22.692728,
+      "longitude": 113.838657,
+      "speed": 117,
+      "power": 21,
+      "batteryLevel": 34,
+      "elevation": 30
+    },
+    {
+      "date": "2026-02-15T08:51:53.488Z",
+      "latitude": 22.677319,
+      "longitude": 113.830441,
+      "speed": 117,
+      "power": -25,
+      "batteryLevel": 33,
+      "elevation": 22
+    },
+    {
+      "date": "2026-02-15T08:52:41.852Z",
+      "latitude": 22.665326,
+      "longitude": 113.828021,
+      "speed": 82,
+      "power": 41,
+      "batteryLevel": 33,
+      "elevation": 50
+    },
+    {
+      "date": "2026-02-15T08:53:29.985Z",
+      "latitude": 22.655706,
+      "longitude": 113.829092,
+      "speed": 95,
+      "power": 19,
+      "batteryLevel": 33
+    },
+    {
+      "date": "2026-02-15T08:54:18.816Z",
+      "latitude": 22.644195,
+      "longitude": 113.835552,
+      "speed": 129,
+      "power": 31,
+      "batteryLevel": 32,
+      "elevation": 18
+    },
+    {
+      "date": "2026-02-15T08:55:08.183Z",
+      "latitude": 22.63255,
+      "longitude": 113.845254,
+      "speed": 101,
+      "power": -1,
+      "batteryLevel": 32,
+      "elevation": 24
+    },
+    {
+      "date": "2026-02-15T08:55:56.299Z",
+      "latitude": 22.62566,
+      "longitude": 113.856591,
+      "speed": 122,
+      "power": 43,
+      "batteryLevel": 32,
+      "elevation": 21
+    },
+    {
+      "date": "2026-02-15T08:56:46.372Z",
+      "latitude": 22.620052,
+      "longitude": 113.870856,
+      "speed": 105,
+      "power": 12,
+      "batteryLevel": 31,
+      "elevation": 52
+    },
+    {
+      "date": "2026-02-15T08:57:35.981Z",
+      "latitude": 22.610773,
+      "longitude": 113.88023,
+      "speed": 106,
+      "power": -1,
+      "batteryLevel": 31,
+      "elevation": 35
+    },
+    {
+      "date": "2026-02-15T08:58:24.341Z",
+      "latitude": 22.600698,
+      "longitude": 113.88947,
+      "speed": 113,
+      "power": 2,
+      "batteryLevel": 31,
+      "elevation": 19
+    },
+    {
+      "date": "2026-02-15T08:59:13.202Z",
+      "latitude": 22.593135,
+      "longitude": 113.899232,
+      "speed": 87,
+      "power": 1,
+      "batteryLevel": 31,
+      "elevation": 22
+    },
+    {
+      "date": "2026-02-15T09:00:04.067Z",
+      "latitude": 22.584728,
+      "longitude": 113.907241,
+      "speed": 87,
+      "power": 13,
+      "batteryLevel": 30,
+      "elevation": 21
+    },
+    {
+      "date": "2026-02-15T09:00:53.522Z",
+      "latitude": 22.575305,
+      "longitude": 113.915909,
+      "speed": 69,
+      "power": 21,
+      "batteryLevel": 30
+    },
+    {
+      "date": "2026-02-15T09:01:43.925Z",
+      "latitude": 22.571448,
+      "longitude": 113.918765,
+      "speed": 50,
+      "power": 28,
+      "batteryLevel": 30,
+      "elevation": 23
+    },
+    {
+      "date": "2026-02-15T09:02:33.538Z",
+      "latitude": 22.573813,
+      "longitude": 113.916111,
+      "speed": 24,
+      "power": 30,
+      "batteryLevel": 30,
+      "elevation": 21
+    },
+    {
+      "date": "2026-02-15T09:04:05.955Z",
+      "latitude": 22.577327,
+      "longitude": 113.912589,
       "speed": 0,
       "power": 1,
       "batteryLevel": 30,
-      "elevation": 35,
-      "outsideTemp": 25.5,
-      "insideTemp": 20.5,
-      "tpmsPressureFL": 2.9,
-      "tpmsPressureFR": 2.9,
-      "tpmsPressureRL": 2.95,
-      "tpmsPressureRR": 2.95
+      "elevation": 21
+    },
+    {
+      "date": "2026-02-15T09:05:00.577Z",
+      "latitude": 22.581082,
+      "longitude": 113.909858,
+      "speed": 53,
+      "power": -4,
+      "batteryLevel": 30,
+      "elevation": 16
+    },
+    {
+      "date": "2026-02-15T09:06:35.272Z",
+      "latitude": 22.58304,
+      "longitude": 113.912733,
+      "speed": 34,
+      "power": -14,
+      "batteryLevel": 30,
+      "elevation": 15
+    },
+    {
+      "date": "2026-02-15T09:07:27.891Z",
+      "latitude": 22.580822,
+      "longitude": 113.912079,
+      "speed": 32,
+      "power": 54,
+      "batteryLevel": 29,
+      "elevation": 16
+    },
+    {
+      "date": "2026-02-15T09:08:27.509Z",
+      "latitude": 22.582382,
+      "longitude": 113.912683,
+      "speed": 10,
+      "power": 0,
+      "batteryLevel": 29,
+      "elevation": 11
+    },
+    {
+      "date": "2026-02-15T09:09:41.906Z",
+      "latitude": 22.582589,
+      "longitude": 113.912557,
+      "speed": 2,
+      "power": 1,
+      "batteryLevel": 29,
+      "elevation": 8
+    },
+    {
+      "date": "2026-02-15T09:09:54.102Z",
+      "latitude": 22.582574,
+      "longitude": 113.912531,
+      "speed": 0,
+      "power": 1,
+      "batteryLevel": 29
     }
   ]
 }

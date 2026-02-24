@@ -67,12 +67,25 @@
         "latitude": 39.9842,
         "longitude": 116.4874,
         "chargeType": "AC"
+      },
+      {
+        "id": 4,
+        "startDate": "2025-11-20T10:00:00.000Z",
+        "endDate": "2025-11-20T11:30:00.000Z",
+        "durationMin": 90,
+        "chargeEnergyAdded": 20.5,
+        "startBatteryLevel": 45,
+        "endBatteryLevel": 80,
+        "location": "Supercharger Station",
+        "latitude": 39.9542,
+        "longitude": 116.4574,
+        "chargeType": "DC"
       }
     ],
     "pagination": {
       "page": 1,
       "pageSize": 20,
-      "total": 5
+      "total": 6
     }
   }
 }

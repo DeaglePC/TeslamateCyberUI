@@ -1,0 +1,8 @@
+{
+    "code": 0,
+    "message": "success",
+    "data": {
+        "status": "ok",
+        "message": "API key is valid (mock mode)"
+    }
+}

@@ -1,3 +1,7 @@
+param (
+    [switch]$Mock
+)
+
 # This script is for local development and testing.
 # It reads variables from the root .env file and sets them as environment variables.
 
@@ -27,6 +31,11 @@ if (Test-Path $envPath) {
     Write-Host "Environment variables set successfully.`n"
 } else {
     Write-Host "Warning: .env file not found at $envPath. Using default configuration from code.`n"
+}
+
+if ($Mock) {
+    Write-Host "Enabling Mock Data Mode..." -ForegroundColor Yellow
+    $env:CYBERUI_MOCK_DATA = "true"
 }
 
 # Run the backend server.
