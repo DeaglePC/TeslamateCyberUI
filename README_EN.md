@@ -31,9 +31,9 @@
     <th align="center">⚡ Charges</th>
   </tr>
   <tr>
-    <td><img src="./screenshots/home.webp" width="250" /></td>
-    <td><img src="./screenshots/drive-list.webp" width="250" /></td>
-    <td><img src="./screenshots/charge-list.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/home.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/drive-list.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/charge-list.webp" width="250" /></td>
   </tr>
   <tr>
     <th align="center">🛣️ Drive Detail</th>
@@ -41,9 +41,9 @@
     <th align="center">⚙️ Settings</th>
   </tr>
   <tr>
-    <td><img src="./screenshots/drive-detail.webp" width="250" /></td>
-    <td><img src="./screenshots/charge-detail.webp" width="250" /></td>
-    <td><img src="./screenshots/setting.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/drive-detail.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/charge-detail.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/setting.webp" width="250" /></td>
   </tr>
 </table>
 </p>
@@ -81,7 +81,9 @@
 
 ### 🛣️ Driving Records
 - **Driving Records List** - All driving history with filtering and sorting
-- **Driving Details** - Speed/power curves, driving duration, energy consumption stats
+- **Driving Details** - Speed/power curves, elevation profile, driving duration, energy consumption stats
+- **Tire Pressure Monitoring** - Real-time display of all four tire pressures
+- **Temperature Info** - Interior and exterior temperature records
 - **Route Map** - Support for both Amap and OpenStreetMap map sources
 - **China Coordinate Correction** - Amap automatically handles GCJ-02 coordinate offset
 
@@ -98,6 +100,21 @@
 - **API Connection Config** - Configure backend address and API Key
 - **Amap Key** - Configure Amap API Key
 - **Background Image Management** - Upload, crop, delete background images
+
+### 🐳 Docker One-Click Deployment
+- **Multi-stage Build** - Independent frontend/backend builds, optimized image size
+- **Environment Variable Config** - All settings injected via environment variables, no code changes needed
+- **Health Checks** - Built-in container health checks to ensure service availability
+
+### 🧪 Mock Data Mode
+- **No Database Required** - Run the full UI without connecting to TeslaMate
+- **Development & Debugging** - Built-in mock data for frontend development and UI preview
+- **Online Demo** - Used for demo site showcase
+
+### 📊 Umami Analytics
+- **Page Analytics** - Integrate Umami for page view statistics
+- **Runtime Configuration** - Configure via environment variables, no rebuild needed in Docker
+- **Self-hosted / Cloud** - Supports both Umami Cloud and self-hosted instances
 
 ### 📱 PWA (Progressive Web App) Support
 This dashboard fully supports PWA, providing an immersive experience comparable to native apps:
@@ -287,18 +304,46 @@ npm run dev
 
 ### Environment Variables
 
+#### Database Connection (Required)
+
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
 | `TESLAMATE_DB_HOST` | TeslaMate database host | - | ✅ |
-| `TESLAMATE_DB_PORT` | Database port | 5432 | |
+| `TESLAMATE_DB_PORT` | Database port | `5432` | |
 | `TESLAMATE_DB_USER` | Database username | - | ✅ |
 | `TESLAMATE_DB_PASSWORD` | Database password | - | ✅ |
-| `TESLAMATE_DB_NAME` | Database name | teslamate | |
-| `TESLAMATE_DB_SSLMODE` | SSL mode | disable | |
-| `CYBERUI_PORT` | Frontend service port | 8080 | |
-| `CYBERUI_API_PORT` | Backend API port | 8899 | |
-| `CYBERUI_API_KEY` | API authentication key | - | ✅ |
-| `TZ` | Timezone | Asia/Shanghai | |
+| `TESLAMATE_DB_NAME` | Database name | `teslamate` | |
+| `TESLAMATE_DB_SSLMODE` | SSL mode | `disable` | |
+
+#### Service Configuration
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `CYBERUI_PORT` | Frontend web access port | `8080` |
+| `CYBERUI_API_PORT` | Backend API port (for debugging) | `8899` |
+| `CYBERUI_SERVER_MODE` | Run mode (`debug` / `release`) | `release` |
+| `LOG_LEVEL` | Log level (`debug` / `info` / `warn` / `error`) | `info` |
+| `TZ` | Timezone | `Asia/Shanghai` |
+
+#### API Settings
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `VITE_API_BASE_URL` | Frontend default API address (build-time only) | empty |
+| `CYBERUI_API_KEY` | API authentication key (empty to disable auth) | empty |
+
+#### Umami Analytics
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `UMAMI_WEBSITE_ID` | Umami Website ID (empty to disable) | empty |
+| `UMAMI_SCRIPT_URL` | Umami script URL | `https://cloud.umami.is/script.js` |
+
+#### Mock Data
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `CYBERUI_MOCK_DATA` | Enable mock data mode (`true` / `false`) | `false` |
 
 ### Amap Configuration
 

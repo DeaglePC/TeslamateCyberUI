@@ -31,9 +31,9 @@
     <th align="center">⚡ 充电记录</th>
   </tr>
   <tr>
-    <td><img src="./screenshots/home.webp" width="250" /></td>
-    <td><img src="./screenshots/drive-list.webp" width="250" /></td>
-    <td><img src="./screenshots/charge-list.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/home.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/drive-list.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/charge-list.webp" width="250" /></td>
   </tr>
   <tr>
     <th align="center">🛣️ 驾驶详情</th>
@@ -41,9 +41,9 @@
     <th align="center">⚙️ 设置</th>
   </tr>
   <tr>
-    <td><img src="./screenshots/drive-detail.webp" width="250" /></td>
-    <td><img src="./screenshots/charge-detail.webp" width="250" /></td>
-    <td><img src="./screenshots/setting.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/drive-detail.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/charge-detail.webp" width="250" /></td>
+    <td valign="top"><img src="./screenshots/setting.webp" width="250" /></td>
   </tr>
 </table>
 </p>
@@ -81,7 +81,9 @@
 
 ### 🛣️ 驾驶记录
 - **驾驶记录列表** - 所有驾驶历史，支持筛选和排序
-- **驾驶详情** - 速度/功率曲线、驾驶时长、能耗统计
+- **驾驶详情** - 速度/功率曲线、海拔变化、驾驶时长、能耗统计
+- **胎压监测** - 实时显示四轮胎压数据
+- **温度信息** - 车内外温度记录
 - **轨迹地图** - 支持高德地图和 OpenStreetMap 两种地图源
 - **中国坐标纠偏** - 高德地图自动处理 GCJ-02 坐标偏移
 
@@ -98,6 +100,21 @@
 - **API 连接配置** - 配置后端地址和 API Key
 - **高德地图 Key** - 配置高德地图 API Key
 - **背景图片管理** - 上传、裁剪、删除背景图片
+
+### 🐳 Docker 一键部署
+- **多阶段构建** - 前后端独立构建，优化镜像体积
+- **环境变量配置** - 所有配置通过环境变量注入，无需修改代码
+- **健康检查** - 内置容器健康检查，确保服务可用
+
+### 🧪 Mock 数据模式
+- **无需数据库** - 无需连接 TeslaMate 即可运行完整 UI
+- **开发调试** - 内置模拟数据，支持前端开发和 UI 预览
+- **在线演示** - 用于 Demo 站点展示
+
+### 📊 Umami 统计分析
+- **访问统计** - 支持集成 Umami 进行页面访问统计
+- **运行时配置** - 通过环境变量配置，Docker 中无需重新构建即可启用
+- **自部署/云端** - 同时支持 Umami Cloud 和自部署实例
 
 ### 📱 PWA（渐进式 Web 应用）支持
 本面板已完整支持 PWA，提供媲美原生 App 的沉浸式体验：
@@ -287,18 +304,46 @@ npm run dev
 
 ### 环境变量
 
+#### 数据库连接（必填）
+
 | 变量名 | 说明 | 默认值 | 必填 |
 |--------|------|--------|------|
 | `TESLAMATE_DB_HOST` | TeslaMate 数据库地址 | - | ✅ |
-| `TESLAMATE_DB_PORT` | 数据库端口 | 5432 | |
+| `TESLAMATE_DB_PORT` | 数据库端口 | `5432` | |
 | `TESLAMATE_DB_USER` | 数据库用户名 | - | ✅ |
 | `TESLAMATE_DB_PASSWORD` | 数据库密码 | - | ✅ |
-| `TESLAMATE_DB_NAME` | 数据库名称 | teslamate | |
-| `TESLAMATE_DB_SSLMODE` | SSL 模式 | disable | |
-| `CYBERUI_PORT` | 前端服务端口 | 8080 | |
-| `CYBERUI_API_PORT` | 后端 API 端口 | 8899 | |
-| `CYBERUI_API_KEY` | API 认证密钥 | - | ✅ |
-| `TZ` | 时区 | Asia/Shanghai | |
+| `TESLAMATE_DB_NAME` | 数据库名称 | `teslamate` | |
+| `TESLAMATE_DB_SSLMODE` | SSL 模式 | `disable` | |
+
+#### 服务配置
+
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `CYBERUI_PORT` | 前端网页访问端口 | `8080` |
+| `CYBERUI_API_PORT` | 后端 API 暴露端口（用于调试） | `8899` |
+| `CYBERUI_SERVER_MODE` | 运行模式（`debug` / `release`） | `release` |
+| `LOG_LEVEL` | 日志级别（`debug` / `info` / `warn` / `error`） | `info` |
+| `TZ` | 时区 | `Asia/Shanghai` |
+
+#### API 设置
+
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `VITE_API_BASE_URL` | 前端默认 API 地址（构建时生效） | 空 |
+| `CYBERUI_API_KEY` | API 认证密钥（留空则不启用认证） | 空 |
+
+#### Umami 统计分析
+
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `UMAMI_WEBSITE_ID` | Umami Website ID（留空则不启用） | 空 |
+| `UMAMI_SCRIPT_URL` | Umami 脚本地址 | `https://cloud.umami.is/script.js` |
+
+#### Mock 数据
+
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `CYBERUI_MOCK_DATA` | 启用 Mock 数据模式（`true` / `false`） | `false` |
 
 ### 高德地图配置
 
