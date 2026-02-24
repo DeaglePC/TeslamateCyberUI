@@ -10,20 +10,23 @@ interface DateFilterProps {
     onPresetChange?: (preset: FilterPreset) => void;
     customHours?: number;
     onCustomHoursChange?: (hours: number) => void;
+    initialCustomStart?: string;
+    initialCustomEnd?: string;
+    onDateRangeChange?: (info: { preset: FilterPreset; start?: string; end?: string }) => void;
 }
 
 export type FilterPreset = 'last24h' | 'lastNHours' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
-export function DateFilter({ onFilter, className = '', initialPreset = 'last24h', onPresetChange, customHours: externalCustomHours, onCustomHoursChange }: DateFilterProps) {
+export function DateFilter({ onFilter, className = '', initialPreset = 'last24h', onPresetChange, customHours: externalCustomHours, onCustomHoursChange, initialCustomStart, initialCustomEnd, onDateRangeChange }: DateFilterProps) {
     const { theme, language } = useSettingsStore();
     const colors = getThemeColors(theme);
 
     const [preset, setPreset] = useState<FilterPreset>(initialPreset);
-    const [customStart, setCustomStart] = useState('');
-    const [customEnd, setCustomEnd] = useState('');
+    const [customStart, setCustomStart] = useState(initialCustomStart || '');
+    const [customEnd, setCustomEnd] = useState(initialCustomEnd || '');
     const [internalCustomHours, setInternalCustomHours] = useState<string>('6');
-    const [showCustom, setShowCustom] = useState(false);
-    const [showCustomHours, setShowCustomHours] = useState(false);
+    const [showCustom, setShowCustom] = useState(initialPreset === 'custom');
+    const [showCustomHours, setShowCustomHours] = useState(initialPreset === 'lastNHours');
     const initialized = useRef(false);
 
     // Use external customHours if provided, otherwise use internal state
@@ -132,20 +135,27 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
             setShowCustomHours(false);
             const range = getDateRange(presetId);
             onFilter(range.start, range.end);
+            onDateRangeChange?.({ preset: presetId as FilterPreset, start: range.start, end: range.end });
         }
     };
 
     const handleCustomApply = () => {
         const range = getDateRange('custom');
         onFilter(range.start, range.end);
+        onDateRangeChange?.({ preset: 'custom', start: range.start, end: range.end });
     };
 
     // 初始化时应用默认筛选
     useEffect(() => {
-        if (!initialized.current && initialPreset !== 'custom') {
+        if (!initialized.current) {
             initialized.current = true;
-            const range = getDateRange(initialPreset);
-            onFilter(range.start, range.end);
+            if (initialPreset === 'custom' && (initialCustomStart || initialCustomEnd)) {
+                // 自定义日期从 URL 恢复，直接使用
+                onFilter(initialCustomStart || undefined, initialCustomEnd || undefined);
+            } else if (initialPreset !== 'custom') {
+                const range = getDateRange(initialPreset);
+                onFilter(range.start, range.end);
+            }
         }
     }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -207,6 +217,7 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
                         onClick={() => {
                             const range = getDateRange('lastNHours');
                             onFilter(range.start, range.end);
+                            onDateRangeChange?.({ preset: 'lastNHours', start: range.start, end: range.end });
                         }}
                         className="px-4 py-1.5 text-sm rounded-lg transition-all hover:opacity-80 ml-auto md:ml-0"
                         style={{

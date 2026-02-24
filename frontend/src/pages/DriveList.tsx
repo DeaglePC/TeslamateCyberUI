@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSettingsStore } from '@/store/settings';
 import { driveApi } from '@/services/api';
 import { Card } from '@/components/Card';
@@ -10,35 +10,30 @@ import { formatDate, formatDuration, formatDistance } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import type { DriveListItem, Pagination } from '@/types';
 import { DriveStats, SpeedHistogram } from '@/components/DriveStats';
+import type { FilterPreset } from '@/components/DateFilter';
 import clsx from 'clsx';
 
 export default function DriveListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { theme, selectedCarId, unit, language } = useSettingsStore();
   const [drives, setDrives] = useState<DriveListItem[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 9, total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [customHours, setCustomHours] = useState<number>(6);
-  const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>(() => {
-    const now = new Date();
-    const start = new Date(now);
-    start.setFullYear(start.getFullYear() - 1);
-    const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-    return {
-      start: formatDate(start),
-      end: formatDate(now),
-    };
-  });
+
+  // Read filter state from URL search params
+  const urlPreset = (searchParams.get('preset') as FilterPreset) || 'year';
+  const urlPage = parseInt(searchParams.get('page') || '1') || 1;
+  const urlStart = searchParams.get('start') || undefined;
+  const urlEnd = searchParams.get('end') || undefined;
+  const urlCustomHours = parseInt(searchParams.get('customHours') || '6') || 6;
+
+  const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>({ start: urlStart, end: urlEnd });
 
   const colors = getThemeColors(theme);
 
-  const fetchData = useCallback(async (page = 1) => {
+  const fetchData = useCallback(async (page = urlPage) => {
     if (!selectedCarId) {
       setError(language === 'zh' ? '请先选择车辆' : 'Please select a car first');
       setLoading(false);
@@ -60,17 +55,40 @@ export default function DriveListPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCarId, dateRange, language]);
+  }, [selectedCarId, dateRange, language, urlPage]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const updateSearchParams = (updates: Record<string, string | undefined>) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      for (const [key, value] of Object.entries(updates)) {
+        if (value !== undefined && value !== '') {
+          next.set(key, value);
+        } else {
+          next.delete(key);
+        }
+      }
+      return next;
+    }, { replace: true });
+  };
 
   const handleDateFilter = (start: string | undefined, end: string | undefined) => {
     if (dateRange.start === start && dateRange.end === end) {
       return;
     }
     setDateRange({ start, end });
+  };
+
+  const handleDateRangeChange = (info: { preset: FilterPreset; start?: string; end?: string }) => {
+    updateSearchParams({ preset: info.preset, start: info.start, end: info.end, page: '1' });
+  };
+
+  const handlePageChange = (page: number) => {
+    updateSearchParams({ page: String(page) });
+    fetchData(page);
   };
 
   const totalPages = Math.ceil(pagination.total / pagination.pageSize);
@@ -88,7 +106,15 @@ export default function DriveListPage() {
         </div>
 
         {/* 日期筛选 */}
-        <DateFilter onFilter={handleDateFilter} initialPreset="year" customHours={customHours} onCustomHoursChange={setCustomHours} />
+        <DateFilter
+          onFilter={handleDateFilter}
+          initialPreset={urlPreset}
+          initialCustomStart={urlPreset === 'custom' ? urlStart : undefined}
+          initialCustomEnd={urlPreset === 'custom' ? urlEnd : undefined}
+          customHours={urlCustomHours}
+          onCustomHoursChange={(h) => updateSearchParams({ customHours: String(h) })}
+          onDateRangeChange={handleDateRangeChange}
+        />
       </div>
 
       {/* 统计概览 */}
@@ -208,7 +234,7 @@ export default function DriveListPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-4">
               <button
-                onClick={() => fetchData(pagination.page - 1)}
+                onClick={() => handlePageChange(pagination.page - 1)}
                 disabled={pagination.page <= 1}
                 className={clsx(
                   'px-4 py-2 rounded-lg transition-all',
@@ -225,7 +251,7 @@ export default function DriveListPage() {
                 {pagination.page} / {totalPages}
               </span>
               <button
-                onClick={() => fetchData(pagination.page + 1)}
+                onClick={() => handlePageChange(pagination.page + 1)}
                 disabled={pagination.page >= totalPages}
                 className={clsx(
                   'px-4 py-2 rounded-lg transition-all',
