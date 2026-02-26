@@ -249,7 +249,7 @@ export default function Layout({ hideNav = false }: LayoutProps) {
 
       {/* 居中悬浮导航栏 (Apple Style Dock) */}
       {!hideNav && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[90vw]">
+        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[90vw]">
           <nav
             className="flex items-center justify-between gap-8 px-8 py-1.5 rounded-full border shadow-2xl transition-all duration-300 animate-slideUp"
             style={{

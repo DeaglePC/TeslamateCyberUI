@@ -13,8 +13,8 @@ import (
 const backgroundImageKey = "backgroundImage"
 const backgroundOriginalImageKey = "backgroundOriginalImage"
 
-// 最大图片大小 5MB（Base64 编码后约为 6.67MB）
-const maxImageSize = 5 * 1024 * 1024
+// 最大图片大小 30MB（Base64 编码后约为 40MB）
+const maxImageSize = 30 * 1024 * 1024
 
 // GetUISettings 获取所有UI设置
 func (h *Handler) GetUISettings(c *gin.Context) {
@@ -141,8 +141,8 @@ func (h *Handler) GetBackgroundImage(c *gin.Context) {
 	if err != nil {
 		// 没有设置背景图片，返回空
 		c.JSON(http.StatusOK, SuccessResponse(map[string]string{
-			"image":          "",
-			"originalImage":  "",
+			"image":         "",
+			"originalImage": "",
 		}))
 		return
 	}

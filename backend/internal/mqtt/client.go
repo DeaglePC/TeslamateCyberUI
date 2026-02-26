@@ -3,6 +3,7 @@ package mqtt
 import (
 	"crypto/tls"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -38,7 +39,9 @@ func NewClient(cfg config.MQTTConfig) (*Client, error) {
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
-	opts.SetClientID(cfg.ClientID)
+	// 添加随机后缀避免多个实例使用同一 ClientID 导致互踢
+	clientID := fmt.Sprintf("%s-%d", cfg.ClientID, rand.Intn(100000))
+	opts.SetClientID(clientID)
 
 	if cfg.Username != "" {
 		opts.SetUsername(cfg.Username)
