@@ -241,7 +241,7 @@ export default function Layout({ hideNav = false }: LayoutProps) {
             slideDirection === 'right' && 'page-slide-right'
           )}
         >
-          <div className="max-w-[1920px] mx-auto w-full min-w-0 lg:w-[50%] lg:min-w-[960px] transition-all duration-300 overflow-x-hidden">
+          <div className="max-w-[1920px] mx-auto w-full min-w-0 lg:w-[50%] lg:min-w-[960px] transition-all duration-300">
             <Outlet />
           </div>
         </div>

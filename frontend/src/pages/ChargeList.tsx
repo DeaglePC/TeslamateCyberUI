@@ -218,21 +218,7 @@ export default function ChargeListPage() {
                     </div>
                   </div>
 
-                  {/* 查看详情箭头 - 仅在有费用时显示 */}
-                  {charge.cost !== undefined && charge.cost > 0 && (
-                    <div className="flex justify-end">
-                      <svg
-                        className="w-5 h-5"
-                        style={{ color: colors.muted }}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </div>
-                  )}
+
                 </div>
               </Card>
             ))}
