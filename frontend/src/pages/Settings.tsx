@@ -321,9 +321,9 @@ export default function SettingsPage() {
       return;
     }
 
-    // 验证文件大小（5MB）
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError(language === 'zh' ? '图片大小不能超过 5MB' : 'Image size cannot exceed 5MB');
+    // 验证文件大小（30MB）
+    if (file.size > 30 * 1024 * 1024) {
+      setUploadError(language === 'zh' ? '图片大小不能超过 30MB' : 'Image size cannot exceed 30MB');
       return;
     }
 
@@ -742,7 +742,7 @@ export default function SettingsPage() {
                     {language === 'zh' ? '点击上传背景图片' : 'Click to upload background'}
                   </span>
                   <span className="text-xs" style={{ color: colors.muted }}>
-                    {language === 'zh' ? '支持 JPG、PNG、WebP，最大 5MB' : 'Supports JPG, PNG, WebP, max 5MB'}
+                    {language === 'zh' ? '支持 JPG、PNG、WebP，最大 30MB' : 'Supports JPG, PNG, WebP, max 30MB'}
                   </span>
                 </div>
               )}
