@@ -4,8 +4,8 @@
 # ============================================
 
 # Stage 1: Build the Go application
-# 如果拉取失败，可以替换为: registry.cn-hangzhou.aliyuncs.com/library/golang:1.21-alpine
-FROM golang:1.21-alpine AS builder
+# 如果拉取失败，可以替换为: registry.cn-hangzhou.aliyuncs.com/library/golang:1.24-alpine
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
