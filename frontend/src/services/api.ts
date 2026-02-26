@@ -219,12 +219,19 @@ export const settingsApi = {
 // 背景图片 API
 export const backgroundApi = {
   // 获取背景图片
-  get: async (): Promise<{ image: string; originalImage: string }> => {
-    const res = await api.get<ApiResponse<{ image: string; originalImage: string }>>('/background-image');
+  get: async (): Promise<{ image: string; originalImage: string; hash: string }> => {
+    const res = await api.get<ApiResponse<{ image: string; originalImage: string; hash: string }>>('/background-image');
     return {
       image: res.data.data?.image || '',
       originalImage: res.data.data?.originalImage || '',
+      hash: res.data.data?.hash || '',
     };
+  },
+
+  // 仅获取背景图片的 MD5 Hash（轻量接口，用于缓存比对）
+  getHash: async (): Promise<string> => {
+    const res = await api.get<ApiResponse<{ hash: string }>>('/background-image/hash');
+    return res.data.data?.hash || '';
   },
 
   // 上传背景图片（Base64 格式）

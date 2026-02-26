@@ -150,6 +150,7 @@ func main() {
 
 		// 背景图片相关
 		api.GET("/background-image", h.GetBackgroundImage)
+		api.GET("/background-image/hash", h.GetBackgroundImageHash)
 		api.POST("/background-image", h.UploadBackgroundImage)
 		api.DELETE("/background-image", h.DeleteBackgroundImage)
 		// 认证测试相关

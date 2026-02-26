@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { settingsApi, backgroundApi } from '@/services/api';
+import { getCachedBackground, setCachedBackground, clearCachedBackground } from '@/utils/bgCache';
 
 export type ThemeType = 'cyber' | 'tesla' | 'dark' | 'tech' | 'aurora' | 'auto';
 export type UnitType = 'metric' | 'imperial';
@@ -114,10 +115,14 @@ export const useSettingsStore = create<SettingsState>()(
       },
       uploadBackgroundImage: async (image, originalImage) => {
         await backgroundApi.upload(image, originalImage);
+        // 上传后重新获取 hash 以便缓存
+        const serverHash = await backgroundApi.getHash();
+        await setCachedBackground(serverHash, image, originalImage || '');
         set({ backgroundImage: image, backgroundOriginalImage: originalImage || '' });
       },
       deleteBackgroundImage: async () => {
         await backgroundApi.delete();
+        await clearCachedBackground();
         set({ backgroundImage: '', backgroundOriginalImage: '' });
       },
       fetchBackgroundImage: async () => {
@@ -125,11 +130,35 @@ export const useSettingsStore = create<SettingsState>()(
           const state = get();
           if (!state.baseUrl) return;
 
-          const { image, originalImage } = await backgroundApi.get();
+          // 1. 先从 IndexedDB 缓存中读取
+          const cached = await getCachedBackground();
+
+          // 2. 请求服务端的轻量 hash 接口
+          const serverHash = await backgroundApi.getHash();
+
+          // 3. 如果有缓存且 hash 一致，直接使用缓存
+          if (cached && cached.hash && cached.hash === serverHash) {
+            set({ backgroundImage: cached.image, backgroundOriginalImage: cached.originalImage, backgroundLoaded: true });
+            return;
+          }
+
+          // 4. Hash 不一致或无缓存，拉取完整图片
+          const { image, originalImage, hash } = await backgroundApi.get();
           set({ backgroundImage: image, backgroundOriginalImage: originalImage, backgroundLoaded: true });
+
+          // 5. 写入 IndexedDB 缓存
+          if (image && hash) {
+            await setCachedBackground(hash, image, originalImage);
+          }
         } catch (e) {
           console.error("Failed to fetch background image", e);
-          set({ backgroundLoaded: true });
+          // 降级：尝试从缓存读取
+          const cached = await getCachedBackground();
+          if (cached?.image) {
+            set({ backgroundImage: cached.image, backgroundOriginalImage: cached.originalImage, backgroundLoaded: true });
+          } else {
+            set({ backgroundLoaded: true });
+          }
         }
       },
       fetchRemoteSettings: async () => {

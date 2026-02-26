@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,6 +14,7 @@ import (
 // 背景图片存储的 key
 const backgroundImageKey = "backgroundImage"
 const backgroundOriginalImageKey = "backgroundOriginalImage"
+const backgroundImageHashKey = "backgroundImageHash"
 
 // 最大图片大小 30MB（Base64 编码后约为 40MB）
 const maxImageSize = 30 * 1024 * 1024
@@ -25,8 +28,12 @@ func (h *Handler) GetUISettings(c *gin.Context) {
 	}
 
 	// Convert slice to map for easier frontend consumption
+	// 排除背景图片相关的大数据，它们有专用的接口和缓存机制
 	settingsMap := make(map[string]string)
 	for _, s := range settings {
+		if s.Key == backgroundImageKey || s.Key == backgroundOriginalImageKey || s.Key == backgroundImageHashKey {
+			continue
+		}
 		settingsMap[s.Key] = s.Value
 	}
 
@@ -121,6 +128,11 @@ func (h *Handler) UploadBackgroundImage(c *gin.Context) {
 		return
 	}
 
+	// 计算并保存 MD5 Hash
+	hash := md5.Sum(imageData)
+	hashStr := hex.EncodeToString(hash[:])
+	h.repo.UISetting.Set(backgroundImageHashKey, hashStr)
+
 	// 保存原始图片（如果有）
 	if req.OriginalImage != "" {
 		if err := h.repo.UISetting.Set(backgroundOriginalImageKey, req.OriginalImage); err != nil {
@@ -132,6 +144,7 @@ func (h *Handler) UploadBackgroundImage(c *gin.Context) {
 	c.JSON(http.StatusOK, SuccessResponse(map[string]any{
 		"message": "background image uploaded successfully",
 		"size":    len(imageData),
+		"hash":    hashStr,
 	}))
 }
 
@@ -154,9 +167,30 @@ func (h *Handler) GetBackgroundImage(c *gin.Context) {
 		originalImage = originalSetting.Value
 	}
 
+	// 获取 hash
+	hashSetting, _ := h.repo.UISetting.Get(backgroundImageHashKey)
+	hashStr := ""
+	if hashSetting != nil {
+		hashStr = hashSetting.Value
+	}
+
 	c.JSON(http.StatusOK, SuccessResponse(map[string]string{
 		"image":         setting.Value,
 		"originalImage": originalImage,
+		"hash":          hashStr,
+	}))
+}
+
+// GetBackgroundImageHash 仅获取背景图片的 MD5 Hash（轻量接口，用于前端缓存比对）
+func (h *Handler) GetBackgroundImageHash(c *gin.Context) {
+	hashSetting, _ := h.repo.UISetting.Get(backgroundImageHashKey)
+	hashStr := ""
+	if hashSetting != nil {
+		hashStr = hashSetting.Value
+	}
+
+	c.JSON(http.StatusOK, SuccessResponse(map[string]string{
+		"hash": hashStr,
 	}))
 }
 
@@ -168,8 +202,9 @@ func (h *Handler) DeleteBackgroundImage(c *gin.Context) {
 		return
 	}
 
-	// 同时删除原始图片
+	// 同时删除原始图片和 hash
 	h.repo.UISetting.Set(backgroundOriginalImageKey, "")
+	h.repo.UISetting.Set(backgroundImageHashKey, "")
 
 	c.JSON(http.StatusOK, SuccessResponse(map[string]string{
 		"message": "background image deleted",
