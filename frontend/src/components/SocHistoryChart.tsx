@@ -13,17 +13,20 @@ interface SocHistoryChartProps {
     data: SocDataPoint[];
     className?: string;
     rangeLabel?: string;
+    rangeStart?: string | Date;
+    rangeEnd?: string | Date;
     days?: number; // approx duration in days to decide format
     onRangeChange?: (start: string | undefined, end: string | undefined) => void;
 }
 
-export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, onRangeChange }: SocHistoryChartProps) {
+export function SocHistoryChart({ data, className = '', rangeLabel, rangeStart, rangeEnd, days = 1, onRangeChange }: SocHistoryChartProps) {
     const { theme, language } = useSettingsStore();
     const { t } = useTranslation(language);
     const [showFilter, setShowFilter] = useState(false);
     const [filterPos, setFilterPos] = useState({ top: 0, right: 0 });
     const isFirstMount = useRef(true);
     const [currentPreset, setCurrentPreset] = useState<FilterPreset>('last24h');
+    const [customHours, setCustomHours] = useState<number>(6);
 
     const colors = getThemeColors(theme);
 
@@ -31,7 +34,9 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
     const getPresetLabel = (preset: FilterPreset): string => {
         const labels: Record<FilterPreset, string> = {
             last24h: t('last24h'),
-            lastNHours: language === 'zh' ? '近N小时' : 'Last N h',
+            lastNHours: customHours > 0
+                ? (language === 'zh' ? `近${customHours}小时` : `Last ${customHours}h`)
+                : (language === 'zh' ? '近N小时' : 'Last N h'),
             week: t('lastWeek'),
             month: t('lastMonth'),
             quarter: t('lastQuarter'),
@@ -44,8 +49,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
     const option = useMemo(() => {
         // 使用 ECharts 内置的 LTTB 采样算法，保持曲线平滑同时保留关键特征
         const formatStr = days > 1 ? 'MM-DD HH:mm' : 'HH:mm';
-        const xData = data.map(d => dayjs(d.date).format(formatStr));
-        const socData = data.map(d => d.soc);
+        const chartData = data.map(d => [new Date(d.date).getTime(), d.soc]);
 
         // 计算满电续航里程（100% SOC对应的续航）
         // 从数据中找到 rangeKm 和 soc 的比例关系
@@ -60,6 +64,20 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
         }
         // 默认值
         if (maxRangeKm === 0) maxRangeKm = 500;
+
+        let minTime: number | undefined;
+        let maxTime: number | undefined;
+
+        if (rangeStart) {
+            minTime = new Date(rangeStart).getTime();
+        } else if (days === 1 && chartData.length > 0) {
+            maxTime = Date.now();
+            minTime = maxTime - 24 * 3600 * 1000;
+        }
+
+        if (rangeEnd) {
+            maxTime = new Date(rangeEnd).getTime();
+        }
 
         return {
             backgroundColor: 'transparent',
@@ -77,13 +95,13 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                 textStyle: {
                     color: '#fff',
                 },
-                formatter: (params: { seriesName: string; value: number; axisValue: string; color: string }[]) => {
+                formatter: (params: any[]) => {
                     if (!params.length) return '';
-                    const time = params[0].axisValue;
+                    const time = dayjs(params[0].value[0]).format(formatStr);
                     let html = `<div style="font-weight: 600; margin-bottom: 4px;">${time}</div>`;
-                    params.forEach(p => {
+                    params.forEach((p: any) => {
                         if (p.value !== null && p.value !== undefined) {
-                            const soc = Math.round(p.value);
+                            const soc = Math.round(p.value[1]);
                             const rangeKm = Math.round((soc / 100) * maxRangeKm);
                             html += `<div style="color: ${p.color};">SOC: ${soc}% (~${rangeKm}km)</div>`;
                         }
@@ -92,8 +110,9 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                 },
             },
             xAxis: {
-                type: 'category',
-                data: xData,
+                type: 'time',
+                min: minTime,
+                max: maxTime,
                 axisLine: {
                     lineStyle: {
                         color: 'rgba(255, 255, 255, 0.1)',
@@ -102,7 +121,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                 axisLabel: {
                     color: colors.muted,
                     fontSize: 10,
-                    interval: 'auto',
+                    formatter: (value: number) => dayjs(value).format(formatStr)
                 },
                 axisTick: {
                     show: false,
@@ -150,7 +169,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                 {
                     name: 'SOC',
                     type: 'line',
-                    data: socData,
+                    data: chartData,
                     smooth: 0.4,
                     symbol: 'none',
                     sampling: 'lttb',
@@ -221,11 +240,13 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
                                 <DateFilter
                                     className="flex-col items-stretch"
                                     initialPreset={currentPreset}
+                                    customHours={customHours}
+                                    onCustomHoursChange={setCustomHours}
                                     onFilter={(start, end) => {
-                                        onRangeChange?.(start, end);
                                         if (isFirstMount.current) {
                                             isFirstMount.current = false;
                                         } else {
+                                            onRangeChange?.(start, end);
                                             setShowFilter(false);
                                         }
                                     }}
@@ -239,7 +260,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, days = 1, on
             </div>
 
             {/* Chart */}
-            {data.length > 0 ? (
+            {(data.length > 0 || (rangeStart !== undefined && rangeEnd !== undefined)) ? (
                 <ReactECharts option={option} style={{ height: 180 }} />
             ) : (
                 <div

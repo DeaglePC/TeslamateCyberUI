@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"teslamate-cyberui/internal/logger"
+	"teslamate-cyberui/internal/mqtt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,6 +30,25 @@ func (h *Handler) GetOverviewStats(c *gin.Context) {
 		logger.Errorf("Failed to get overview stats: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse(500, "Failed to get overview stats"))
 		return
+	}
+
+	// 如果正在充电，尝试从 MQTT 缓存中获取最新的补充数据
+	if stats.IsCharging {
+		carState := mqtt.GlobalCache.GetAllForCar(carID)
+
+		// 充入电量 (charge_energy_added)
+		if val, ok := carState["charge_energy_added"]; ok {
+			if f, err := strconv.ParseFloat(val, 64); err == nil {
+				stats.ChargeEnergyAdded = &f
+			}
+		}
+
+		// 剩余充满时间 (time_to_full_charge)
+		if val, ok := carState["time_to_full_charge"]; ok {
+			if f, err := strconv.ParseFloat(val, 64); err == nil {
+				stats.TimeToFullCharge = &f
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, SuccessResponse(stats))

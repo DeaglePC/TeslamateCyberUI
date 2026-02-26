@@ -23,6 +23,10 @@ type OverviewStats struct {
 	IsCharging      bool `json:"isCharging"`
 	ChargingVoltage *int `json:"chargingVoltage,omitempty"`
 	ChargingPower   *int `json:"chargingPower,omitempty"`
+	// 以下字段在正在充电时提供更详细的历史和预测数据
+	ChargeEnergyAdded *float64 `json:"chargeEnergyAdded,omitempty"`
+	ChargeDurationMin *int     `json:"chargeDurationMin,omitempty"`
+	TimeToFullCharge  *float64 `json:"timeToFullCharge,omitempty"` // 单位通常为小时，可以从 MQTT 获得
 }
 
 // EfficiencyStats 能效统计

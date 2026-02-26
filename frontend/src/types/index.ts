@@ -249,6 +249,9 @@ export interface OverviewStats {
   isCharging: boolean;
   chargingVoltage?: number;
   chargingPower?: number;
+  chargeEnergyAdded?: number;
+  chargeDurationMin?: number;
+  timeToFullCharge?: number;
 }
 
 // 能效统计

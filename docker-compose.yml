@@ -32,6 +32,12 @@ services:
       - CYBERUI_MOCK_DATA=${CYBERUI_MOCK_DATA:-false}
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      # Mqtt configuration
+      - TESLAMATE_MQTT_HOST=${TESLAMATE_MQTT_HOST:-${TESLAMATE_DB_HOST}}
+      - TESLAMATE_MQTT_PORT=${TESLAMATE_MQTT_PORT:-1883}
+      - TESLAMATE_MQTT_USERNAME=${TESLAMATE_MQTT_USERNAME:-}
+      - TESLAMATE_MQTT_PASSWORD=${TESLAMATE_MQTT_PASSWORD:-}
+      - TESLAMATE_MQTT_CLIENT_ID=${TESLAMATE_MQTT_CLIENT_ID:-teslamate-cyberui-backend}
       # Timezone
       - TZ=${TZ:-Asia/Shanghai}
     networks:

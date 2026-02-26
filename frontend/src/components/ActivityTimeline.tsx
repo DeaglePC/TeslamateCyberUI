@@ -101,11 +101,11 @@ function Tooltip({
     const tooltipWidth = 180; // 估算的 tooltip 宽度
     const padding = 12; // 距离屏幕边缘的最小间距
     const screenWidth = window.innerWidth;
-    
+
     // 计算水平位置
     let left = position.x;
     let translateX = '-50%';
-    
+
     // 检查左边界
     if (position.x - tooltipWidth / 2 < padding) {
         left = padding;
@@ -242,7 +242,7 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
         if (totalMs <= 0) return { segments: [], timeLabels: [] };
 
         const result: TimelineSegment[] = [];
-        
+
         // Sort data by time, then by state (ensure consistent ordering)
         const sortedData = [...data].sort((a, b) => {
             const timeDiff = dayjs(a.time).valueOf() - dayjs(b.time).valueOf();
@@ -264,10 +264,10 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
 
         const pushSegment = (endTime: dayjs.Dayjs, state: number) => {
             if (state === STATE.RESET) return;
-            
+
             const startPct = Math.max(0, (segmentStart.valueOf() - dayStart.valueOf()) / totalMs * 100);
             const endPct = Math.min(100, (endTime.valueOf() - dayStart.valueOf()) / totalMs * 100);
-            
+
             if (endPct > startPct) {
                 const durationMin = Math.round(endTime.diff(segmentStart, 'minute'));
                 result.push({
@@ -285,12 +285,12 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
 
         // Group events by timestamp to handle simultaneous events correctly
         // This prevents tiny segments when state=0 and new background state arrive at same time
-        const eventsByTime = new Map<number, Array<{time: dayjs.Dayjs, state: number}>>();
+        const eventsByTime = new Map<number, Array<{ time: dayjs.Dayjs, state: number }>>();
         for (const item of sortedData) {
             const time = dayjs(item.time);
             const state = Number(item.state);
             if (time.isBefore(dayStart) || time.isAfter(now)) continue;
-            
+
             const timeKey = time.valueOf();
             if (!eventsByTime.has(timeKey)) {
                 eventsByTime.set(timeKey, []);
@@ -301,7 +301,7 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
         // Process events grouped by timestamp
         for (const [, events] of Array.from(eventsByTime.entries()).sort((a, b) => a[0] - b[0])) {
             const time = events[0].time;
-            
+
             // Extract all states at this timestamp
             const hasReset = events.some(e => e.state === STATE.RESET);
             const newBackground = events.find(e => isBackgroundState(e.state));
@@ -345,27 +345,27 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
         // The gaps will be filled by extending adjacent segments
         const MIN_SEGMENT_SECONDS = 120; // Minimum 2 minutes to show a background segment
         const filteredResult: TimelineSegment[] = [];
-        
+
         for (let i = 0; i < result.length; i++) {
             const segment = result[i];
             const durationSeconds = segment.endTime.diff(segment.startTime, 'second');
             const isShortSegment = durationSeconds < MIN_SEGMENT_SECONDS;
             const isBackground = isBackgroundState(segment.state);
-            
+
             // Skip very short background segments
             if (isShortSegment && isBackground) {
                 continue;
             }
-            
+
             filteredResult.push(segment);
         }
-        
+
         // Now fill gaps by extending segments to meet their neighbors
         const mergedResult: TimelineSegment[] = [];
         for (let i = 0; i < filteredResult.length; i++) {
             const segment = { ...filteredResult[i] }; // Clone to avoid mutation
             const nextSegment = filteredResult[i + 1];
-            
+
             // If there's a gap before next segment, extend current to fill it
             if (nextSegment) {
                 const gapMs = nextSegment.startTime.valueOf() - segment.endTime.valueOf();
@@ -378,7 +378,7 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
                     segment.durationMin = newDurationMin;
                 }
             }
-            
+
             mergedResult.push(segment);
         }
 
@@ -475,11 +475,11 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
                                     customHours={customHours}
                                     onCustomHoursChange={setCustomHours}
                                     onFilter={(start, end) => {
-                                        onRangeChange?.(start, end);
-                                        // Skip closing on first mount (initial useEffect call)
+                                        // Skip on first mount (initial useEffect call)
                                         if (isFirstMount.current) {
                                             isFirstMount.current = false;
                                         } else {
+                                            onRangeChange?.(start, end);
                                             setShowFilter(false);
                                         }
                                     }}

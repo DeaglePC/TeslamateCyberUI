@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"teslamate-cyberui/internal/config"
 	"teslamate-cyberui/internal/handler"
 	"teslamate-cyberui/internal/logger"
 	"teslamate-cyberui/internal/middleware"
+	"teslamate-cyberui/internal/mqtt"
 	"teslamate-cyberui/internal/repository"
 
 	"github.com/gin-contrib/cors"
@@ -38,6 +40,41 @@ func main() {
 		repo = repository.NewRepository(db)
 	} else {
 		applog.Info("Mock data is ENABLED. Skipping database connection.")
+	}
+
+	// 初始化 MQTT
+	if !cfg.Server.EnableMock && repo != nil {
+		mqttClient, err := mqtt.NewClient(cfg.MQTT)
+		if err != nil {
+			applog.Errorf("Failed to initialize MQTT client: %v", err)
+		} else {
+			// 在后台获取车辆列表并订阅
+			go func() {
+				defer mqttClient.Disconnect() // 实际上可以按需管理生命周期，此处仅起隔离作用
+
+				// 暂时简单的延时等待 DB 和其它模块准备好 (可选)
+				// time.Sleep(2 * time.Second)
+
+				// 获取所有车辆的 ID 以便订阅对应的 MQTT topic
+				// 必须通过新的 context.Background()，不要用 gin context
+				cars, err := repo.Car.GetAll(context.Background())
+				if err != nil {
+					applog.Errorf("Failed to get cars for MQTT subscription: %v", err)
+					return
+				}
+
+				var carIDs []int16
+				for _, car := range cars {
+					carIDs = append(carIDs, car.ID)
+				}
+
+				if len(carIDs) > 0 {
+					mqttClient.SubscribeCars(carIDs)
+				}
+				// 阻塞保持协程运行，如果不执行 Disconnect，其实客户端内部有自动重连和保持
+				select {}
+			}()
+		}
 	}
 
 	// 初始化处理器

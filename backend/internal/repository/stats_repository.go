@@ -114,7 +114,7 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 			AND d.start_ideal_range_km > d.end_ideal_range_km
 	`
 	var effStats struct {
-		TotalDistance float64 `db:"total_distance"`
+		TotalDistance  float64 `db:"total_distance"`
 		TotalRangeUsed float64 `db:"total_range_used"`
 	}
 	if err := r.db.GetContext(ctx, &effStats, efficiencyQuery, carID); err == nil {
@@ -216,7 +216,7 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 	// 获取最近一次充电过程，如果其 end_date 为 NULL，说明正在充电
 	chargingQuery := `
 		WITH charging_process AS (
-			SELECT id, end_date
+			SELECT id, end_date, start_date, charge_energy_added
 			FROM charging_processes
 			WHERE car_id = $1
 			ORDER BY start_date DESC
@@ -225,7 +225,9 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 		SELECT 
 			CASE WHEN cp.end_date IS NULL THEN true ELSE false END AS is_charging,
 			CASE WHEN cp.end_date IS NULL THEN c.charger_voltage ELSE NULL END AS charger_voltage,
-			CASE WHEN cp.end_date IS NULL THEN c.charger_power ELSE NULL END AS charger_power
+			CASE WHEN cp.end_date IS NULL THEN c.charger_power ELSE NULL END AS charger_power,
+			CASE WHEN cp.end_date IS NULL THEN cp.charge_energy_added ELSE NULL END AS charge_energy_added,
+			CASE WHEN cp.end_date IS NULL THEN EXTRACT(EPOCH FROM (NOW() - cp.start_date))/60 ELSE NULL END AS charge_duration_min
 		FROM charging_process cp
 		LEFT JOIN LATERAL (
 			SELECT charger_voltage, charger_power
@@ -237,9 +239,11 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 		WHERE cp.id IS NOT NULL
 	`
 	var chargingInfo struct {
-		IsCharging     bool          `db:"is_charging"`
-		ChargerVoltage sql.NullInt64 `db:"charger_voltage"`
-		ChargerPower   sql.NullInt64 `db:"charger_power"`
+		IsCharging        bool            `db:"is_charging"`
+		ChargerVoltage    sql.NullInt64   `db:"charger_voltage"`
+		ChargerPower      sql.NullInt64   `db:"charger_power"`
+		ChargeEnergyAdded sql.NullFloat64 `db:"charge_energy_added"`
+		ChargeDurationMin sql.NullFloat64 `db:"charge_duration_min"`
 	}
 	if err := r.db.GetContext(ctx, &chargingInfo, chargingQuery, carID); err == nil {
 		stats.IsCharging = chargingInfo.IsCharging
@@ -251,6 +255,13 @@ func (r *statsRepository) GetOverview(ctx context.Context, carID int16) (*model.
 			if chargingInfo.ChargerPower.Valid {
 				p := int(chargingInfo.ChargerPower.Int64)
 				stats.ChargingPower = &p
+			}
+			if chargingInfo.ChargeEnergyAdded.Valid {
+				stats.ChargeEnergyAdded = &chargingInfo.ChargeEnergyAdded.Float64
+			}
+			if chargingInfo.ChargeDurationMin.Valid {
+				d := int(chargingInfo.ChargeDurationMin.Float64)
+				stats.ChargeDurationMin = &d
 			}
 		}
 	}
@@ -307,8 +318,8 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 			}
 
 			point := model.EfficiencyDataPoint{
-				Date:      row.Date.Format("2006-01-02"),
-				Distance:  row.Distance,
+				Date:       row.Date.Format("2006-01-02"),
+				Distance:   row.Distance,
 				EnergyUsed: row.RangeUsed * efficiencyFactor / 1000,
 			}
 			if row.Distance > 0 {
@@ -348,8 +359,8 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 			}
 
 			point := model.EfficiencyDataPoint{
-				Date:      row.Date.Format("2006-01-02"),
-				Distance:  row.Distance,
+				Date:       row.Date.Format("2006-01-02"),
+				Distance:   row.Distance,
 				EnergyUsed: row.RangeUsed * efficiencyFactor / 1000,
 			}
 			if row.Distance > 0 {
@@ -389,8 +400,8 @@ func (r *statsRepository) GetEfficiency(ctx context.Context, carID int16, days i
 			}
 
 			point := model.EfficiencyDataPoint{
-				Date:      row.Date.Format("2006-01"),
-				Distance:  row.Distance,
+				Date:       row.Date.Format("2006-01"),
+				Distance:   row.Distance,
 				EnergyUsed: row.RangeUsed * efficiencyFactor / 1000,
 			}
 			if row.Distance > 0 {

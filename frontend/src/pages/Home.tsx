@@ -295,7 +295,6 @@ export default function HomePage() {
                   <div className="space-y-1">
                     {/* 1. Battery Icon + Percentage */}
                     <div className="flex items-center gap-2">
-                      {/* Battery Icon */}
                       <div className="relative w-8 h-3.5 border border-white/30 rounded-[2px] flex items-center p-[1px]"
                         style={{ borderColor: colors.muted }}>
                         {/* Battery Tip */}
@@ -303,12 +302,23 @@ export default function HomePage() {
                           style={{ background: colors.muted }} />
                         {/* Fill */}
                         <div
-                          className="h-full rounded-[1px] transition-all duration-500"
+                          className={clsx(
+                            "h-full rounded-[1px] transition-all duration-500",
+                            stats?.isCharging && "animate-pulse"
+                          )}
                           style={{
                             width: `${status.batteryLevel}%`,
                             background: status.batteryLevel <= 20 ? '#ff4444' : colors.primary,
                           }}
                         />
+                        {/* Charging Lightning Icon */}
+                        {stats?.isCharging && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
 
                       {/* Percentage Text */}
@@ -515,7 +525,7 @@ export default function HomePage() {
           </div>
 
           {/* 充电信息卡片 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               label={language === 'zh' ? '充电电压' : 'CHARGING VOLTAGE'}
               value={stats.chargingVoltage != null ? stats.chargingVoltage : '--'}
@@ -537,6 +547,61 @@ export default function HomePage() {
                 </svg>
               }
             />
+            <StatCard
+              label={language === 'zh' ? '已充入电量' : 'ENERGY ADDED'}
+              value={stats.chargeEnergyAdded != null ? stats.chargeEnergyAdded.toFixed(2) : '--'}
+              unit="kWh"
+              icon={
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 22h14M12 2v10M9 7l3-5 3 5" />
+                  <path d="M12 12A5 5 0 0 0 12 22A5 5 0 0 0 12 12Z" />
+                </svg>
+              }
+            />
+            <StatCard
+              label={language === 'zh' ? '充电时长' : 'CHARGING DURATION'}
+              value={stats.chargeDurationMin != null ?
+                (stats.chargeDurationMin >= 60 ?
+                  `${Math.floor(stats.chargeDurationMin / 60)}${language === 'zh' ? '小时' : 'h'} ${stats.chargeDurationMin % 60}${language === 'zh' ? '分' : 'm'}`
+                  : `${stats.chargeDurationMin}${language === 'zh' ? '分' : 'm'}`
+                ) : '--'}
+              icon={
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              }
+            />
+            {stats.timeToFullCharge != null && stats.timeToFullCharge > 0 && (
+              <>
+                <StatCard
+                  label={language === 'zh' ? '预计结束时间' : 'EXPECTED END TIME'}
+                  value={dayjs().add(stats.timeToFullCharge, 'hour').format('HH:mm')}
+                  icon={
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  }
+                />
+                <StatCard
+                  label={language === 'zh' ? '充电剩余时间' : 'TIME REMAINING'}
+                  value={
+                    stats.timeToFullCharge >= 1
+                      ? `${Math.floor(stats.timeToFullCharge)}${language === 'zh' ? '小时' : 'h'} ${Math.round((stats.timeToFullCharge % 1) * 60)}${language === 'zh' ? '分' : 'm'}`
+                      : `${Math.round(stats.timeToFullCharge * 60)}${language === 'zh' ? '分' : 'm'}`
+                  }
+                  icon={
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  }
+                />
+              </>
+            )}
           </div>
         </div>
       )}
@@ -546,6 +611,8 @@ export default function HomePage() {
       <SocHistoryChart
         data={socHistory}
         rangeLabel={socDateRange.start ? `${socDateRange.start} ~ ${socDateRange.end || t('today')}` : undefined}
+        rangeStart={socDateRange.start}
+        rangeEnd={socDateRange.end}
         days={socDateRange.start ? dayjs(socDateRange.end || undefined).diff(dayjs(socDateRange.start), 'day') : 1}
         onRangeChange={(start, end) => setSocDateRange({ start, end })}
       />

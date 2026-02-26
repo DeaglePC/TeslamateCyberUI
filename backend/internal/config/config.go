@@ -5,11 +5,21 @@ import (
 	"strings"
 )
 
+// MQTTConfig MQTT配置
+type MQTTConfig struct {
+	Host     string
+	Port     string
+	Username string
+	Password string
+	ClientID string
+}
+
 // Config 应用配置
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Log      LogConfig
+	MQTT     MQTTConfig
 }
 
 // ServerConfig 服务器配置
@@ -85,6 +95,13 @@ func Load() (*Config, error) {
 		},
 		Log: LogConfig{
 			Level: getEnv("LOG_LEVEL", "info"),
+		},
+		MQTT: MQTTConfig{
+			Host:     getEnv("TESLAMATE_MQTT_HOST", getEnv("TESLAMATE_DB_HOST", "localhost")),
+			Port:     getEnv("TESLAMATE_MQTT_PORT", "1883"),
+			Username: getEnv("TESLAMATE_MQTT_USERNAME", ""),
+			Password: getEnv("TESLAMATE_MQTT_PASSWORD", ""),
+			ClientID: getEnv("TESLAMATE_MQTT_CLIENT_ID", "teslamate-cyberui-backend"),
 		},
 	}
 

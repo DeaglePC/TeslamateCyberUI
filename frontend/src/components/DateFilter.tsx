@@ -135,6 +135,7 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
             setShowCustomHours(false);
             const range = getDateRange(presetId);
             onFilter(range.start, range.end);
+            // 这里会导致在 SocHistoryChart 使用 onFilter 和 onPresetChange 时触发两次更新，或者依赖 DateFilter API。
             onDateRangeChange?.({ preset: presetId as FilterPreset, start: range.start, end: range.end });
         }
     };
@@ -150,7 +151,9 @@ export function DateFilter({ onFilter, className = '', initialPreset = 'last24h'
         if (!initialized.current) {
             initialized.current = true;
             if (initialPreset === 'custom' && (initialCustomStart || initialCustomEnd)) {
-                // 自定义日期从 URL 恢复，直接使用
+                // 自定义日期从 URL 恢复，此时父组件若还没拿到具体日期，可通过 onFilter 同步上去。
+                // 但为了防止父组件用初始 state 触发请求然后这里又触发一遍，需要看父级实现。
+                // 因为目前会有重复请求问题，我们可以选择只在确实需要从URL同步到父组件时触发一次。
                 onFilter(initialCustomStart || undefined, initialCustomEnd || undefined);
             } else if (initialPreset !== 'custom') {
                 const range = getDateRange(initialPreset);
