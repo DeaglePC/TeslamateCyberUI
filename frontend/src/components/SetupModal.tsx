@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { useSettingsStore } from '@/store/settings';
+import { getUrlParams } from '@/utils/urlParams';
 import clsx from 'clsx';
 
 interface SetupModalProps {
     onComplete: () => void;
+    initialError?: string;  // URL 参数连接失败时的初始错误信息
 }
 
-export default function SetupModal({ onComplete: _onComplete }: SetupModalProps) {
-    const { language, setBaseUrl, setApiKey, setLanguage } = useSettingsStore();
+export default function SetupModal({ onComplete: _onComplete, initialError = '' }: SetupModalProps) {
+    const { language, setBaseUrl, setApiKey, setLanguage, baseUrl, apiKey } = useSettingsStore();
 
-    const [baseUrlInput, setBaseUrlInput] = useState(import.meta.env.VITE_API_BASE_URL || '');
-    const [apiKeyInput, setApiKeyInput] = useState('');
+    // 优先级：URL 参数 > store 已有值 > 环境变量
+    const urlParams = getUrlParams();
+    const [baseUrlInput, setBaseUrlInput] = useState(urlParams.backend || baseUrl || import.meta.env.VITE_API_BASE_URL || '');
+    const [apiKeyInput, setApiKeyInput] = useState(urlParams.apikey || apiKey || '');
     const [testing, setTesting] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(initialError);
 
     const themeColors = {
         primary: '#00f0ff',
@@ -154,7 +158,14 @@ export default function SetupModal({ onComplete: _onComplete }: SetupModalProps)
                                 border: '1px solid rgba(255,0,0,0.3)',
                             }}
                         >
-                            {error}
+                            {/* 根据错误类型代码动态翻译 */}
+                            {error === 'auth_failed'
+                                ? (language === 'zh' ? 'API Key 错误或未配置' : 'Invalid or missing API Key')
+                                : error === 'connection_failed'
+                                    ? (language === 'zh' ? '连接失败，请检查地址' : 'Connection failed, check URL')
+                                    : error === 'server_unreachable'
+                                        ? (language === 'zh' ? '无法连接到服务器' : 'Cannot connect to server')
+                                        : error}
                         </div>
                     )}
 

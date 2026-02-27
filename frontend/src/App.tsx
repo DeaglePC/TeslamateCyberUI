@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { useSettingsStore } from '@/store/settings';
 import { getThemeColors, setAutoThemeColor } from '@/utils/theme';
 import { extractDominantColor } from '@/utils/colorExtractor';
+import { getUrlParams, clearUrlParams } from '@/utils/urlParams';
 import Layout from '@/components/Layout';
 import SetupModal from '@/components/SetupModal';
 
@@ -17,6 +18,7 @@ const SettingsPage = lazy(() => import('@/pages/Settings'));
 function App() {
   const { theme, baseUrl, backgroundImage, fetchRemoteSettings, autoThemeFromBg, setAutoThemePrimaryColor, autoThemePrimaryColor } = useSettingsStore();
   const [showSetup, setShowSetup] = useState(false);
+  const [setupError, setSetupError] = useState('');  // URL 参数连接失败时的初始错误信息
   const [initialized, setInitialized] = useState(false);
 
   // 更新主题颜色：影响浏览器地址栏、iOS 安全区域等
@@ -64,6 +66,38 @@ function App() {
   useEffect(() => {
     // Wait for zustand to hydrate from localStorage
     const timer = setTimeout(() => {
+      // 优先检查 URL 参数中的 backend 和 apikey
+      const urlParams = getUrlParams();
+      if (urlParams.backend) {
+        const store = useSettingsStore.getState();
+        store.setBaseUrl(urlParams.backend);
+        if (urlParams.apikey) {
+          store.setApiKey(urlParams.apikey);
+        }
+        clearUrlParams();
+
+        // 异步验证连接（使用需要认证的端点），失败则弹出 SetupModal 让用户修正
+        const testUrl = urlParams.backend.replace(/\/$/, '');
+        fetch(`${testUrl}/api/v1/auth/test`, {
+          method: 'GET',
+          headers: urlParams.apikey ? { 'X-API-Key': urlParams.apikey } : {},
+        })
+          .then((res) => {
+            if (!res.ok) {
+              setSetupError(res.status === 401 ? 'auth_failed' : 'connection_failed');
+              setShowSetup(true);
+            }
+          })
+          .catch(() => {
+            setSetupError('server_unreachable');
+            setShowSetup(true);
+          })
+          .finally(() => {
+            setInitialized(true);
+          });
+        return;
+      }
+
       const stored = localStorage.getItem('cyberui-settings');
       if (stored) {
         try {
@@ -112,7 +146,7 @@ function App() {
       )}
       {/* 内容层 */}
       <div className="relative z-10">
-        {showSetup && <SetupModal onComplete={handleSetupComplete} />}
+        {showSetup && <SetupModal onComplete={handleSetupComplete} initialError={setupError} />}
         <BrowserRouter
           future={{
             v7_startTransition: true,
