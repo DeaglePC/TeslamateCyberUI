@@ -144,22 +144,11 @@ This dashboard fully supports PWA, providing an immersive experience comparable 
 
 ### Architecture
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Tesla API     │────▶│   TeslaMate     │────▶│   PostgreSQL    │
-└─────────────────┘     └─────────────────┘     └────────┬────────┘
-                                                         │
-                                                         │ Read-only
-                                                         ▼
-                                                ┌─────────────────┐
-                                                │  CyberUI Backend│
-                                                └────────┬────────┘
-                                                         │
-                                                         │ API
-                                                         ▼
-                                                ┌─────────────────┐
-                                                │  CyberUI Frontend│
-                                                └─────────────────┘
+```mermaid
+graph TD
+    A[Tesla API] --> B[TeslaMate] --> C[PostgreSQL]
+    C -- Read-only --> D[CyberUI Backend]
+    D -- API --> E[CyberUI Frontend]
 ```
 
 **TeslaMate CyberUI is an independent visualization dashboard that:**
@@ -290,43 +279,46 @@ npm run dev
 
 #### Database Connection (Required)
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `TESLAMATE_DB_HOST` | TeslaMate database host | - | ✅ |
-| `TESLAMATE_DB_PORT` | Database port | `5432` | |
-| `TESLAMATE_DB_USER` | Database username | - | ✅ |
-| `TESLAMATE_DB_PASSWORD` | Database password | - | ✅ |
-| `TESLAMATE_DB_NAME` | Database name | `teslamate` | |
-| `TESLAMATE_DB_SSLMODE` | SSL mode | `disable` | |
+| Variable                | Description             | Default     | Required |
+| ----------------------- | ----------------------- | ----------- | -------- |
+| `TESLAMATE_DB_HOST`     | TeslaMate database host | -           | ✅        |
+| `TESLAMATE_DB_PORT`     | Database port           | `5432`      |          |
+| `TESLAMATE_DB_USER`     | Database username       | -           | ✅        |
+| `TESLAMATE_DB_PASSWORD` | Database password       | -           | ✅        |
+| `TESLAMATE_DB_NAME`     | Database name           | `teslamate` |          |
+| `TESLAMATE_DB_SSLMODE`  | SSL mode                | `disable`   |          |
 
 #### Service Configuration
 
-| Variable | Description | Default |
-|----------|-------------|----------|
-| `CYBERUI_PORT` | Frontend web access port | `8080` |
-| `CYBERUI_API_PORT` | Backend API port (for debugging) | `8899` |
-| `CYBERUI_SERVER_MODE` | Run mode (`debug` / `release`) | `release` |
-| `LOG_LEVEL` | Log level (`debug` / `info` / `warn` / `error`) | `info` |
-| `TZ` | Timezone | `Asia/Shanghai` |
+| Variable              | Description                                     | Default         |
+| --------------------- | ----------------------------------------------- | --------------- |
+| `CYBERUI_PORT`        | Frontend web access port                        | `8080`          |
+| `CYBERUI_API_PORT`    | Backend API port (for debugging)                | `8899`          |
+| `CYBERUI_SERVER_MODE` | Run mode (`debug` / `release`)                  | `release`       |
+| `LOG_LEVEL`           | Log level (`debug` / `info` / `warn` / `error`) | `info`          |
+| `TZ`                  | Timezone                                        | `Asia/Shanghai` |
 
 #### API Settings
 
-| Variable | Description | Default |
-|----------|-------------|----------|
-| `VITE_API_BASE_URL` | Frontend default API address (build-time only) | empty |
-| `CYBERUI_API_KEY` | API authentication key (empty to disable auth) | empty |
+| Variable            | Description                                    | Default |
+| ------------------- | ---------------------------------------------- | ------- |
+| `VITE_API_BASE_URL` | Frontend default API address (build-time only) | empty   |
+| `CYBERUI_API_KEY`   | API authentication key (empty to disable auth) | empty   |
+
+> 💡 You can pass the backend address and API Key via URL parameters, e.g.:
+> `https://tsl.deaglepc.cn/?backend=https://tsldemo.deaglepc.cn/&apikey=xxx`
 
 #### Umami Analytics
 
-| Variable | Description | Default |
-|----------|-------------|----------|
-| `UMAMI_WEBSITE_ID` | Umami Website ID (empty to disable) | empty |
-| `UMAMI_SCRIPT_URL` | Umami script URL | `https://cloud.umami.is/script.js` |
+| Variable           | Description                         | Default                            |
+| ------------------ | ----------------------------------- | ---------------------------------- |
+| `UMAMI_WEBSITE_ID` | Umami Website ID (empty to disable) | empty                              |
+| `UMAMI_SCRIPT_URL` | Umami script URL                    | `https://cloud.umami.is/script.js` |
 
 #### Mock Data
 
-| Variable | Description | Default |
-|----------|-------------|----------|
+| Variable            | Description                              | Default |
+| ------------------- | ---------------------------------------- | ------- |
 | `CYBERUI_MOCK_DATA` | Enable mock data mode (`true` / `false`) | `false` |
 
 ### Amap Configuration
@@ -341,43 +333,43 @@ npm run dev
 
 ### Home Dashboard
 
-| Feature | Description |
-|---------|-------------|
-| Vehicle Image | Auto-match Tesla official image based on model and color |
-| Battery Display | Battery icon + percentage, turns red below 20% |
-| Status Info | Current state (driving/charging/online/offline/asleep) |
-| Location Map | Current vehicle location with address |
-| Stats Cards | Range, mileage, software version, temperature |
-| SOC Chart | Battery level change curve |
-| Timeline | State change timeline visualization |
+| Feature         | Description                                              |
+| --------------- | -------------------------------------------------------- |
+| Vehicle Image   | Auto-match Tesla official image based on model and color |
+| Battery Display | Battery icon + percentage, turns red below 20%           |
+| Status Info     | Current state (driving/charging/online/offline/asleep)   |
+| Location Map    | Current vehicle location with address                    |
+| Stats Cards     | Range, mileage, software version, temperature            |
+| SOC Chart       | Battery level change curve                               |
+| Timeline        | State change timeline visualization                      |
 
 ### Charging Records
 
-| Feature | Description |
-|---------|-------------|
-| List Filter | Filter charging records by time range |
-| Charging Details | Level curve, power curve |
-| Charging Stats | Duration, energy, cost |
-| Location Map | Charging location display |
+| Feature          | Description                           |
+| ---------------- | ------------------------------------- |
+| List Filter      | Filter charging records by time range |
+| Charging Details | Level curve, power curve              |
+| Charging Stats   | Duration, energy, cost                |
+| Location Map     | Charging location display             |
 
 ### Driving Records
 
-| Feature | Description |
-|---------|-------------|
-| List Filter | Filter driving records by time range |
-| Driving Details | Speed curve, power curve, elevation changes |
-| Route Map | Amap/OpenStreetMap dual map sources |
-| Driving Stats | Distance, duration, average energy consumption |
+| Feature         | Description                                    |
+| --------------- | ---------------------------------------------- |
+| List Filter     | Filter driving records by time range           |
+| Driving Details | Speed curve, power curve, elevation changes    |
+| Route Map       | Amap/OpenStreetMap dual map sources            |
+| Driving Stats   | Distance, duration, average energy consumption |
 
 ### Theme System
 
-| Theme | Color Style |
-|-------|-------------|
-| Cyberpunk | Blue-purple neon, default theme |
-| Tesla | Red-black, tribute to official |
-| Dark Night | Deep blue-purple, low-key elegant |
-| Tech Blue | Fresh blue tech feel |
-| Aurora | Green-purple gradient, dreamy |
+| Theme      | Color Style                                |
+| ---------- | ------------------------------------------ |
+| Cyberpunk  | Blue-purple neon, default theme            |
+| Tesla      | Red-black, tribute to official             |
+| Dark Night | Deep blue-purple, low-key elegant          |
+| Tech Blue  | Fresh blue tech feel                       |
+| Aurora     | Green-purple gradient, dreamy              |
 | Auto Theme | Auto-generated from background image color |
 
 ## Development Guide
