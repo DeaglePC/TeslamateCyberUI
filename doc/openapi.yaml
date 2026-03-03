@@ -1,0 +1,651 @@
+openapi: 3.0.3
+info:
+  title: TeslamateCyberUI API
+  version: 1.0.0
+  description: >
+    API Documentation for TeslamateCyberUI backend services. All API endpoints 
+    are grouped under the `/api/v1` path and require API Key authentication via 
+    either the `Authorization` header or the `X-API-Key` header.
+servers:
+  - url: 'http://localhost:8080/api/v1'
+    description: Local development server
+    
+components:
+  securitySchemes:
+    ApiKeyAuthAuthHeader:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API Key passed in the Authorization header.
+    ApiKeyAuthXApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key passed in the custom X-API-Key header.
+      
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "success"
+        data:
+          type: object
+          nullable: true
+          
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: "Invalid car ID"
+
+    Car:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        vin:
+          type: string
+          nullable: true
+        trimBadging:
+          type: string
+          nullable: true
+        exteriorColor:
+          type: string
+          nullable: true
+        wheelType:
+          type: string
+          nullable: true
+        marketingName:
+          type: string
+          nullable: true
+        displayPriority:
+          type: integer
+        insertedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CarStatus:
+      type: object
+      properties:
+        carId:
+          type: integer
+        name:
+          type: string
+        model:
+          type: string
+        state:
+          type: string
+        since:
+          type: string
+          format: date-time
+          nullable: true
+        healthy:
+          type: boolean
+        batteryLevel:
+          type: integer
+        usableBatteryLevel:
+          type: integer
+        idealRange:
+          type: number
+        estRange:
+          type: number
+        ratedRange:
+          type: number
+        odometer:
+          type: number
+        insideTemp:
+          type: number
+          nullable: true
+        outsideTemp:
+          type: number
+          nullable: true
+        isClimateOn:
+          type: boolean
+        isPreconditioning:
+          type: boolean
+        locked:
+          type: boolean
+          nullable: true
+        sentryMode:
+          type: boolean
+          nullable: true
+        pluggedIn:
+          type: boolean
+          nullable: true
+        scheduledChargingStartTime:
+          type: string
+          format: date-time
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        heading:
+          type: integer
+          nullable: true
+        geofence:
+          type: string
+          nullable: true
+        softwareVersion:
+          type: string
+
+security:
+  - ApiKeyAuthAuthHeader: []
+  - ApiKeyAuthXApiKey: []
+
+paths:
+  /cars:
+    get:
+      summary: Get list of cars
+      tags:
+        - Car
+      responses:
+        '200':
+          description: A list of cars
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Car'
+
+  /cars/{id}/status:
+    get:
+      summary: Get real-time status of a car
+      tags:
+        - Car
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Car ID
+      responses:
+        '200':
+          description: Real-time car status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/CarStatus'
+        '400':
+          description: Invalid car ID
+        '404':
+          description: Car not found
+
+  /cars/{id}/charges:
+    get:
+      summary: Get charge sessions for a car
+      tags:
+        - Charge
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            description: Date string or RFC3339 format
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            description: Date string or RFC3339 format
+      responses:
+        '200':
+          description: A list of paginated charge sessions
+
+  /charges/{id}:
+    get:
+      summary: Get detailed information of a charge
+      tags:
+        - Charge
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Charge ID
+      responses:
+        '200':
+          description: Charge details
+
+  /charges/{id}/stats:
+    get:
+      summary: Get stats for a specific charge
+      tags:
+        - Charge
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Charge ID
+      responses:
+        '200':
+          description: Charge stats
+
+  /cars/{id}/charges/stats_summary:
+    get:
+      summary: Get charge stats summary for a car
+      tags:
+        - Charge
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Charge stats summary
+
+  /cars/{id}/drives:
+    get:
+      summary: Get drive sessions for a car
+      tags:
+        - Drive
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paged drive sessions
+
+  /cars/{id}/drives/stats_summary:
+    get:
+      summary: Get drive stats summary for a car
+      tags:
+        - Drive
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Drive stats summary
+
+  /cars/{id}/drives/speed_histogram:
+    get:
+      summary: Get aggregated speed histogram data
+      tags:
+        - Drive
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Speed histogram data
+
+  /cars/{id}/drives/positions:
+    get:
+      summary: Get all positions of drives in a range
+      tags:
+        - Drive
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Positions of all drives within range
+
+  /drives/{id}:
+    get:
+      summary: Get detailed information of a drive
+      tags:
+        - Drive
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Drive detail responses
+
+  /drives/{id}/positions:
+    get:
+      summary: Get positions route for a drive
+      tags:
+        - Drive
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Drive positions route (track points)
+
+  /drives/{id}/speed_histogram:
+    get:
+      summary: Get speed histogram for a single drive
+      tags:
+        - Drive
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Drive speed histogram data
+
+  /cars/{id}/stats/overview:
+    get:
+      summary: Get dashboard overview stats
+      tags:
+        - Stats
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Overview statistics
+
+  /cars/{id}/stats/efficiency:
+    get:
+      summary: Get efficiency stats over a specific period
+      tags:
+        - Stats
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: days
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: Efficiency statistics
+
+  /cars/{id}/stats/battery:
+    get:
+      summary: Get battery degradation stats
+      tags:
+        - Stats
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Battery degradation summary
+
+  /cars/{id}/stats/soc-history:
+    get:
+      summary: Get State of Charge (SoC) history
+      tags:
+        - Stats
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: from
+          schema:
+            type: string
+        - in: query
+          name: to
+          schema:
+            type: string
+        - in: query
+          name: hours
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: SoC history points
+
+  /cars/{id}/stats/states-timeline:
+    get:
+      summary: Get states timeline data
+      tags:
+        - Stats
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: from
+          schema:
+            type: string
+        - in: query
+          name: to
+          schema:
+            type: string
+        - in: query
+          name: hours
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: States timeline intervals
+
+  /settings:
+    get:
+      summary: Get all UI settings
+      tags:
+        - UISettings
+      responses:
+        '200':
+          description: UI Settings map
+    post:
+      summary: Update a UI setting
+      tags:
+        - UISettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                value:
+                  type: string
+      responses:
+        '200':
+          description: Setting updated
+    put:
+      summary: Batch update UI settings
+      tags:
+        - UISettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+      responses:
+        '200':
+          description: Settings updated
+
+  /background-image:
+    get:
+      summary: Get background image base64
+      tags:
+        - BackgroundImage
+      responses:
+        '200':
+          description: Background image output
+        '404':
+          description: Not found
+    post:
+      summary: Upload a background image
+      tags:
+        - BackgroundImage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Successfully uploaded
+    delete:
+      summary: Delete background image
+      tags:
+        - BackgroundImage
+      responses:
+        '200':
+          description: Deleted successfully
+
+  /background-image/hash:
+    get:
+      summary: Get background image hash (tag)
+      tags:
+        - BackgroundImage
+      responses:
+        '200':
+          description: Hash data
+
+  /auth/test:
+    get:
+      summary: Test API key validity
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: API key is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: "API key is valid"
