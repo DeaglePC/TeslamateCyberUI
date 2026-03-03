@@ -57,6 +57,7 @@
 - [配置说明](#配置说明)
 - [功能详解](#功能详解)
 - [开发指南](#开发指南)
+- [AI IDE Skill](#ai-ide-skill)
 - [常见问题](#常见问题)
 
 ## 功能特性
@@ -414,6 +415,55 @@ GET /api/v1/cars/:id/stats/soc      # SOC 历史
 GET /api/v1/cars/:id/stats/timeline # 状态时间线
 GET /health                         # 健康检查
 ```
+
+## AI IDE Skill
+
+本项目内置了 `tesla-stats` 技能包，可安装到主流 AI IDE 中，让 AI 助手直接查询你的 Tesla 数据。
+
+### 支持功能
+
+- 🚗 查询车辆实时状态（电量、续航、位置）
+- 📊 获取 SoC 历史、活动时间线
+- ⚡ 查看充电/驾驶记录及详情
+- 🔋 电池健康与效率统计
+- ⚙️ 读写 UI 设置
+
+### 支持平台
+
+| 平台 | 项目级目录 | 全局目录 |
+| --- | --- | --- |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| Codex (OpenAI) | `.codex/skills/` | `~/.codex/skills/` |
+| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
+| Antigravity | `.agent/skills/` | `~/.gemini/antigravity/skills/` |
+| Cursor | `.cursor/skills/` | `~/.cursor/skills/` |
+
+### 安装方式
+
+```bash
+cd skill
+
+# Windows PowerShell
+.\install.ps1                          # 交互模式
+.\install.ps1 -Platforms all           # 安装到所有平台（项目级）
+.\install.ps1 -Global -Platforms all   # 安装到所有平台（全局）
+
+# Linux / macOS
+bash install.sh                         # 交互模式
+bash install.sh all                     # 安装到所有平台（项目级）
+bash install.sh --global all            # 安装到所有平台（全局）
+```
+
+### 安装后配置
+
+设置环境变量后，即可在 AI IDE 中直接对话查询 Tesla 数据：
+
+```bash
+export TESLA_STATS_BASE_URL=http://your-server:8080/api/v1
+export TESLA_STATS_API_KEY=your-api-key
+```
+
+> 💡 **使用示例**：在 AI IDE 中输入 「查看我的 Tesla 当前状态」或 「Show my Tesla's SoC history for last 24 hours」。
 
 ## 常见问题
 

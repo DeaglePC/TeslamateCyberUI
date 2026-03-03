@@ -68,4 +68,8 @@ Thumbs.db
 # Docker
 *.tar
 
+# AI IDE skills (installed via skill/install.sh or skill/install.ps1)
 .agent/
+.claude/
+.codex/
+.cursor/

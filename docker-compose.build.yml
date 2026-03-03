@@ -1,8 +1,7 @@
 # ============================================
 # TeslamateCyberUI Docker Compose Configuration
-# 使用 Docker Hub 镜像部署（推荐）
-# 一键部署命令: docker compose up -d
-# 如需本地构建，请使用: docker compose -f docker-compose.build.yml up -d --build
+# 本地构建模式 - 使用本地源码构建镜像
+# 部署命令: docker compose -f docker-compose.build.yml up -d --build
 # ============================================
 
 services:
@@ -10,7 +9,10 @@ services:
   # Backend API Service
   # ==========================================
   backend:
-    image: dupengcheng66666/teslamate-cyberui-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: teslamate-cyberui-backend:latest
     container_name: teslamate-cyberui-backend
     restart: unless-stopped
     environment:
@@ -58,7 +60,12 @@ services:
   # Frontend Web Service (Nginx)
   # ==========================================
   frontend:
-    image: dupengcheng66666/teslamate-cyberui:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-}
+    image: teslamate-cyberui:latest
     container_name: teslamate-cyberui
     restart: unless-stopped
     ports:

@@ -57,6 +57,7 @@
 - [Configuration](#configuration)
 - [Feature Details](#feature-details)
 - [Development Guide](#development-guide)
+- [AI IDE Skill](#ai-ide-skill)
 - [FAQ](#faq)
 
 ## Features
@@ -414,6 +415,55 @@ GET /api/v1/cars/:id/stats/soc      # SOC history
 GET /api/v1/cars/:id/stats/timeline # Status timeline
 GET /health                         # Health check
 ```
+
+## AI IDE Skill
+
+This project includes a built-in `tesla-stats` skill that can be installed into popular AI IDEs, allowing AI assistants to query your Tesla data directly.
+
+### Capabilities
+
+- 🚗 Query real-time vehicle status (battery, range, location)
+- 📊 Retrieve SoC history and activity timeline
+- ⚡ View charge/drive records and details
+- 🔋 Battery health and efficiency statistics
+- ⚙️ Read/write UI settings
+
+### Supported Platforms
+
+| Platform | Project-level | Global |
+| --- | --- | --- |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| Codex (OpenAI) | `.codex/skills/` | `~/.codex/skills/` |
+| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
+| Antigravity | `.agent/skills/` | `~/.gemini/antigravity/skills/` |
+| Cursor | `.cursor/skills/` | `~/.cursor/skills/` |
+
+### Installation
+
+```bash
+cd skill
+
+# Windows PowerShell
+.\install.ps1                          # Interactive mode
+.\install.ps1 -Platforms all           # Install for all platforms (project)
+.\install.ps1 -Global -Platforms all   # Install for all platforms (global)
+
+# Linux / macOS
+bash install.sh                         # Interactive mode
+bash install.sh all                     # Install for all platforms (project)
+bash install.sh --global all            # Install for all platforms (global)
+```
+
+### Post-Install Configuration
+
+Set environment variables, then you can chat with your AI IDE to query Tesla data:
+
+```bash
+export TESLA_STATS_BASE_URL=http://your-server:8080/api/v1
+export TESLA_STATS_API_KEY=your-api-key
+```
+
+> 💡 **Usage Example**: Type "Show my Tesla's current status" or "Show my Tesla's SoC history for last 24 hours" in your AI IDE.
 
 ## FAQ
 

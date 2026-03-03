@@ -208,7 +208,7 @@ export default function ChargeDetailPage() {
       {/* 统计数据 */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
         <StatCard label={t('energyAdded')} value={formatEnergy(detail.chargeEnergyAdded)} />
-        <StatCard label={t('chargeDuration')} value={formatDuration(detail.durationMin)} />
+        <StatCard label={t('chargeDuration')} value={formatDuration(detail.durationMin, language)} />
         {detail.chargeEnergyUsed !== undefined && (
           <StatCard label={t('energyUsed')} value={formatEnergy(detail.chargeEnergyUsed)} />
         )}

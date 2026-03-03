@@ -724,7 +724,7 @@ export default function DriveDetailPage() {
       {/* 统计数据 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label={t('driveDistance')} value={formatDistance(detail.distance, unit)} />
-        <StatCard label={t('driveDuration')} value={formatDuration(detail.durationMin)} />
+        <StatCard label={t('driveDuration')} value={formatDuration(detail.durationMin, language)} />
         <StatCard label={t('avgSpeed')} value={formatSpeed(detail.speedAvg, unit)} />
         <StatCard label={t('maxSpeed')} value={formatSpeed(detail.speedMax, unit)} />
         <StatCard label={t('efficiency')} value={`${detail.efficiency.toFixed(0)} Wh/km`} />
