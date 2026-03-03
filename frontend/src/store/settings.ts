@@ -10,10 +10,15 @@ export type MapType = 'amap' | 'openstreet';
 
 const getInitialLanguage = (): LanguageType => {
   if (typeof navigator !== 'undefined' && navigator.language) {
-    return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+    const lang = navigator.language.toLowerCase();
+    if (lang.startsWith('zh')) {
+      return 'zh';
+    }
+    return 'en';
   }
   return 'zh';
 };
+
 
 interface SettingsState {
   theme: ThemeType;

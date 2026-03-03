@@ -24,7 +24,7 @@ export function formatDuration(minutes: number, language: 'zh' | 'en' = 'zh'): s
   if (mins === 0) {
     return `${hours}${language === 'zh' ? '小时' : 'h'}`;
   }
-  return `${hours}${language === 'zh' ? '小时' : 'h'}${mins}${language === 'zh' ? '分钟' : 'm'}`;
+  return `${hours}${language === 'zh' ? '小时' : 'h'} ${mins}${language === 'zh' ? '分钟' : 'm'}`;
 }
 
 export function formatDistance(km: number, unit: 'metric' | 'imperial' = 'metric'): string {

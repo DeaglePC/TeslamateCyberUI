@@ -306,8 +306,8 @@ export default function SettingsPage() {
   ];
 
   const languages: { id: LanguageType; name: string }[] = [
-    { id: 'zh', name: t('chinese') },
-    { id: 'en', name: t('english') },
+    { id: 'zh', name: '中文' },
+    { id: 'en', name: 'English' },
   ];
 
   // 处理背景图片上传 - 显示裁剪器
