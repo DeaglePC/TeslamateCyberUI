@@ -5,7 +5,7 @@
 
 # Stage 1: Build the React application
 # 如果拉取失败，可以替换为: registry.cn-hangzhou.aliyuncs.com/library/node:18-alpine
-FROM node:18-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:18-alpine AS builder
 
 WORKDIR /app
 
