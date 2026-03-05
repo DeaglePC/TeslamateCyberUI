@@ -14,6 +14,7 @@ import { getThemeColors } from '@/utils/theme';
 import { useTranslation } from '@/utils/i18n';
 import { domToPng } from 'modern-screenshot';
 import type { DriveDetail, DrivePosition } from '@/types';
+import { simplifyPositions } from '@/utils/mapSampling';
 
 export default function DriveDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -161,6 +162,9 @@ export default function DriveDetailPage() {
       p.tpmsPressureRR !== undefined
     );
   }, [positions]);
+
+  // 地图轨迹采样 - 当点数过多时用 Douglas-Peucker 算法简化路径
+  const mapPositions = useMemo(() => simplifyPositions(positions), [positions]);
 
   // 数据采样函数 - 对密集数据进行降采样
   // mode: 'max' 保留区间最大值（适用于速度，确保峰值显示）
@@ -741,7 +745,7 @@ export default function DriveDetailPage() {
           <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('driveRoute')}</h3>
           <div className="h-64 md:h-96 w-full relative z-0">
             <UniversalMap
-              positions={positions}
+              positions={mapPositions}
               startMarker={{ latitude: detail.startLatitude, longitude: detail.startLongitude }}
               endMarker={{ latitude: detail.endLatitude, longitude: detail.endLongitude }}
             />

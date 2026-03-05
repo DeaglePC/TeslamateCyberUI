@@ -522,13 +522,7 @@ export function ActivityTimeline({ data, className = '', rangeLabel, rangeStart,
                         </div>
                     ))}
 
-                    {/* State label on left */}
-                    <div
-                        className="absolute left-0 top-0 bottom-0 flex items-center pl-2 pointer-events-none"
-                        style={{ color: colors.muted }}
-                    >
-                        <span className="text-xs font-medium bg-black/50 px-1 rounded">state</span>
-                    </div>
+
                 </div>
 
                 {/* Time labels */}

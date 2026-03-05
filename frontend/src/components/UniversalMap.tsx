@@ -110,7 +110,11 @@ export function UniversalMap({ positions = [], tracks = [], marker, startMarker,
 
     // Memoize heatmapData to avoid unnecessary re-renders when data content is the same
     const stableHeatmapData = useMemo(() => heatmapData, [JSON.stringify(heatmapData)]);
-    const stablePositions = useMemo(() => positions, [JSON.stringify(positions)]);
+    const stablePositions = useMemo(() => positions, [
+        positions.length,
+        positions[0]?.latitude, positions[0]?.longitude,
+        positions[positions.length - 1]?.latitude, positions[positions.length - 1]?.longitude,
+    ]);
     const stableTracks = useMemo(() => tracks, [JSON.stringify(tracks)]);
     const stableMarker = useMemo(() => marker, [marker?.latitude, marker?.longitude]);
 
