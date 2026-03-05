@@ -134,11 +134,6 @@
 - **Development & Debugging** - Built-in mock data for frontend development and UI preview
 - **Online Demo** - Used for demo site showcase
 
-### 📊 Umami Analytics
-- **Page Analytics** - Integrate Umami for page view statistics
-- **Runtime Configuration** - Configure via environment variables, no rebuild needed in Docker
-- **Self-hosted / Cloud** - Supports both Umami Cloud and self-hosted instances
-
 ### 📱 PWA (Progressive Web App) Support
 This dashboard fully supports PWA, providing an immersive experience comparable to native apps:
 - **Instant Loading** - Supports local offline caching of core resources
