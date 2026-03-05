@@ -3,11 +3,7 @@
 </p>
 <h1 align="center">TeslaMate CyberUI</h1>
 
-<p align="center">
-  <a href="./README_EN.md">English</a> | <a href="./README.md">中文</a>
-</p>
-
-<p align="center">一个现代化的 Tesla 数据可视化面板，连接 TeslaMate 数据库，采用赛博朋克风格设计。</p>
+<p align="center"><a href="README.md">English</a> | 简体中文</p>
 
 <p align="center">
   <a href="https://github.com/DeaglePC/TeslamateCyberUI/stargazers">
@@ -16,13 +12,38 @@
   <a href="https://tsl.deaglepc.cn/">
     <img src="https://img.shields.io/website?url=https%3A%2F%2Ftsl.deaglepc.cn%2F&style=for-the-badge&color=00f0ff&labelColor=222222&logo=vercel" alt="Website Status" />
   </a>
+  <a href="https://hub.docker.com/r/dupengcheng66666/teslamate-cyberui">
+    <img src="https://img.shields.io/docker/pulls/dupengcheng66666/teslamate-cyberui?style=for-the-badge&color=00f0ff&labelColor=222222&logo=docker&label=frontend" alt="Frontend Docker Pulls" />
+  </a>
+  <a href="https://hub.docker.com/r/dupengcheng66666/teslamate-cyberui-backend">
+    <img src="https://img.shields.io/docker/pulls/dupengcheng66666/teslamate-cyberui-backend?style=for-the-badge&color=00f0ff&labelColor=222222&logo=docker&label=backend" alt="Backend Docker Pulls" />
+  </a>
 </p>
+
+<p align="center">一个现代化的 Tesla 数据可视化面板，连接 TeslaMate 数据库，采用赛博朋克风格设计。</p>
 
 > **🌟 在线体验 (Demo)**
 >
 > - **前端访问**：[https://tsl.deaglepc.cn/](https://tsl.deaglepc.cn/)
 > - **后端 API**：[https://tsldemo.deaglepc.cn](https://tsldemo.deaglepc.cn) *(自动在前端填充。用于演示的假数据)*
 
+<h3 align="center">🦞 接入 <a href="https://github.com/openclaw/openclaw">OpenClaw</a> 技能</h3>
+<p align="center">
+<table align="center">
+  <tr>
+    <th align="center">🚗 通勤查询</th>
+    <th align="center">� 路况分析</th>
+    <th align="center">🗺️ 行程记录</th>
+  </tr>
+  <tr>
+    <td valign="middle"><img src="./screenshots/openclaw-commute.webp" width="250" /></td>
+    <td valign="middle"><img src="./screenshots/openclaw-traffic.webp" width="250" /></td>
+    <td valign="middle"><img src="./screenshots/openclaw-trip.webp" width="250" /></td>
+  </tr>
+</table>
+</p>
+
+<h3 align="center">UI 展示</h3>
 <p align="center">
 <table align="center">
   <tr>
@@ -36,7 +57,7 @@
     <td valign="top"><img src="./screenshots/charge-list.webp" width="250" /></td>
   </tr>
   <tr>
-    <th align="center">🛣️ 驾驶详情</th>
+    <th align="center">�️ 驾驶详情</th>
     <th align="center">⚡ 充电详情</th>
     <th align="center">⚙️ 设置</th>
   </tr>
@@ -48,6 +69,7 @@
 </table>
 </p>
 
+
 ## 目录
 
 - [功能特性](#功能特性)
@@ -55,9 +77,9 @@
 - [与 TeslaMate 的关系](#与-teslamate-的关系)
 - [快速开始](#快速开始)
 - [配置说明](#配置说明)
-- [功能详解](#功能详解)
 - [开发指南](#开发指南)
 - [AI IDE Skill](#ai-ide-skill)
+- [功能详解](#功能详解)
 - [常见问题](#常见问题)
 
 ## 功能特性
@@ -309,12 +331,6 @@ npm run dev
 > 💡 支持通过 URL 参数传递后端地址和 API Key，例如：
 > `https://tsl.deaglepc.cn/?backend=https://tsldemo.deaglepc.cn/&apikey=xxx`
 
-#### Umami 统计分析
-
-| 变量名             | 说明                             | 默认值                             |
-| ------------------ | -------------------------------- | ---------------------------------- |
-| `UMAMI_WEBSITE_ID` | Umami Website ID（留空则不启用） | 空                                 |
-| `UMAMI_SCRIPT_URL` | Umami 脚本地址                   | `https://cloud.umami.is/script.js` |
 
 #### Mock 数据
 
@@ -329,6 +345,55 @@ npm run dev
 3. 获取 Key 后在设置页面填入
 
 > ⚠️ **重要**：必须选择「Web端 (JS API)」类型，不能使用「Web服务」类型。
+
+## AI IDE Skill
+
+本项目内置了 `tesla-stats` 技能包，可安装到主流 AI IDE 中，让 AI 助手直接查询你的 Tesla 数据。
+
+### 支持功能
+
+- 🚗 查询车辆实时状态（电量、续航、位置）
+- 📊 获取 SoC 历史、活动时间线
+- ⚡ 查看充电/驾驶记录及详情
+- 🔋 电池健康与效率统计
+- ⚙️ 读写 UI 设置
+
+### 支持平台
+
+| 平台 | 项目级目录 | 全局目录 |
+| --- | --- | --- |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| Codex (OpenAI) | `.codex/skills/` | `~/.codex/skills/` |
+| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
+| Antigravity | `.agent/skills/` | `~/.gemini/antigravity/skills/` |
+| Cursor | `.cursor/skills/` | `~/.cursor/skills/` |
+
+### 安装方式
+
+```bash
+cd skill
+
+# Windows PowerShell
+.\install.ps1                          # 交互模式
+.\install.ps1 -Platforms all           # 安装到所有平台（项目级）
+.\install.ps1 -Global -Platforms all   # 安装到所有平台（全局）
+
+# Linux / macOS
+bash install.sh                         # 交互模式
+bash install.sh all                     # 安装到所有平台（项目级）
+bash install.sh --global all            # 安装到所有平台（全局）
+```
+
+### 安装后配置
+
+设置环境变量后，即可在 AI IDE 中直接对话查询 Tesla 数据：
+
+```bash
+export TESLA_STATS_BASE_URL=http://your-server:8080/api/v1
+export TESLA_STATS_API_KEY=your-api-key
+```
+
+> 💡 **使用示例**：在 AI IDE 中输入 「查看我的 Tesla 当前状态」或 「Show my Tesla's SoC history for last 24 hours」。
 
 ## 功能详解
 
@@ -416,54 +481,6 @@ GET /api/v1/cars/:id/stats/timeline # 状态时间线
 GET /health                         # 健康检查
 ```
 
-## AI IDE Skill
-
-本项目内置了 `tesla-stats` 技能包，可安装到主流 AI IDE 中，让 AI 助手直接查询你的 Tesla 数据。
-
-### 支持功能
-
-- 🚗 查询车辆实时状态（电量、续航、位置）
-- 📊 获取 SoC 历史、活动时间线
-- ⚡ 查看充电/驾驶记录及详情
-- 🔋 电池健康与效率统计
-- ⚙️ 读写 UI 设置
-
-### 支持平台
-
-| 平台 | 项目级目录 | 全局目录 |
-| --- | --- | --- |
-| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
-| Codex (OpenAI) | `.codex/skills/` | `~/.codex/skills/` |
-| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
-| Antigravity | `.agent/skills/` | `~/.gemini/antigravity/skills/` |
-| Cursor | `.cursor/skills/` | `~/.cursor/skills/` |
-
-### 安装方式
-
-```bash
-cd skill
-
-# Windows PowerShell
-.\install.ps1                          # 交互模式
-.\install.ps1 -Platforms all           # 安装到所有平台（项目级）
-.\install.ps1 -Global -Platforms all   # 安装到所有平台（全局）
-
-# Linux / macOS
-bash install.sh                         # 交互模式
-bash install.sh all                     # 安装到所有平台（项目级）
-bash install.sh --global all            # 安装到所有平台（全局）
-```
-
-### 安装后配置
-
-设置环境变量后，即可在 AI IDE 中直接对话查询 Tesla 数据：
-
-```bash
-export TESLA_STATS_BASE_URL=http://your-server:8080/api/v1
-export TESLA_STATS_API_KEY=your-api-key
-```
-
-> 💡 **使用示例**：在 AI IDE 中输入 「查看我的 Tesla 当前状态」或 「Show my Tesla's SoC history for last 24 hours」。
 
 ## 常见问题
 

@@ -3,11 +3,7 @@
 </p>
 <h1 align="center">TeslaMate CyberUI</h1>
 
-<p align="center">A modern Tesla data visualization dashboard that connects to TeslaMate database with cyberpunk-style design.</p>
-
-<p align="center">
-  <a href="./README_EN.md">English</a> | <a href="./README.md">中文</a>
-</p>
+<p align="center">English | <a href="README_CN.md">简体中文</a></p>
 
 <p align="center">
   <a href="https://github.com/DeaglePC/TeslamateCyberUI/stargazers">
@@ -16,13 +12,38 @@
   <a href="https://tsl.deaglepc.cn/">
     <img src="https://img.shields.io/website?url=https%3A%2F%2Ftsl.deaglepc.cn%2F&style=for-the-badge&color=00f0ff&labelColor=222222&logo=vercel" alt="Website Status" />
   </a>
+  <a href="https://hub.docker.com/r/dupengcheng66666/teslamate-cyberui">
+    <img src="https://img.shields.io/docker/pulls/dupengcheng66666/teslamate-cyberui?style=for-the-badge&color=00f0ff&labelColor=222222&logo=docker&label=frontend" alt="Frontend Docker Pulls" />
+  </a>
+  <a href="https://hub.docker.com/r/dupengcheng66666/teslamate-cyberui-backend">
+    <img src="https://img.shields.io/docker/pulls/dupengcheng66666/teslamate-cyberui-backend?style=for-the-badge&color=00f0ff&labelColor=222222&logo=docker&label=backend" alt="Backend Docker Pulls" />
+  </a>
 </p>
+
+<p align="center">A modern Tesla data visualization dashboard that connects to TeslaMate database with cyberpunk-style design.</p>
 
 > **🌟 Online Demo**
 >
 > - **Frontend Access**: [https://tsl.deaglepc.cn/](https://tsl.deaglepc.cn/)
 > - **Backend API**: [https://tsldemo.deaglepc.cn](https://tsldemo.deaglepc.cn) *(Auto-filled，backend with mock data for demonstration purposes)*
 
+<h3 align="center">🦞 <a href="https://github.com/openclaw/openclaw">OpenClaw</a> Skill</h3>
+<p align="center">
+<table align="center">
+  <tr>
+    <th align="center">🚗 Commute Query</th>
+    <th align="center">📊 Traffic Analysis</th>
+    <th align="center">🗺️ Trip Record</th>
+  </tr>
+  <tr>
+    <td valign="middle"><img src="./screenshots/openclaw-commute.webp" width="250" /></td>
+    <td valign="middle"><img src="./screenshots/openclaw-traffic.webp" width="250" /></td>
+    <td valign="middle"><img src="./screenshots/openclaw-trip.webp" width="250" /></td>
+  </tr>
+</table>
+</p>
+
+<h3 align="center">UI</h3>
 <p align="center">
 <table align="center">
   <tr>
@@ -48,6 +69,7 @@
 </table>
 </p>
 
+
 ## Table of Contents
 
 - [Features](#features)
@@ -55,9 +77,9 @@
 - [Relationship with TeslaMate](#relationship-with-teslamate)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
-- [Feature Details](#feature-details)
 - [Development Guide](#development-guide)
 - [AI IDE Skill](#ai-ide-skill)
+- [Feature Details](#feature-details)
 - [FAQ](#faq)
 
 ## Features
@@ -309,13 +331,6 @@ npm run dev
 > 💡 You can pass the backend address and API Key via URL parameters, e.g.:
 > `https://tsl.deaglepc.cn/?backend=https://tsldemo.deaglepc.cn/&apikey=xxx`
 
-#### Umami Analytics
-
-| Variable           | Description                         | Default                            |
-| ------------------ | ----------------------------------- | ---------------------------------- |
-| `UMAMI_WEBSITE_ID` | Umami Website ID (empty to disable) | empty                              |
-| `UMAMI_SCRIPT_URL` | Umami script URL                    | `https://cloud.umami.is/script.js` |
-
 #### Mock Data
 
 | Variable            | Description                              | Default |
@@ -329,6 +344,55 @@ npm run dev
 3. Enter the Key in settings page
 
 > ⚠️ **Important**: Must select "Web端 (JS API)" type, cannot use "Web服务" type.
+
+## AI IDE Skill
+
+This project includes a built-in `tesla-stats` skill that can be installed into popular AI IDEs, allowing AI assistants to query your Tesla data directly.
+
+### Capabilities
+
+- 🚗 Query real-time vehicle status (battery, range, location)
+- 📊 Retrieve SoC history and activity timeline
+- ⚡ View charge/drive records and details
+- 🔋 Battery health and efficiency statistics
+- ⚙️ Read/write UI settings
+
+### Supported Platforms
+
+| Platform | Project-level | Global |
+| --- | --- | --- |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| Codex (OpenAI) | `.codex/skills/` | `~/.codex/skills/` |
+| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
+| Antigravity | `.agent/skills/` | `~/.gemini/antigravity/skills/` |
+| Cursor | `.cursor/skills/` | `~/.cursor/skills/` |
+
+### Installation
+
+```bash
+cd skill
+
+# Windows PowerShell
+.\install.ps1                          # Interactive mode
+.\install.ps1 -Platforms all           # Install for all platforms (project)
+.\install.ps1 -Global -Platforms all   # Install for all platforms (global)
+
+# Linux / macOS
+bash install.sh                         # Interactive mode
+bash install.sh all                     # Install for all platforms (project)
+bash install.sh --global all            # Install for all platforms (global)
+```
+
+### Post-Install Configuration
+
+Set environment variables, then you can chat with your AI IDE to query Tesla data:
+
+```bash
+export TESLA_STATS_BASE_URL=http://your-server:8080/api/v1
+export TESLA_STATS_API_KEY=your-api-key
+```
+
+> 💡 **Usage Example**: Type "Show my Tesla's current status" or "Show my Tesla's SoC history for last 24 hours" in your AI IDE.
 
 ## Feature Details
 
@@ -416,54 +480,6 @@ GET /api/v1/cars/:id/stats/timeline # Status timeline
 GET /health                         # Health check
 ```
 
-## AI IDE Skill
-
-This project includes a built-in `tesla-stats` skill that can be installed into popular AI IDEs, allowing AI assistants to query your Tesla data directly.
-
-### Capabilities
-
-- 🚗 Query real-time vehicle status (battery, range, location)
-- 📊 Retrieve SoC history and activity timeline
-- ⚡ View charge/drive records and details
-- 🔋 Battery health and efficiency statistics
-- ⚙️ Read/write UI settings
-
-### Supported Platforms
-
-| Platform | Project-level | Global |
-| --- | --- | --- |
-| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
-| Codex (OpenAI) | `.codex/skills/` | `~/.codex/skills/` |
-| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
-| Antigravity | `.agent/skills/` | `~/.gemini/antigravity/skills/` |
-| Cursor | `.cursor/skills/` | `~/.cursor/skills/` |
-
-### Installation
-
-```bash
-cd skill
-
-# Windows PowerShell
-.\install.ps1                          # Interactive mode
-.\install.ps1 -Platforms all           # Install for all platforms (project)
-.\install.ps1 -Global -Platforms all   # Install for all platforms (global)
-
-# Linux / macOS
-bash install.sh                         # Interactive mode
-bash install.sh all                     # Install for all platforms (project)
-bash install.sh --global all            # Install for all platforms (global)
-```
-
-### Post-Install Configuration
-
-Set environment variables, then you can chat with your AI IDE to query Tesla data:
-
-```bash
-export TESLA_STATS_BASE_URL=http://your-server:8080/api/v1
-export TESLA_STATS_API_KEY=your-api-key
-```
-
-> 💡 **Usage Example**: Type "Show my Tesla's current status" or "Show my Tesla's SoC history for last 24 hours" in your AI IDE.
 
 ## FAQ
 
