@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">TeslaMate CyberUI</h1>
 
-<p align="center"><a href="README.md">English</a> | 简体中文</p>
+<p align="center"><a href="README_EN.md">English</a> | 简体中文</p>
 
 <p align="center">
   <a href="https://github.com/DeaglePC/TeslamateCyberUI/stargazers">
