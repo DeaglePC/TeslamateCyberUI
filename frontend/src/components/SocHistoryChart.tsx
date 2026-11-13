@@ -3,6 +3,7 @@ import ReactECharts from 'echarts-for-react';
 import { useSettingsStore } from '@/store/settings';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors } from '@/utils/theme';
+import { toDistanceUnit } from '@/utils/format';
 import type { SocDataPoint } from '@/types';
 import { DateFilter, FilterPreset } from '@/components/DateFilter';
 import dayjs from 'dayjs';
@@ -20,7 +21,7 @@ interface SocHistoryChartProps {
 }
 
 export function SocHistoryChart({ data, className = '', rangeLabel, rangeStart, rangeEnd, days = 1, onRangeChange }: SocHistoryChartProps) {
-    const { theme, language } = useSettingsStore();
+    const { theme, language, distanceUnit } = useSettingsStore();
     const { t } = useTranslation(language);
     const [showFilter, setShowFilter] = useState(false);
     const [filterPos, setFilterPos] = useState({ top: 0, right: 0 });
@@ -64,6 +65,8 @@ export function SocHistoryChart({ data, className = '', rangeLabel, rangeStart, 
         }
         // 默认值
         if (maxRangeKm === 0) maxRangeKm = 500;
+        // Full-charge range in the user's distance unit (right-hand axis and tooltip)
+        const maxRange = toDistanceUnit(maxRangeKm, distanceUnit);
 
         let minTime: number | undefined;
         let maxTime: number | undefined;
@@ -102,8 +105,8 @@ export function SocHistoryChart({ data, className = '', rangeLabel, rangeStart, 
                     params.forEach((p: any) => {
                         if (p.value !== null && p.value !== undefined) {
                             const soc = Math.round(p.value[1]);
-                            const rangeKm = Math.round((soc / 100) * maxRangeKm);
-                            html += `<div style="color: ${p.color};">SOC: ${soc}% (~${rangeKm}km)</div>`;
+                            const range = Math.round((soc / 100) * maxRange);
+                            html += `<div style="color: ${p.color};">SOC: ${soc}% (~${range}${distanceUnit})</div>`;
                         }
                     });
                     return html;
@@ -149,7 +152,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, rangeStart, 
                 {
                     type: 'value',
                     min: 0,
-                    max: maxRangeKm,
+                    max: maxRange,
                     splitNumber: 5,
                     position: 'right',
                     axisLine: {
@@ -158,7 +161,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, rangeStart, 
                     axisLabel: {
                         color: colors.muted,
                         fontSize: 10,
-                        formatter: (value: number) => `${Math.round(value)}km`,
+                        formatter: (value: number) => `${Math.round(value)}${distanceUnit}`,
                     },
                     splitLine: {
                         show: false,
@@ -193,7 +196,7 @@ export function SocHistoryChart({ data, className = '', rangeLabel, rangeStart, 
                 },
             ],
         };
-    }, [data, colors, days]);
+    }, [data, colors, days, distanceUnit]);
 
     return (
         <div className={`glass rounded-2xl p-4 ${className}`}>

@@ -16,7 +16,7 @@ import clsx from 'clsx';
 export default function DriveListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { theme, selectedCarId, unit, language } = useSettingsStore();
+  const { theme, selectedCarId, distanceUnit, language } = useSettingsStore();
   const [drives, setDrives] = useState<DriveListItem[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 9, total: 0 });
   const [loading, setLoading] = useState(true);
@@ -206,7 +206,7 @@ export default function DriveListPage() {
                       <div>
                         <p className="text-xs" style={{ color: colors.muted }}>{language === 'zh' ? '距离' : 'Distance'}</p>
                         <p className="font-bold" style={{ color: colors.primary }}>
-                          {formatDistance(drive.distance, unit)}
+                          {formatDistance(drive.distance, distanceUnit)}
                         </p>
                       </div>
                     </div>

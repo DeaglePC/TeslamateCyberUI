@@ -4,7 +4,8 @@ import { settingsApi, backgroundApi } from '@/services/api';
 import { getCachedBackground, setCachedBackground, clearCachedBackground } from '@/utils/bgCache';
 
 export type ThemeType = 'cyber' | 'tesla' | 'dark' | 'tech' | 'aurora' | 'auto';
-export type UnitType = 'metric' | 'imperial';
+export type DistanceUnit = 'km' | 'mi';
+export type TemperatureUnit = 'celsius' | 'fahrenheit';
 export type LanguageType = 'zh' | 'en';
 export type MapType = 'amap' | 'openstreet';
 
@@ -20,9 +21,25 @@ const getInitialLanguage = (): LanguageType => {
 };
 
 
+// The single combined unit setting used before distance and temperature were split
+function legacyUnits(unit: unknown): { distanceUnit: DistanceUnit; temperatureUnit: TemperatureUnit } | undefined {
+  if (unit === 'imperial') return { distanceUnit: 'mi', temperatureUnit: 'fahrenheit' };
+  if (unit === 'metric') return { distanceUnit: 'km', temperatureUnit: 'celsius' };
+  return undefined;
+}
+
+function parseDistanceUnit(value: unknown): DistanceUnit | undefined {
+  return value === 'km' || value === 'mi' ? value : undefined;
+}
+
+function parseTemperatureUnit(value: unknown): TemperatureUnit | undefined {
+  return value === 'celsius' || value === 'fahrenheit' ? value : undefined;
+}
+
 interface SettingsState {
   theme: ThemeType;
-  unit: UnitType;
+  distanceUnit: DistanceUnit;       // also drives speed, elevation and efficiency
+  temperatureUnit: TemperatureUnit;
   language: LanguageType;
   selectedCarId: number | null;
   amapKey: string;
@@ -37,7 +54,8 @@ interface SettingsState {
   autoThemeFromBg: boolean; // 是否根据背景图片自动计算主题色
   autoThemePrimaryColor: string; // 自动计算出的主题主色
   setTheme: (theme: ThemeType) => void;
-  setUnit: (unit: UnitType) => void;
+  setDistanceUnit: (unit: DistanceUnit) => void;
+  setTemperatureUnit: (unit: TemperatureUnit) => void;
   setLanguage: (language: LanguageType) => void;
   setSelectedCarId: (id: number | null) => void;
   setAmapKey: (key: string) => void;
@@ -60,7 +78,8 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       theme: 'cyber',
-      unit: 'metric',
+      distanceUnit: 'km',
+      temperatureUnit: 'celsius',
       language: getInitialLanguage(),
       selectedCarId: null,
       amapKey: '',
@@ -78,9 +97,13 @@ export const useSettingsStore = create<SettingsState>()(
         set({ theme });
         settingsApi.update('theme', theme).catch(() => { });
       },
-      setUnit: (unit) => {
-        set({ unit });
-        settingsApi.update('unit', unit).catch(() => { });
+      setDistanceUnit: (distanceUnit) => {
+        set({ distanceUnit });
+        settingsApi.update('distanceUnit', distanceUnit).catch(() => { });
+      },
+      setTemperatureUnit: (temperatureUnit) => {
+        set({ temperatureUnit });
+        settingsApi.update('temperatureUnit', temperatureUnit).catch(() => { });
       },
       setLanguage: (language) => {
         set({ language });
@@ -175,7 +198,8 @@ export const useSettingsStore = create<SettingsState>()(
           const settings = await settingsApi.get();
           set((prev) => ({
             theme: (settings.theme as ThemeType) || prev.theme,
-            unit: (settings.unit as UnitType) || prev.unit,
+            distanceUnit: parseDistanceUnit(settings.distanceUnit) || legacyUnits(settings.unit)?.distanceUnit || prev.distanceUnit,
+            temperatureUnit: parseTemperatureUnit(settings.temperatureUnit) || legacyUnits(settings.unit)?.temperatureUnit || prev.temperatureUnit,
             language: (settings.language as LanguageType) || prev.language,
             amapKey: settings.amapKey || prev.amapKey,
             mapType: (settings.mapType as MapType) || prev.mapType,
@@ -193,10 +217,21 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'cyberui-settings',
+      version: 1,
+      // v0 stored a single combined `unit` ('metric' | 'imperial'); split it in two
+      migrate: (persisted, version) => {
+        const state = (persisted ?? {}) as Record<string, unknown>;
+        if (version < 1) {
+          const { unit, ...rest } = state;
+          return { ...rest, ...legacyUnits(unit) };
+        }
+        return state;
+      },
       // 不持久化背景图片到 localStorage（太大）
       partialize: (state) => ({
         theme: state.theme,
-        unit: state.unit,
+        distanceUnit: state.distanceUnit,
+        temperatureUnit: state.temperatureUnit,
         language: state.language,
         selectedCarId: state.selectedCarId,
         amapKey: state.amapKey,

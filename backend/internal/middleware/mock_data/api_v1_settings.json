@@ -10,7 +10,8 @@
     "cardOpacity": "92",
     "language": "zh",
     "mapType": "openstreet",
-    "theme": "cyber",
-    "unit": "metric"
+    "distanceUnit": "km",
+    "temperatureUnit": "celsius",
+    "theme": "cyber"
   }
 }

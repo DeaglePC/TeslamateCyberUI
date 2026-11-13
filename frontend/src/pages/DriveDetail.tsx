@@ -9,7 +9,7 @@ import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
 import { UniversalMap } from '@/components/UniversalMap';
 import { SpeedHistogram } from '@/components/DriveStats';
-import { formatDate, formatDuration, formatDistance, formatSpeed, formatTemperature } from '@/utils/format';
+import { formatDate, formatDuration, formatDistance, formatEfficiency, formatRange, formatSpeed, formatTemperature, speedUnitLabel, toDistanceUnit } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import { useTranslation } from '@/utils/i18n';
 import { domToPng } from 'modern-screenshot';
@@ -19,7 +19,7 @@ import { simplifyPositions } from '@/utils/mapSampling';
 export default function DriveDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { theme, unit, language } = useSettingsStore();
+  const { theme, distanceUnit, temperatureUnit, language } = useSettingsStore();
   const { t } = useTranslation(language);
   const [detail, setDetail] = useState<DriveDetail | null>(null);
   const [positions, setPositions] = useState<DrivePosition[]>([]);
@@ -260,7 +260,9 @@ export default function DriveDetailPage() {
     }
 
     // 速度使用最大值采样（保留峰值速度），功率使用绝对最大值采样（保留加速和动能回收峰值）
-    const speeds = sampleData(positions.map(p => p.speed), targetPoints, 'max');
+    const speeds = sampleData(positions.map(p => p.speed), targetPoints, 'max')
+      .map(s => Math.round(toDistanceUnit(s, distanceUnit)));
+    const speedLabel = `${t('speed')} ${speedUnitLabel(distanceUnit)}`;
     const powers = sampleData(positions.map(p => p.power), targetPoints, 'maxAbs');
 
     return {
@@ -273,7 +275,7 @@ export default function DriveDetailPage() {
         containLabel: true,
       },
       legend: {
-        data: [t('speedKmh'), t('power')],
+        data: [speedLabel, t('power')],
         textStyle: { color: colors.muted },
         top: 10,
       },
@@ -298,7 +300,7 @@ export default function DriveDetailPage() {
       yAxis: [
         {
           type: 'value',
-          name: t('speedKmh'),
+          name: speedLabel,
           axisLine: { lineStyle: { color: colors.primary } },
           axisLabel: { color: colors.primary },
           splitLine: { lineStyle: { color: `${colors.muted}15` } },
@@ -314,7 +316,7 @@ export default function DriveDetailPage() {
       ],
       series: [
         {
-          name: t('speedKmh'),
+          name: speedLabel,
           type: 'line',
           data: speeds,
           smooth: 0.4,
@@ -396,8 +398,8 @@ export default function DriveDetailPage() {
           let html = `<div style="font-weight: 600;">${params[0]?.axisValue || ''}</div>`;
           params.forEach(p => {
             if (p.value !== undefined && p.value !== null) {
-              const temp = unit === 'imperial' ? (p.value * 9 / 5 + 32).toFixed(1) : p.value.toFixed(1);
-              const unitStr = unit === 'imperial' ? '°F' : '°C';
+              const temp = temperatureUnit === 'fahrenheit' ? (p.value * 9 / 5 + 32).toFixed(1) : p.value.toFixed(1);
+              const unitStr = temperatureUnit === 'fahrenheit' ? '°F' : '°C';
               html += `<div>${p.seriesName}: ${temp}${unitStr}</div>`;
             }
           });
@@ -414,7 +416,7 @@ export default function DriveDetailPage() {
       yAxis: {
         type: 'value',
         axisLine: { lineStyle: { color: colors.muted } },
-        axisLabel: { color: colors.muted, formatter: (val: number) => unit === 'imperial' ? `${(val * 9 / 5 + 32).toFixed(0)}°F` : `${val.toFixed(0)}°C` },
+        axisLabel: { color: colors.muted, formatter: (val: number) => temperatureUnit === 'fahrenheit' ? `${(val * 9 / 5 + 32).toFixed(0)}°F` : `${val.toFixed(0)}°C` },
         splitLine: { lineStyle: { color: `${colors.muted}15` } },
       },
       series: [
@@ -527,7 +529,7 @@ export default function DriveDetailPage() {
     // Use avg sampling for elevation to smooth out GPS jitter
     const elevationsStr = sampleData(rawElevations, targetPoints, 'avg');
     // Convert to target unit
-    const elevations = unit === 'imperial'
+    const elevations = distanceUnit === 'mi'
       ? elevationsStr.map(e => Math.round(e * 3.28084)) // meters to feet
       : elevationsStr;
 
@@ -541,7 +543,7 @@ export default function DriveDetailPage() {
 
     const padding = Math.max(10, (maxEle - minEle) * 0.1);
 
-    const eleUnitLabel = unit === 'imperial' ? 'ft' : 'm';
+    const eleUnitLabel = distanceUnit === 'mi' ? 'ft' : 'm';
 
     return {
       backgroundColor: 'transparent',
@@ -720,22 +722,22 @@ export default function DriveDetailPage() {
         <h3 className="font-semibold mb-4" style={{ color: colors.primary }}>{t('batteryConsumption')}</h3>
         <BatteryBar startLevel={detail.startBatteryLevel} endLevel={detail.endBatteryLevel} />
         <div className="flex justify-between mt-4" style={{ color: colors.muted }}>
-          <span>{t('range')} {detail.startIdealRangeKm.toFixed(0)} km</span>
-          <span>{t('range')} {detail.endIdealRangeKm.toFixed(0)} km</span>
+          <span>{t('range')} {formatRange(detail.startIdealRangeKm, distanceUnit)}</span>
+          <span>{t('range')} {formatRange(detail.endIdealRangeKm, distanceUnit)}</span>
         </div>
       </Card>
 
       {/* 统计数据 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label={t('driveDistance')} value={formatDistance(detail.distance, unit)} />
+        <StatCard label={t('driveDistance')} value={formatDistance(detail.distance, distanceUnit)} />
         <StatCard label={t('driveDuration')} value={formatDuration(detail.durationMin, language)} />
-        <StatCard label={t('avgSpeed')} value={formatSpeed(detail.speedAvg, unit)} />
-        <StatCard label={t('maxSpeed')} value={formatSpeed(detail.speedMax, unit)} />
-        <StatCard label={t('efficiency')} value={`${detail.efficiency.toFixed(0)} Wh/km`} />
+        <StatCard label={t('avgSpeed')} value={formatSpeed(detail.speedAvg, distanceUnit)} />
+        <StatCard label={t('maxSpeed')} value={formatSpeed(detail.speedMax, distanceUnit)} />
+        <StatCard label={t('efficiency')} value={formatEfficiency(detail.efficiency, distanceUnit)} />
         <StatCard label={t('maxPower')} value={`${detail.powerMax} kW`} />
         <StatCard label={t('maxRegen')} value={`${Math.abs(detail.powerMin)} kW`} />
         {detail.outsideTempAvg !== undefined && (
-          <StatCard label={t('outsideTemp')} value={formatTemperature(detail.outsideTempAvg, unit)} />
+          <StatCard label={t('outsideTemp')} value={formatTemperature(detail.outsideTempAvg, temperatureUnit)} />
         )}
       </div>
 
@@ -809,14 +811,14 @@ export default function DriveDetailPage() {
                 <div className="flex items-center gap-1.5" style={{ color: colors.success }}>
                   <ArrowUpRight className="w-4 h-4" />
                   <span className="font-medium">
-                    {language === 'zh' ? '爬升' : 'UP'}: {unit === 'imperial' ? Math.round(elevationStats.up * 3.28084) : elevationStats.up} {unit === 'imperial' ? 'ft' : 'm'}
+                    {language === 'zh' ? '爬升' : 'UP'}: {distanceUnit === 'mi' ? Math.round(elevationStats.up * 3.28084) : elevationStats.up} {distanceUnit === 'mi' ? 'ft' : 'm'}
                   </span>
                 </div>
                 <div className="w-px h-3 bg-white/20"></div>
                 <div className="flex items-center gap-1.5" style={{ color: colors.danger }}>
                   <ArrowDownRight className="w-4 h-4" />
                   <span className="font-medium">
-                    {language === 'zh' ? '下降' : 'DOWN'}: {unit === 'imperial' ? Math.round(elevationStats.down * 3.28084) : elevationStats.down} {unit === 'imperial' ? 'ft' : 'm'}
+                    {language === 'zh' ? '下降' : 'DOWN'}: {distanceUnit === 'mi' ? Math.round(elevationStats.down * 3.28084) : elevationStats.down} {distanceUnit === 'mi' ? 'ft' : 'm'}
                   </span>
                 </div>
               </div>

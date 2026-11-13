@@ -37,13 +37,13 @@ const formatTime = (seconds: number): string => {
 };
 
 export function SpeedHistogram({ carId, startDate, endDate, driveId, noCard }: Props) {
-    const { theme, unit, language } = useSettingsStore();
+    const { theme, distanceUnit, language } = useSettingsStore();
     const { t } = useTranslation(language);
     const [data, setData] = useState<SpeedHistogramItem[]>([]);
     const [loading, setLoading] = useState(true);
     const colors = getThemeColors(theme);
 
-    const isImperial = unit === 'imperial';
+    const isImperial = distanceUnit === 'mi';
     const speedUnit = isImperial ? 'mph' : 'km/h';
     const convertSpeed = (speed: number) => isImperial ? Math.round(speed * 0.621371) : speed;
 

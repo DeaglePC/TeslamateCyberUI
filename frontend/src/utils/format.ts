@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import duration from 'dayjs/plugin/duration';
+import type { DistanceUnit, TemperatureUnit } from '@/store/settings';
 
 dayjs.extend(relativeTime);
 dayjs.extend(duration);
@@ -27,8 +28,24 @@ export function formatDuration(minutes: number, language: 'zh' | 'en' = 'zh'): s
   return `${hours}${language === 'zh' ? '小时' : 'h'} ${mins}${language === 'zh' ? '分钟' : 'm'}`;
 }
 
-export function formatDistance(km: number, unit: 'metric' | 'imperial' = 'metric'): string {
-  if (unit === 'imperial') {
+const KM_TO_MI = 0.621371;
+
+/** Converts a distance (or speed) from km to the chosen unit, without formatting. */
+export function toDistanceUnit(km: number, unit: DistanceUnit = 'km'): number {
+  return unit === 'mi' ? km * KM_TO_MI : km;
+}
+
+/** Whole-number range, e.g. "298 km" / "185 mi". */
+export function formatRange(km: number, unit: DistanceUnit = 'km'): string {
+  return `${toDistanceUnit(km, unit).toFixed(0)} ${unit}`;
+}
+
+export function speedUnitLabel(unit: DistanceUnit = 'km'): string {
+  return unit === 'mi' ? 'mph' : 'km/h';
+}
+
+export function formatDistance(km: number, unit: DistanceUnit = 'km'): string {
+  if (unit === 'mi') {
     const miles = km * 0.621371;
     return `${miles.toFixed(1)} mi`;
   }
@@ -45,24 +62,24 @@ export function formatEnergy(kwh: number): string {
   return `${kwh.toFixed(2)} kWh`;
 }
 
-export function formatEfficiency(whPerKm: number, unit: 'metric' | 'imperial' = 'metric'): string {
-  if (unit === 'imperial') {
+export function formatEfficiency(whPerKm: number, unit: DistanceUnit = 'km'): string {
+  if (unit === 'mi') {
     const whPerMile = whPerKm * 1.60934;
     return `${whPerMile.toFixed(0)} Wh/mi`;
   }
   return `${whPerKm.toFixed(0)} Wh/km`;
 }
 
-export function formatTemperature(celsius: number, unit: 'metric' | 'imperial' = 'metric'): string {
-  if (unit === 'imperial') {
+export function formatTemperature(celsius: number, unit: TemperatureUnit = 'celsius', digits = 1): string {
+  if (unit === 'fahrenheit') {
     const fahrenheit = celsius * 9 / 5 + 32;
-    return `${fahrenheit.toFixed(1)}°F`;
+    return `${fahrenheit.toFixed(digits)}°F`;
   }
-  return `${celsius.toFixed(1)}°C`;
+  return `${celsius.toFixed(digits)}°C`;
 }
 
-export function formatSpeed(kmh: number, unit: 'metric' | 'imperial' = 'metric'): string {
-  if (unit === 'imperial') {
+export function formatSpeed(kmh: number, unit: DistanceUnit = 'km'): string {
+  if (unit === 'mi') {
     const mph = kmh * 0.621371;
     return `${mph.toFixed(0)} mph`;
   }

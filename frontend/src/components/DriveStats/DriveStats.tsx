@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function DriveStats({ carId, startDate, endDate }: Props) {
-    const { theme, unit, language } = useSettingsStore();
+    const { theme, distanceUnit, language } = useSettingsStore();
     const [stats, setStats] = useState<DriveStatsSummary | null>(null);
     const [tracks, setTracks] = useState<DriveTrack[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,7 +77,7 @@ export function DriveStats({ carId, startDate, endDate }: Props) {
                                 {language === 'zh' ? '记录距离' : 'Total Distance'}
                             </span>
                             <span className="text-lg md:text-2xl font-bold mt-1" style={{ color: colors.primary }}>
-                                {formatDistance(stats.totalDistance, unit)}
+                                {formatDistance(stats.totalDistance, distanceUnit)}
                             </span>
                         </div>
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
@@ -97,7 +97,7 @@ export function DriveStats({ carId, startDate, endDate }: Props) {
                                 {language === 'zh' ? '中位距离' : 'Median Distance'}
                             </span>
                             <span className="text-lg md:text-2xl font-bold mt-1" style={{ color: colors.success }}>
-                                {formatDistance(stats.medianDistance, unit)}
+                                {formatDistance(stats.medianDistance, distanceUnit)}
                             </span>
                         </div>
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.success}15` }}>
@@ -118,7 +118,7 @@ export function DriveStats({ carId, startDate, endDate }: Props) {
                                 {language === 'zh' ? '日均行驶' : 'Daily Average'}
                             </span>
                             <span className="text-lg md:text-2xl font-bold mt-1" style={{ color: colors.primary }}>
-                                {formatDistance(stats.avgDailyDistance, unit)}
+                                {formatDistance(stats.avgDailyDistance, distanceUnit)}
                             </span>
                         </div>
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
@@ -140,7 +140,7 @@ export function DriveStats({ carId, startDate, endDate }: Props) {
                                 {language === 'zh' ? '最高速度' : 'Max Speed'}
                             </span>
                             <span className="text-lg md:text-2xl font-bold mt-1" style={{ color: colors.accent }}>
-                                {formatSpeed(stats.maxSpeed, unit)}
+                                {formatSpeed(stats.maxSpeed, distanceUnit)}
                             </span>
                         </div>
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.accent}15` }}>
@@ -162,7 +162,7 @@ export function DriveStats({ carId, startDate, endDate }: Props) {
                                 {language === 'zh' ? '月里程（推算）' : 'Monthly Mileage (Est.)'}
                             </span>
                             <span className="text-lg md:text-2xl font-bold mt-1" style={{ color: colors.primary }}>
-                                {formatDistance(stats.extrapolatedMonthlyKm, unit)}
+                                {formatDistance(stats.extrapolatedMonthlyKm, distanceUnit)}
                             </span>
                         </div>
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.primary}15` }}>
@@ -184,7 +184,7 @@ export function DriveStats({ carId, startDate, endDate }: Props) {
                                 {language === 'zh' ? '年里程（推算）' : 'Annual Mileage (Est.)'}
                             </span>
                             <span className="text-lg md:text-2xl font-bold mt-1" style={{ color: colors.accent }}>
-                                {formatDistance(stats.extrapolatedAnnualKm, unit)}
+                                {formatDistance(stats.extrapolatedAnnualKm, distanceUnit)}
                             </span>
                         </div>
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.accent}15` }}>

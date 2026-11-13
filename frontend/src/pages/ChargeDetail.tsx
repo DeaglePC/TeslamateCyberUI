@@ -7,7 +7,7 @@ import { Card, StatCard } from '@/components/Card';
 import { MapCard } from '@/components/MapCard';
 import { BatteryBar } from '@/components/Battery';
 import { Loading, ErrorState } from '@/components/States';
-import { formatDate, formatDuration, formatEnergy, formatCurrency, formatTemperature } from '@/utils/format';
+import { formatDate, formatDuration, formatEnergy, formatCurrency, formatRange, formatTemperature } from '@/utils/format';
 import { getThemeColors } from '@/utils/theme';
 import { useTranslation } from '@/utils/i18n';
 import type { ChargeDetail, ChargeStats } from '@/types';
@@ -15,7 +15,7 @@ import type { ChargeDetail, ChargeStats } from '@/types';
 export default function ChargeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { theme, unit, language } = useSettingsStore();
+  const { theme, distanceUnit, temperatureUnit, language } = useSettingsStore();
   const { t } = useTranslation(language);
   const [detail, setDetail] = useState<ChargeDetail | null>(null);
   const [stats, setStats] = useState<ChargeStats | null>(null);
@@ -184,8 +184,8 @@ export default function ChargeDetailPage() {
         <h3 className="font-semibold mb-2 sm:mb-4 text-sm sm:text-base" style={{ color: colors.primary }}>{t('batteryChange')}</h3>
         <BatteryBar startLevel={detail.startBatteryLevel} endLevel={detail.endBatteryLevel} />
         <div className="flex justify-between mt-2 sm:mt-4 mb-3 sm:mb-6 text-xs sm:text-base flex-wrap gap-y-1" style={{ color: colors.muted }}>
-          <span>{t('range')} {detail.startIdealRangeKm.toFixed(0)} km</span>
-          <span>{t('range')} {detail.endIdealRangeKm.toFixed(0)} km</span>
+          <span>{t('range')} {formatRange(detail.startIdealRangeKm, distanceUnit)}</span>
+          <span>{t('range')} {formatRange(detail.endIdealRangeKm, distanceUnit)}</span>
         </div>
 
         {/* Time Info Integration */}
@@ -216,7 +216,7 @@ export default function ChargeDetailPage() {
           <StatCard label={t('chargeEfficiency')} value={`${detail.efficiency.toFixed(1)}%`} />
         )}
         {detail.outsideTempAvg !== undefined && (
-          <StatCard label={t('avgTemp')} value={formatTemperature(detail.outsideTempAvg, unit)} />
+          <StatCard label={t('avgTemp')} value={formatTemperature(detail.outsideTempAvg, temperatureUnit)} />
         )}
         {detail.cost !== undefined && detail.cost > 0 && (
           <StatCard label={t('chargeCost')} value={formatCurrency(detail.cost)} />

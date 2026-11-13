@@ -6,7 +6,7 @@ import { Loading, ErrorState, EmptyState } from '@/components/States';
 import { MapCard } from '@/components/MapCard';
 import { SocHistoryChart } from '@/components/SocHistoryChart';
 import { ActivityTimeline } from '@/components/ActivityTimeline';
-import { formatDistance, formatRelativeTime } from '@/utils/format';
+import { formatDistance, formatRelativeTime, formatTemperature } from '@/utils/format';
 import { useTranslation } from '@/utils/i18n';
 import { getThemeColors } from '@/utils/theme';
 import { getCachedImage, setCachedImage } from '@/utils/imageCache';
@@ -79,7 +79,7 @@ const COLOR_NAMES: Record<string, { zh: string; en: string }> = {
 };
 
 export default function HomePage() {
-  const { theme, selectedCarId, setSelectedCarId, unit, language } = useSettingsStore();
+  const { theme, selectedCarId, setSelectedCarId, distanceUnit, temperatureUnit, language } = useSettingsStore();
   const { t, getStateLabel } = useTranslation(language);
   const [cars, setCars] = useState<Car[]>([]);
   const [status, setStatus] = useState<CarStatus | null>(null);
@@ -439,7 +439,7 @@ export default function HomePage() {
                     {/* Odometer */}
                     <div className="space-y-1">
                       <p style={{ color: colors.muted }}>{language === 'zh' ? '总里程' : 'Odometer'}</p>
-                      <p>{formatDistance(stats?.totalDistance || 0, unit)}</p>
+                      <p>{formatDistance(stats?.totalDistance || 0, distanceUnit)}</p>
                     </div>
                   </div>
                 </div>
@@ -465,7 +465,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label={t('range').toUpperCase()}
-            value={formatDistance(status.idealRange, unit)}
+            value={formatDistance(status.idealRange, distanceUnit)}
             icon={
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
@@ -475,7 +475,7 @@ export default function HomePage() {
           />
           <StatCard
             label={t('odometer').toUpperCase()}
-            value={formatDistance(stats.totalDistance, unit)}
+            value={formatDistance(stats.totalDistance, distanceUnit)}
             icon={
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -496,8 +496,8 @@ export default function HomePage() {
           />
           <StatCard
             label={t('temperature').toUpperCase()}
-            value={stats.outsideTemp != null ? `${stats.outsideTemp.toFixed(0)}°` : '--'}
-            unit={stats.insideTemp != null ? `${language === 'zh' ? '内' : 'In'} ${stats.insideTemp.toFixed(0)}°` : undefined}
+            value={stats.outsideTemp != null ? formatTemperature(stats.outsideTemp, temperatureUnit, 0) : '--'}
+            unit={stats.insideTemp != null ? `${language === 'zh' ? '内' : 'In'} ${formatTemperature(stats.insideTemp, temperatureUnit, 0)}` : undefined}
             icon={
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
