@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { CURRENCIES, currencyLabel } from '@/utils/currency';
 import { useSettingsStore, type ThemeType, type DistanceUnit, type TemperatureUnit, type LanguageType } from '@/store/settings';
 import { Card } from '@/components/Card';
 import { ImageCropper } from '@/components/ImageCropper';
@@ -184,7 +185,7 @@ function AutoThemeColorPreview({
 
 export default function SettingsPage() {
   const {
-    theme, setTheme, distanceUnit, setDistanceUnit, temperatureUnit, setTemperatureUnit, language, setLanguage,
+    theme, setTheme, distanceUnit, setDistanceUnit, temperatureUnit, setTemperatureUnit, currency, setCurrency, language, setLanguage,
     amapKey, setAmapKey, baseUrl, setBaseUrl, apiKey, setApiKey,
     mapType, setMapType,
     backgroundImage, backgroundOriginalImage, uploadBackgroundImage, deleteBackgroundImage,
@@ -304,6 +305,11 @@ export default function SettingsPage() {
     { id: 'km', name: t('metric') },
     { id: 'mi', name: t('imperial') },
   ];
+
+  // Keep a saved currency selectable even if it is not in the built-in list
+  const currencyOptions = CURRENCIES.includes(currency as typeof CURRENCIES[number])
+    ? CURRENCIES
+    : [currency, ...CURRENCIES];
 
   const temperatureUnits: { id: TemperatureUnit; name: string }[] = [
     { id: 'celsius', name: t('celsius') },
@@ -890,6 +896,25 @@ export default function SettingsPage() {
             </button>
           ))}
         </div>
+        <label htmlFor="currency-select" className="block text-sm mt-4 mb-2" style={{ color: colors.muted }}>
+          {t('currencyUnit')}
+        </label>
+        <select
+          id="currency-select"
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+          className="w-full p-3 rounded-lg border outline-none transition-all focus:ring-2 cursor-pointer"
+          style={{
+            borderColor: colors.border,
+            color: colors.primary,
+            background: colors.bg,
+          }}
+        >
+          {currencyOptions.map((code) => (
+            <option key={code} value={code}>{currencyLabel(code)}</option>
+          ))}
+        </select>
+        <p className="text-xs mt-2" style={{ color: colors.muted }}>{t('currencyHint')}</p>
       </Card>
 
       {/* Map Settings */}

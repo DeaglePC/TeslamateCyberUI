@@ -68,6 +68,8 @@ const translations = {
     mapSettings: { zh: '地图设置', en: 'Map Settings' },
     distanceUnit: { zh: '距离', en: 'Distance' },
     temperatureUnit: { zh: '温度', en: 'Temperature' },
+    currencyUnit: { zh: '货币', en: 'Currency' },
+    currencyHint: { zh: 'TeslaMate 不保存货币种类，请选择充电费用的显示货币。', en: 'TeslaMate does not store a currency, so choose the one your charging costs are in.' },
     metric: { zh: '公制 (km)', en: 'Metric (km)' },
     imperial: { zh: '英制 (mi)', en: 'Imperial (mi)' },
     celsius: { zh: '摄氏度 (°C)', en: 'Celsius (°C)' },

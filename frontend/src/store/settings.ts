@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { settingsApi, backgroundApi } from '@/services/api';
 import { getCachedBackground, setCachedBackground, clearCachedBackground } from '@/utils/bgCache';
+import { guessCurrency, isValidCurrency } from '@/utils/currency';
 
 export type ThemeType = 'cyber' | 'tesla' | 'dark' | 'tech' | 'aurora' | 'auto';
 export type DistanceUnit = 'km' | 'mi';
@@ -40,6 +41,7 @@ interface SettingsState {
   theme: ThemeType;
   distanceUnit: DistanceUnit;       // also drives speed, elevation and efficiency
   temperatureUnit: TemperatureUnit;
+  currency: string;                 // ISO 4217 code used to display charging costs
   language: LanguageType;
   selectedCarId: number | null;
   amapKey: string;
@@ -56,6 +58,7 @@ interface SettingsState {
   setTheme: (theme: ThemeType) => void;
   setDistanceUnit: (unit: DistanceUnit) => void;
   setTemperatureUnit: (unit: TemperatureUnit) => void;
+  setCurrency: (currency: string) => void;
   setLanguage: (language: LanguageType) => void;
   setSelectedCarId: (id: number | null) => void;
   setAmapKey: (key: string) => void;
@@ -80,6 +83,7 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'cyber',
       distanceUnit: 'km',
       temperatureUnit: 'celsius',
+      currency: guessCurrency(),
       language: getInitialLanguage(),
       selectedCarId: null,
       amapKey: '',
@@ -104,6 +108,10 @@ export const useSettingsStore = create<SettingsState>()(
       setTemperatureUnit: (temperatureUnit) => {
         set({ temperatureUnit });
         settingsApi.update('temperatureUnit', temperatureUnit).catch(() => { });
+      },
+      setCurrency: (currency) => {
+        set({ currency });
+        settingsApi.update('currency', currency).catch(() => { });
       },
       setLanguage: (language) => {
         set({ language });
@@ -200,6 +208,7 @@ export const useSettingsStore = create<SettingsState>()(
             theme: (settings.theme as ThemeType) || prev.theme,
             distanceUnit: parseDistanceUnit(settings.distanceUnit) || legacyUnits(settings.unit)?.distanceUnit || prev.distanceUnit,
             temperatureUnit: parseTemperatureUnit(settings.temperatureUnit) || legacyUnits(settings.unit)?.temperatureUnit || prev.temperatureUnit,
+            currency: isValidCurrency(settings.currency) ? settings.currency : prev.currency,
             language: (settings.language as LanguageType) || prev.language,
             amapKey: settings.amapKey || prev.amapKey,
             mapType: (settings.mapType as MapType) || prev.mapType,
@@ -232,6 +241,7 @@ export const useSettingsStore = create<SettingsState>()(
         theme: state.theme,
         distanceUnit: state.distanceUnit,
         temperatureUnit: state.temperatureUnit,
+        currency: state.currency,
         language: state.language,
         selectedCarId: state.selectedCarId,
         amapKey: state.amapKey,

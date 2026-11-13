@@ -16,7 +16,7 @@ interface Props {
 }
 
 export function ChargeStats({ carId, startDate, endDate }: Props) {
-    const { theme, language } = useSettingsStore();
+    const { theme, language, currency } = useSettingsStore();
     const [stats, setStats] = useState<ChargeStatsSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const colors = getThemeColors(theme);
@@ -76,7 +76,7 @@ export function ChargeStats({ carId, startDate, endDate }: Props) {
                                 {language === 'zh' ? '总费用' : 'Total Cost'}
                             </span>
                             <span className="text-lg md:text-2xl font-bold mt-1" style={{ color: colors.success }}>
-                                {formatCurrency(stats.totalCost)}
+                                {formatCurrency(stats.totalCost, currency)}
                             </span>
                         </div>
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center" style={{ background: `${colors.success}15` }}>

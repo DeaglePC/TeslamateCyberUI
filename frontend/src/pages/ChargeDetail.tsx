@@ -15,7 +15,7 @@ import type { ChargeDetail, ChargeStats } from '@/types';
 export default function ChargeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { theme, distanceUnit, temperatureUnit, language } = useSettingsStore();
+  const { theme, distanceUnit, temperatureUnit, currency, language } = useSettingsStore();
   const { t } = useTranslation(language);
   const [detail, setDetail] = useState<ChargeDetail | null>(null);
   const [stats, setStats] = useState<ChargeStats | null>(null);
@@ -219,7 +219,7 @@ export default function ChargeDetailPage() {
           <StatCard label={t('avgTemp')} value={formatTemperature(detail.outsideTempAvg, temperatureUnit)} />
         )}
         {detail.cost !== undefined && detail.cost > 0 && (
-          <StatCard label={t('chargeCost')} value={formatCurrency(detail.cost)} />
+          <StatCard label={t('chargeCost')} value={formatCurrency(detail.cost, currency)} />
         )}
       </div>
 

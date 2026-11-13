@@ -87,10 +87,16 @@ export function formatSpeed(kmh: number, unit: DistanceUnit = 'km'): string {
 }
 
 export function formatCurrency(amount: number, currency = 'CNY'): string {
-  return new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency,
-  }).format(amount);
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+      currencyDisplay: 'narrowSymbol',
+    }).format(amount);
+  } catch {
+    // Unknown currency code: show the number with the raw code
+    return `${amount.toFixed(2)} ${currency}`;
+  }
 }
 
 export function formatNumber(num: number, decimals = 0): string {
