@@ -373,3 +373,24 @@ input[type="range"]::-moz-range-track {
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.1);
 }
+/* Leaflet map: dark rendering of the standard OpenStreetMap tiles */
+.leaflet-container {
+  background: #0d1117;
+}
+
+.osm-dark-tiles {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6);
+}
+
+.leaflet-container .leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 9px;
+  line-height: 1.4;
+  padding: 0 4px;
+  border-top-left-radius: 4px;
+}
+
+.leaflet-container .leaflet-control-attribution a {
+  color: rgba(255, 255, 255, 0.75);
+}

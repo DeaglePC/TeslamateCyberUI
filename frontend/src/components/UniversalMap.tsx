@@ -103,6 +103,15 @@ function BoundsFitter({ positions, marker, heatmapData }: { positions?: [number,
     return null;
 }
 
+// Keep the attribution short: only the required map-data credit, no "Leaflet" prefix
+function AttributionPrefixRemover() {
+    const map = useMap();
+    useEffect(() => {
+        map.attributionControl?.setPrefix(false);
+    }, [map]);
+    return null;
+}
+
 export function UniversalMap({ positions = [], tracks = [], marker, startMarker, endMarker, heatmapData = [], className = '' }: UniversalMapProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<unknown>(null);
@@ -365,12 +374,17 @@ export function UniversalMap({ positions = [], tracks = [], marker, startMarker,
                 className="w-full h-full rounded-lg overflow-hidden"
                 style={{ zIndex: 0 }}
                 zoomControl={false}
-                attributionControl={false}
             >
+                {/* Free OpenStreetMap tiles (no API key). They are light-coloured,
+                    so the .osm-dark-tiles filter in index.css darkens them.
+                    Attribution is required by the OSM tile usage policy. */}
                 <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>'
+                    url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maxZoom={19}
+                    className="osm-dark-tiles"
                 />
+                <AttributionPrefixRemover />
 
                 {isPathMode && (
                     <>
