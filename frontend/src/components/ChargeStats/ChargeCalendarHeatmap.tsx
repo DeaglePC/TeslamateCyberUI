@@ -15,6 +15,10 @@ export function ChargeCalendarHeatmap({ data, startDate, endDate }: Props) {
     const { theme, language } = useSettingsStore();
     const colors = getThemeColors(theme);
 
+    // ECharts locale keys are upper-case ('ZH' / 'EN'). An unknown key silently
+    // falls back to the page's default locale, which is how 'en' ended up Chinese.
+    const calendarLocale = language === 'zh' ? 'ZH' : 'EN';
+
     const option = useMemo(() => {
         // Prepare data: [[date, value]]
         const heatmapData = data.map(item => [
@@ -85,12 +89,12 @@ export function ChargeCalendarHeatmap({ data, startDate, endDate }: Props) {
                 dayLabel: {
                     margin: 5, // Tighter labels
                     color: colors.muted,
-                    nameMap: language === 'zh' ? 'cn' : 'en'
+                    nameMap: calendarLocale
                 },
                 monthLabel: {
                     margin: 10,
                     color: colors.muted,
-                    nameMap: language === 'zh' ? 'cn' : 'en'
+                    nameMap: calendarLocale
                 },
             },
             series: {
@@ -104,7 +108,7 @@ export function ChargeCalendarHeatmap({ data, startDate, endDate }: Props) {
                 }
             }
         };
-    }, [data, colors, theme, language, startDate, endDate]);
+    }, [data, colors, theme, language, calendarLocale, startDate, endDate]);
 
     if (!data || data.length === 0) {
         return (

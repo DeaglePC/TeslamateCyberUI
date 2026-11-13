@@ -16,7 +16,7 @@ const DriveDetailPage = lazy(() => import('@/pages/DriveDetail'));
 const SettingsPage = lazy(() => import('@/pages/Settings'));
 
 function App() {
-  const { theme, baseUrl, backgroundImage, fetchRemoteSettings, autoThemeFromBg, setAutoThemePrimaryColor, autoThemePrimaryColor } = useSettingsStore();
+  const { theme, language, baseUrl, backgroundImage, fetchRemoteSettings, autoThemeFromBg, setAutoThemePrimaryColor, autoThemePrimaryColor } = useSettingsStore();
   const [showSetup, setShowSetup] = useState(false);
   const [setupError, setSetupError] = useState('');  // URL 参数连接失败时的初始错误信息
   const [initialized, setInitialized] = useState(false);
@@ -35,6 +35,11 @@ function App() {
     document.documentElement.style.setProperty('--theme-bg', colors.bg);
     document.body.style.backgroundColor = colors.bg;
   }, [theme, autoThemePrimaryColor]);
+
+  // Keep <html lang> in step with the chosen language (index.html ships with zh-CN)
+  useEffect(() => {
+    document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+  }, [language]);
 
   // 初始化或 BaseURL 设置完成后，加载远程设置和背景图
   useEffect(() => {
